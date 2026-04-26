@@ -18,6 +18,13 @@ const menuGroups = [
     ]
   },
   {
+    label: 'Markdown',
+    items: [
+      { id: 'copyMarkdown', label: '复制 MD' },
+      { id: 'pasteMarkdown', label: '粘贴 MD' }
+    ]
+  },
+  {
     label: '设置',
     items: [
       { id: 'settings', label: '设置' }
@@ -149,7 +156,6 @@ function TitleBar({ tabs, activeTabId, onSwitchTab, onCloseTab, onMenuAction, on
           { menuGroups.map((group, gi) => (
             <React.Fragment key={ gi }>
               { gi > 0 && <div className="title-menu-divider" /> }
-              <div className="title-menu-group-label">{ group.label }</div>
               { group.items.map(item => (
                 <div key={ item.id } className="title-menu-item" onClick={ () => handleItemClick(item.id) }>
                   <span>{ item.label }</span>

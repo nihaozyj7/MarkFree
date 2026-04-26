@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 
 const ICONS = {
   bold: (
@@ -132,18 +132,92 @@ const ICONS = {
       <line x1="9" y1="21" x2="9" y2="9" />
     </svg>
   ),
-  exportHtml: (
+  table: (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-      <polyline points="7 10 12 15 17 10" />
-      <line x1="12" y1="15" x2="12" y2="3" />
+      <rect x="3" y="3" width="18" height="18" rx="2" />
+      <line x1="3" y1="9" x2="21" y2="9" />
+      <line x1="3" y1="15" x2="21" y2="15" />
+      <line x1="9" y1="3" x2="9" y2="21" />
+      <line x1="15" y1="3" x2="15" y2="21" />
     </svg>
   ),
-  markdown: (
+  addRowAfter: (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M4 6h16M4 12h10M4 18h12" />
-      <path d="M14 9l3-3 3 3" />
-      <path d="M17 6v12" />
+      <line x1="12" y1="2" x2="12" y2="10" />
+      <line x1="8" y1="6" x2="16" y2="6" />
+      <rect x="3" y="12" width="18" height="10" rx="1" />
+      <line x1="12" y1="15" x2="12" y2="19" />
+      <line x1="10" y1="17" x2="14" y2="17" />
+    </svg>
+  ),
+  addRowBefore: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="2" width="18" height="10" rx="1" />
+      <line x1="12" y1="5" x2="12" y2="9" />
+      <line x1="10" y1="7" x2="14" y2="7" />
+      <line x1="12" y1="14" x2="12" y2="22" />
+      <line x1="8" y1="18" x2="16" y2="18" />
+    </svg>
+  ),
+  addColumnAfter: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="3" width="10" height="18" rx="1" />
+      <line x1="5" y1="12" x2="9" y2="12" />
+      <line x1="7" y1="10" x2="7" y2="14" />
+      <line x1="16" y1="12" x2="22" y2="12" />
+      <line x1="19" y1="9" x2="19" y2="15" />
+    </svg>
+  ),
+  addColumnBefore: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="5" y1="12" x2="12" y2="12" />
+      <line x1="8" y1="9" x2="8" y2="15" />
+      <rect x="14" y="3" width="8" height="18" rx="1" />
+      <line x1="18" y1="12" x2="22" y2="12" />
+      <line x1="20" y1="10" x2="20" y2="14" />
+    </svg>
+  ),
+  deleteRow: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="2" width="18" height="20" rx="1" />
+      <line x1="3" y1="12" x2="21" y2="12" />
+      <line x1="17" y1="9" x2="21" y2="12" />
+      <line x1="17" y1="15" x2="21" y2="12" />
+    </svg>
+  ),
+  deleteColumn: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="3" width="20" height="18" rx="1" />
+      <line x1="12" y1="3" x2="12" y2="21" />
+      <line x1="9" y1="17" x2="12" y2="21" />
+      <line x1="15" y1="17" x2="12" y2="21" />
+    </svg>
+  ),
+  deleteTable: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="3" width="18" height="18" rx="2" />
+      <line x1="3" y1="9" x2="21" y2="9" />
+      <line x1="3" y1="15" x2="21" y2="15" />
+      <line x1="9" y1="3" x2="9" y2="21" />
+      <line x1="15" y1="3" x2="15" y2="21" />
+      <line x1="6" y1="6" x2="18" y2="18" />
+    </svg>
+  ),
+  mergeCells: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="3" width="18" height="18" rx="1" />
+      <line x1="3" y1="12" x2="21" y2="12" />
+      <line x1="12" y1="3" x2="12" y2="21" />
+      <line x1="4" y1="8" x2="8" y2="8" />
+      <line x1="4" y1="16" x2="8" y2="16" />
+    </svg>
+  ),
+  splitCell: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="3" width="18" height="18" rx="1" />
+      <line x1="12" y1="3" x2="12" y2="21" />
+      <line x1="8" y1="6" x2="8" y2="10" />
+      <line x1="16" y1="6" x2="16" y2="10" />
     </svg>
   ),
 }
@@ -196,31 +270,25 @@ const MENU_GROUPS = [
     ]
   },
   {
-    label: '导出',
+    label: '表格',
     items: [
-      { id: 'exportHtml', label: '导出 HTML', icon: 'exportHtml' },
+      { id: 'insertTable', label: '插表格', icon: 'table', action: (e) => e.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run() },
+      { id: 'addRowBefore', label: '上插行', icon: 'addRowBefore', action: (e) => e.chain().focus().addRowBefore().run() },
+      { id: 'addRowAfter', label: '下插行', icon: 'addRowAfter', action: (e) => e.chain().focus().addRowAfter().run() },
+      { id: 'addColumnBefore', label: '左插列', icon: 'addColumnBefore', action: (e) => e.chain().focus().addColumnBefore().run() },
+      { id: 'addColumnAfter', label: '右插列', icon: 'addColumnAfter', action: (e) => e.chain().focus().addColumnAfter().run() },
+      { id: 'deleteRow', label: '删行', icon: 'deleteRow', action: (e) => e.chain().focus().deleteRow().run() },
+      { id: 'deleteColumn', label: '删列', icon: 'deleteColumn', action: (e) => e.chain().focus().deleteColumn().run() },
+      { id: 'deleteTable', label: '删表', icon: 'deleteTable', action: (e) => e.chain().focus().deleteTable().run() },
+      { id: 'mergeCells', label: '合并', icon: 'mergeCells', action: (e) => e.chain().focus().mergeCells().run() },
+      { id: 'splitCell', label: '拆分', icon: 'splitCell', action: (e) => e.chain().focus().splitCell().run() },
     ]
   },
 ]
 
-function ContextMenu({ editor, visible, position, onClose, onCopyMarkdown, onPasteMarkdown, onExportHtml }) {
+function ContextMenu({ editor, visible, position, onClose }) {
   const menuRef = useRef(null)
   const [adjustedPos, setAdjustedPos] = useState({ x: 0, y: 0 })
-
-  const handleExportHtml = useCallback(() => {
-    onExportHtml?.()
-    onClose()
-  }, [onExportHtml, onClose])
-
-  const handleCopyMarkdown = useCallback(() => {
-    onCopyMarkdown?.()
-    onClose()
-  }, [onCopyMarkdown, onClose])
-
-  const handlePasteMarkdown = useCallback(() => {
-    onPasteMarkdown?.()
-    onClose()
-  }, [onPasteMarkdown, onClose])
 
   useEffect(() => {
     if (!visible) return
@@ -263,17 +331,8 @@ function ContextMenu({ editor, visible, position, onClose, onCopyMarkdown, onPas
 
   if (!visible) return null
 
-  const allActions = {
-    exportHtml: handleExportHtml,
-    copyMarkdown: handleCopyMarkdown,
-    pasteMarkdown: handlePasteMarkdown
-  }
-
   const handleItemClick = (item) => {
-    const action = allActions[item.id]
-    if (action) {
-      action()
-    } else if (item.action) {
+    if (item.action) {
       item.action(editor)
       onClose()
     }
@@ -292,7 +351,6 @@ function ContextMenu({ editor, visible, position, onClose, onCopyMarkdown, onPas
         {MENU_GROUPS.map((group, gi) => (
           <React.Fragment key={gi}>
             {gi > 0 && <div className="context-menu-divider" />}
-            <div className="context-menu-group-label">{group.label}</div>
             <div className="context-menu-group-grid">
               {group.items.map((item) => {
                 const active = item.isActive && item.isActive(editor)
@@ -311,18 +369,7 @@ function ContextMenu({ editor, visible, position, onClose, onCopyMarkdown, onPas
             </div>
           </React.Fragment>
         ))}
-        <div className="context-menu-divider" />
-        <div className="context-menu-group-label">Markdown</div>
-        <div className="context-menu-group-grid">
-          <div className="context-menu-item" onClick={handleCopyMarkdown} title="复制 Markdown">
-            <span className="context-menu-item-icon">{ICONS.copy}</span>
-            <span className="context-menu-item-label">复制 MD</span>
-          </div>
-          <div className="context-menu-item" onClick={handlePasteMarkdown} title="粘贴 Markdown">
-            <span className="context-menu-item-icon">{ICONS.paste}</span>
-            <span className="context-menu-item-label">粘贴 MD</span>
-          </div>
-        </div>
+
       </div>
     </div>
   )

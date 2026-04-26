@@ -208,14 +208,6 @@
   color: var(--color-accent);
   border-color: var(--color-accent);
 }
-.title-menu-group-label {
-  padding: 4px 12px 2px;
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-}
 .title-menu-item {
   display: flex;
   align-items: center;
@@ -1004,27 +996,27 @@
 .context-menu {
   position: fixed;
   width: max-content;
-  min-width: 200px;
+  min-width: 170px;
   max-width: calc(100vw - 16px);
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
-  border-radius: 8px;
+  border-radius: 6px;
   box-shadow: var(--menu-shadow);
-  padding: 4px;
+  padding: 3px;
   z-index: 10002;
 }
 .context-menu-divider {
   height: 1px;
   background: var(--border-color);
-  margin: 3px 6px;
+  margin: 2px 4px;
 }
 .context-menu-group-label {
-  padding: 2px 6px 1px;
-  font-size: 9px;
+  padding: 1px 4px 0;
+  font-size: 8px;
   font-weight: 700;
   color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.8px;
+  letter-spacing: 0.6px;
 }
 .context-menu-group-grid {
   display: flex;
@@ -1037,9 +1029,9 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 52px;
-  height: 40px;
-  padding: 2px;
+  width: 44px;
+  height: 32px;
+  padding: 1px;
   border-radius: 4px;
   cursor: pointer;
   color: var(--text-secondary);
@@ -1058,9 +1050,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 16px;
-  height: 16px;
-  margin-bottom: 1px;
+  width: 14px;
+  height: 14px;
+  margin-bottom: 0;
   flex-shrink: 0;
 }
 .context-menu-item-icon svg {
@@ -1072,7 +1064,7 @@
   font-size: 9px;
   font-weight: 500;
   text-align: center;
-  line-height: 1.2;
+  line-height: 1.1;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

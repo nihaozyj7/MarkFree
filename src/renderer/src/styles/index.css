@@ -57,6 +57,9 @@
   /* ===== 关闭按钮 ===== */
   --close-btn-bg: #e81123;
 
+  /* ===== 状态栏 ===== */
+  --status-bar-bg: #0f1a2e;
+
   /* ===== 滚动条 ===== */
   --scrollbar-track: #1a1a2e;
   --scrollbar-thumb: #0f3460;

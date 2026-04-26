@@ -670,6 +670,20 @@ function App() {
     addTab({ content: '', filePath: '', fileName: '未命名' })
   }, [addTab])
 
+  const handleCopyMarkdown = useCallback(() => {
+    if (editor) {
+      const md = editor.storage.markdown.getMarkdown()
+      navigator.clipboard.writeText(md)
+    }
+  }, [editor])
+
+  const handlePasteMarkdown = useCallback(async () => {
+    if (editor) {
+      const text = await navigator.clipboard.readText()
+      editor.commands.setContent(text)
+    }
+  }, [editor])
+
   const handleMenuAction = useCallback((action) => {
     switch (action) {
       case 'newFile': handleNewFile(); break
@@ -678,12 +692,14 @@ function App() {
       case 'save': handleSaveFile(); break
       case 'saveAs': handleSaveAsFile(); break
       case 'exportHtml': handleExportHtml(); break
+      case 'copyMarkdown': handleCopyMarkdown(); break
+      case 'pasteMarkdown': handlePasteMarkdown(); break
       case 'registerAssociation': handleRegisterAssociation(); break
       case 'unregisterAssociation': handleUnregisterAssociation(); break
       case 'settings': handleOpenSettings(); break
       case 'about': setShowAbout(true); break
     }
-  }, [handleNewFile, handleOpenFile, handleOpenFolder, handleSaveFile, handleSaveAsFile, handleExportHtml, handleRegisterAssociation, handleUnregisterAssociation, handleOpenSettings])
+  }, [handleNewFile, handleOpenFile, handleOpenFolder, handleSaveFile, handleSaveAsFile, handleExportHtml, handleCopyMarkdown, handlePasteMarkdown, handleRegisterAssociation, handleUnregisterAssociation, handleOpenSettings])
 
   const handleToggleSidebar = useCallback(() => {
     setSidebarVisible(v => !v)
@@ -808,20 +824,6 @@ function App() {
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [handleNewFile, handleOpenFile, handleSaveFile, handleSaveAsFile])
 
-  const handleCopyMarkdown = useCallback(() => {
-    if (editor) {
-      const md = editor.storage.markdown.getMarkdown()
-      navigator.clipboard.writeText(md)
-    }
-  }, [editor])
-
-  const handlePasteMarkdown = useCallback(async () => {
-    if (editor) {
-      const text = await navigator.clipboard.readText()
-      editor.commands.setContent(text)
-    }
-  }, [editor])
-
   const handleContextMenu = useCallback((e) => {
     e.preventDefault()
     setContextMenu({ visible: true, x: e.clientX, y: e.clientY })
@@ -897,9 +899,6 @@ function App() {
         visible={contextMenu.visible}
         position={{ x: contextMenu.x, y: contextMenu.y }}
         onClose={closeContextMenu}
-        onCopyMarkdown={handleCopyMarkdown}
-        onPasteMarkdown={handlePasteMarkdown}
-        onExportHtml={handleExportHtml}
       />
       <StatusBar
         editor={editor}
