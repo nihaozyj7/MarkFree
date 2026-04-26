@@ -61,7 +61,8 @@ function convertToAbsolutePaths(md, filePath, imageFolder) {
 
 const DEFAULT_SETTINGS = {
   imageInsertMode: 'base64',
-  imageFolder: '.assets'
+  imageFolder: '.assets',
+  spellcheck: true
 }
 
 function getSettings() {
@@ -82,6 +83,7 @@ function App() {
   const [dragOver, setDragOver] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [currentTheme, setCurrentTheme] = useState(() => localStorage.getItem('appTheme') || 'dark')
+  const [spellcheck, setSpellcheck] = useState(() => getSettings().spellcheck !== false)
   const contentRef = useRef('')
   const modifiedRef = useRef(false)
   const filePathRef = useRef('')
@@ -113,7 +115,8 @@ function App() {
     ],
     editorProps: {
       attributes: {
-        class: 'prose-editor'
+        class: 'prose-editor',
+        spellcheck: spellcheck ? 'true' : 'false'
       },
       handlePaste: (view, event) => {
         const items = event.clipboardData?.items
@@ -449,6 +452,10 @@ function App() {
     localStorage.setItem('appTheme', themeName)
   }, [])
 
+  const handleSaveSettings = useCallback((settings) => {
+    setSpellcheck(settings.spellcheck !== false)
+  }, [])
+
   useEffect(() => {
     const loadTheme = async () => {
       try {
@@ -466,6 +473,12 @@ function App() {
     }
     loadTheme()
   }, [currentTheme])
+
+  useEffect(() => {
+    if (editor?.view?.dom) {
+      editor.view.dom.setAttribute('spellcheck', spellcheck ? 'true' : 'false')
+    }
+  }, [editor, spellcheck])
 
   useEffect(() => {
     function handleKeyDown(e) {
@@ -536,7 +549,7 @@ function App() {
         )}
       </div>
       {dragOver && <div className="drag-overlay"><span>释放以打开 .md 文件</span></div>}
-      {showSettings && <SettingsDialog onClose={() => setShowSettings(false)} currentTheme={currentTheme} onThemeChange={handleThemeChange} />}
+      {showSettings && <SettingsDialog onClose={() => setShowSettings(false)} currentTheme={currentTheme} onThemeChange={handleThemeChange} onSaveSettings={handleSaveSettings} />}
     </div>
   )
 }

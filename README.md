@@ -1,114 +1,93 @@
-# Markdown WYSIWYG Editor
+# MarkdownPad
 
-一个基于 Electron + React + TipTap 的所见即所得 Markdown 编辑器。
+A WYSIWYG Markdown editor built with Electron, React, and TipTap. Write in rich text, save as Markdown.
 
-## 功能
+[中文文档](./README.zh.md)
 
-- **所见即所得编辑** — 基于 TipTap (ProseMirror) 的富文本编辑器，实时渲染 Markdown
-- **双向 Markdown** — 支持在 WYSIWYG 和 Markdown 源码之间切换
-- **工具栏** — 粗体、斜体、下划线、标题、列表、引用、代码块、表格、链接、图片等
-- **代码高亮** — 使用 lowlight 实现代码块语法高亮
-- **文件管理** — 打开、保存、另存为 Markdown 文件
-- **导出 HTML** — 将编辑内容导出为 HTML 文件
-- **图片插入** — 支持 base64 嵌入和相对路径两种模式
-- **拖拽打开** — 拖拽 .md 文件到窗口即可打开
-- **命令行打开** — 支持通过命令行直接打开文件
+## Features
 
-## 命令行用法
+- **WYSIWYG Editing** — TipTap-based rich text editor renders Markdown in real time
+- **Bidirectional Markdown** — toggle between rich text and Markdown source view; copy/paste Markdown directly
+- **Formatting Toolbar** — bold, italic, underline, strikethrough, inline code, H1–H6 headings, bullet/ordered/task lists, blockquote, code blocks, horizontal rule, tables (with add row/column), links, images
+- **Code Syntax Highlighting** — powered by lowlight with 37+ languages
+- **Task Lists** — interactive checkboxes (nested support)
+- **Tables** — resizable columns, header rows, insert row/column after
+- **Image Insertion** — three modes: Base64 (embedded), relative path (saved to a folder), absolute path; paste images from clipboard
+- **File Management** — open, save, save as Markdown files; keyboard shortcuts (Ctrl+O, Ctrl+S, Ctrl+Shift+S)
+- **Export HTML** — one-click export editor content to HTML
+- **Drag & Drop** — drag .md / .markdown files onto the window to open
+- **Command-line Opening** — `MarkdownPad.exe example.md`
+- **File Association** — register/unregister `.md` file association from the menu (Windows only)
+- **Custom Title Bar** — frameless window with custom title bar and menu
+- **Theme System** — dark (default) and light themes built in; add custom CSS themes by placing `.css` files in the themes folder
+- **Spellcheck Toggle** — enable/disable browser spellcheck in settings
+- **Single Instance** — prevents multiple instances, forwards opened files to the running instance
 
-安装后，可以直接通过命令行打开 Markdown 文件：
+## Install
 
-```bash
-Markdown\ WYSIWYG.exe example.md
-Markdown\ WYSIWYG.exe document.markdown
-```
+Download the latest installer from the [Releases](https://github.com/anomalyco/markdownpad/releases) page.
 
-支持同时传入多个文件（仅打开第一个匹配的 .md 文件）。
+### Prerequisites
 
-### 文件关联
+- Windows x64 (NSIS installer)
+- Node.js >= 18 (for development)
 
-在应用菜单中点击「注册 .md 文件关联」，即可让 `.md` 文件默认使用本编辑器打开。双击 `.md` 文件即可自动打开编辑。
-
-## 开发
-
-### 环境要求
-
-- Node.js >= 18
-- npm
-
-### 安装依赖
+## Development
 
 ```bash
+# Install dependencies
 npm install
-```
 
-### 生成图标
-
-```bash
+# Generate app icon
 npm run generate-icon
-```
 
-### 启动开发服务器
-
-```bash
+# Start dev server with HMR
 npm run dev
-```
 
-### 构建生产版本
-
-```bash
+# Production build
 npm run build
-```
 
-### 打包为 Windows 安装程序
-
-```bash
+# Package into Windows installer
 npm run pack
 ```
 
-打包后的安装程序位于 `release/` 目录。
+The packaged installer will be in the `release/` directory.
 
-## 技术栈
-
-| 技术 | 用途 |
-|---|---|
-| Electron 33 | 桌面应用框架 |
-| React 18 | UI 框架 |
-| Vite 5 | 构建工具 |
-| TipTap 2 | 富文本编辑器引擎 |
-| ProseMirror | 编辑器内核 |
-| tiptap-markdown | Markdown ↔ WYSIWYG 互转 |
-| lowlight | 代码语法高亮 |
-
-## 项目结构
+## Project Structure
 
 ```
 src/
-  main/index.js          — Electron 主进程
-  preload/index.js       — 预加载脚本 (contextBridge)
+  main/index.js              — Electron main process (window, IPC, themes, file assoc)
+  preload/index.js           — contextBridge (electronAPI for renderer)
   renderer/
-    index.html           — 入口 HTML
+    index.html               — entry HTML
     src/
-      main.jsx           — React 入口
-      App.jsx            — 编辑器主体
+      main.jsx               — React mount
+      App.jsx                — editor setup, all extensions, Markdown preview
       components/
-        Toolbar.jsx      — 格式工具栏
-        TitleBar.jsx     — 自定义标题栏
-        SettingsDialog.jsx — 设置对话框
+        TitleBar.jsx         — custom frameless title bar with menu
+        Toolbar.jsx          — formatting toolbar
+        SettingsDialog.jsx   — settings (theme, spellcheck, image mode)
       styles/
-        index.css        — 全局样式
-        editor.css       — 编辑器样式
+        index.css            — reset + base styles
+        editor.css           — editor, toolbar, preview, scrollbar styles
 ```
 
-## 构建说明
+## Tech Stack
 
-```bash
-# 完整打包流程
-npm run pack
-```
+| Tech | Purpose |
+|---|---|
+| Electron 33 | Desktop framework |
+| React 18 | UI |
+| Vite 5 (electron-vite) | Build tool |
+| TipTap 2 (ProseMirror) | Rich text engine |
+| tiptap-markdown | Markdown ↔ WYSIWYG conversion |
+| lowlight | Code syntax highlighting |
 
-打包产物在 `release/` 目录，包含 NSIS 安装程序（.exe）。
-
-## 许可
+## License
 
 MIT
+
+---
+
+*This project was entirely generated using [opencode](https://opencode.ai) with DeepSeek V4 Flash model.*

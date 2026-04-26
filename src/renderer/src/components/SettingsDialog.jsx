@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react'
 
 const DEFAULT_SETTINGS = {
   imageInsertMode: 'base64',
-  imageFolder: '.assets'
+  imageFolder: '.assets',
+  spellcheck: true
 }
 
-function SettingsDialog({ onClose, currentTheme, onThemeChange }) {
+function SettingsDialog({ onClose, currentTheme, onThemeChange, onSaveSettings }) {
   const [settings, setSettings] = useState(() => {
     try {
       const saved = localStorage.getItem('editorSettings')
@@ -22,6 +23,7 @@ function SettingsDialog({ onClose, currentTheme, onThemeChange }) {
 
   const handleSave = () => {
     localStorage.setItem('editorSettings', JSON.stringify(settings))
+    onSaveSettings?.(settings)
     onClose()
   }
 
@@ -61,6 +63,14 @@ function SettingsDialog({ onClose, currentTheme, onThemeChange }) {
                 打开主题文件夹
               </button>
             </div>
+          </div>
+          <div style={{ height: 1, background: 'var(--border-color)', marginBottom: 24 }} />
+          <div className="settings-section">
+            <h3 className="settings-section-title">编辑器</h3>
+            <label className="settings-radio">
+              <input type="checkbox" checked={settings.spellcheck !== false} onChange={e => setSettings({...settings, spellcheck: e.target.checked})} />
+              <span>语法检查</span>
+            </label>
           </div>
           <div style={{ height: 1, background: 'var(--border-color)', marginBottom: 24 }} />
           <div className="settings-section">
