@@ -412,6 +412,16 @@ function App() {
       modified: false,
       savedContent: processedContent
     }
+
+    const onlyTab = tabsRef.current.length === 1 ? tabsRef.current[0] : null
+    if (onlyTab && !onlyTab.filePath && !onlyTab.content && !onlyTab.modified) {
+      tabsRef.current = [newTab]
+      setTabs([newTab])
+      activeTabIdRef.current = id
+      setActiveTabId(id)
+      return id
+    }
+
     tabsRef.current = [...tabsRef.current, newTab]
     setTabs([...tabsRef.current])
     activeTabIdRef.current = id
