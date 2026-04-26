@@ -1110,12 +1110,13 @@
 
 .context-menu {
   position: fixed;
-  min-width: 200px;
+  width: 340px;
+  max-width: calc(100vw - 16px);
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
-  border-radius: 8px;
+  border-radius: 10px;
   box-shadow: var(--menu-shadow);
-  padding: 4px;
+  padding: 6px;
   z-index: 10002;
 }
 
@@ -1126,7 +1127,7 @@
 }
 
 .context-menu-group-label {
-  padding: 4px 12px 2px;
+  padding: 4px 8px 4px;
   font-size: 10px;
   font-weight: 700;
   color: var(--text-muted);
@@ -1134,35 +1135,60 @@
   letter-spacing: 0.8px;
 }
 
+.context-menu-group-grid {
+  display: flex;
+  flex-wrap: wrap;
+  padding: 2px;
+}
+
 .context-menu-item {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  padding: 6px 12px;
-  border-radius: 4px;
+  justify-content: center;
+  width: 62px;
+  height: 52px;
+  padding: 4px;
+  border-radius: 6px;
   cursor: pointer;
-  font-size: 13px;
-  color: var(--text-primary);
-  transition: background 0.1s ease;
+  color: var(--text-secondary);
+  transition: background 0.1s ease, color 0.1s ease;
+  flex-shrink: 0;
 }
 
 .context-menu-item:hover {
   background: var(--hover-bg);
+  color: var(--text-primary);
 }
 
 .context-menu-item.active {
+  background: var(--hover-bg-accent);
   color: var(--color-accent);
 }
 
-.context-menu-item-label {
-  flex: 1;
+.context-menu-item-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  margin-bottom: 2px;
+  flex-shrink: 0;
 }
 
-.context-menu-item-shortcut {
-  color: var(--text-muted);
-  font-size: 11px;
-  margin-left: 24px;
-  flex-shrink: 0;
+.context-menu-item-icon svg {
+  display: block;
+}
+
+.context-menu-item-label {
+  font-size: 10px;
+  font-weight: 500;
+  text-align: center;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
 }
 
 /* ===== Settings Shortcut Keys ===== */
