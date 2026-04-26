@@ -102,10 +102,19 @@ function getSettings() {
 }
 
 function App() {
-  const [tabs, setTabs] = useState([])
-  const [activeTabId, setActiveTabId] = useState(null)
-  const tabsRef = useRef([])
-  const activeTabIdRef = useRef(null)
+  const defaultTabId = Date.now().toString(36) + Math.random().toString(36).slice(2, 8)
+
+  const [tabs, setTabs] = useState(() => [{
+    id: defaultTabId,
+    fileName: '未命名',
+    filePath: '',
+    content: '',
+    modified: false,
+    savedContent: ''
+  }])
+  const [activeTabId, setActiveTabId] = useState(defaultTabId)
+  const tabsRef = useRef(tabs)
+  const activeTabIdRef = useRef(activeTabId)
 
   const [showPreview, setShowPreview] = useState(false)
   const [markdownContent, setMarkdownContent] = useState('')
@@ -287,7 +296,7 @@ function App() {
     setMarkdownContent(md)
     editor.commands.setContent(md || '')
     editor.commands.focus()
-  }, [activeTabId]) // eslint-disable-line
+  }, [activeTabId, editor])
 
   const switchTab = useCallback((tabId) => {
     if (tabId === activeTabIdRef.current) return

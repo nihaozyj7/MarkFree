@@ -27,7 +27,7 @@
 
 .title-bar-spacer {
   flex: 1;
-  min-width: 80px;
+  min-width: 0;
   height: 100%;
 }
 
@@ -100,7 +100,7 @@
   height: 100%;
   overflow-x: auto;
   overflow-y: hidden;
-  flex: 1;
+  flex: 0 1 auto;
   min-width: 0;
   -webkit-app-region: no-drag;
 }
