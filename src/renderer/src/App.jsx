@@ -32,6 +32,7 @@ import TitleBar from './components/TitleBar'
 import StatusBar from './components/StatusBar'
 import SettingsDialog from './components/SettingsDialog'
 import Sidebar from './components/Sidebar'
+import AboutDialog from './components/AboutDialog'
 import ContextMenu from './components/ContextMenu'
 import './styles/editor.css'
 
@@ -158,6 +159,7 @@ function App() {
   const [folderFiles, setFolderFiles] = useState([])
   const [currentFolderPath, setCurrentFolderPath] = useState('')
   const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0 })
+  const [showAbout, setShowAbout] = useState(false)
   const contentRef = useRef('')
   const modifiedRef = useRef(false)
   const filePathRef = useRef('')
@@ -193,9 +195,7 @@ function App() {
         spellcheck: spellcheck ? 'true' : 'false'
       },
       handleKeyDown: (view, event) => {
-        if ((event.ctrlKey || event.metaKey) && !event.shiftKey && !event.altKey && event.key.toLowerCase() === 'b') {
-          event.preventDefault()
-          setSidebarVisible(v => !v)
+        if (event.ctrlKey || event.metaKey) {
           return true
         }
         return false
@@ -663,6 +663,7 @@ function App() {
       case 'registerAssociation': handleRegisterAssociation(); break
       case 'unregisterAssociation': handleUnregisterAssociation(); break
       case 'settings': handleOpenSettings(); break
+      case 'about': setShowAbout(true); break
     }
   }, [handleNewFile, handleOpenFile, handleOpenFolder, handleSaveFile, handleSaveAsFile, handleExportHtml, handleRegisterAssociation, handleUnregisterAssociation, handleOpenSettings])
 
@@ -863,6 +864,7 @@ function App() {
       </div>
       {dragOver && <div className="drag-overlay"><span>释放以打开 .md 文件</span></div>}
       {showSettings && <SettingsDialog onClose={() => setShowSettings(false)} currentTheme={currentTheme} onThemeChange={handleThemeChange} onSaveSettings={handleSaveSettings} hwAccel={hwAccel} onHwAccelChange={handleHwAccelChange} />}
+      {showAbout && <AboutDialog onClose={() => setShowAbout(false)} />}
       <ContextMenu
         editor={editor}
         visible={contextMenu.visible}
