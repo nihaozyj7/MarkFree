@@ -12,14 +12,40 @@ import TableRow from '@tiptap/extension-table-row'
 import TableCell from '@tiptap/extension-table-cell'
 import TableHeader from '@tiptap/extension-table-header'
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
-import { common, createLowlight } from 'lowlight'
+import { createLowlight } from 'lowlight'
+import javascript from 'highlight.js/lib/languages/javascript'
+import typescript from 'highlight.js/lib/languages/typescript'
+import python from 'highlight.js/lib/languages/python'
+import xml from 'highlight.js/lib/languages/xml'
+import css from 'highlight.js/lib/languages/css'
+import json from 'highlight.js/lib/languages/json'
+import bash from 'highlight.js/lib/languages/bash'
+import markdown from 'highlight.js/lib/languages/markdown'
+import sql from 'highlight.js/lib/languages/sql'
+import yaml from 'highlight.js/lib/languages/yaml'
+import rust from 'highlight.js/lib/languages/rust'
+import go from 'highlight.js/lib/languages/go'
+import java from 'highlight.js/lib/languages/java'
 import { Markdown } from 'tiptap-markdown'
 import Toolbar from './components/Toolbar'
 import TitleBar from './components/TitleBar'
 import SettingsDialog from './components/SettingsDialog'
 import './styles/editor.css'
 
-const lowlight = createLowlight(common)
+const lowlight = createLowlight()
+lowlight.register('javascript', javascript)
+lowlight.register('typescript', typescript)
+lowlight.register('python', python)
+lowlight.register('xml', xml)
+lowlight.register('css', css)
+lowlight.register('json', json)
+lowlight.register('bash', bash)
+lowlight.register('markdown', markdown)
+lowlight.register('sql', sql)
+lowlight.register('yaml', yaml)
+lowlight.register('rust', rust)
+lowlight.register('go', go)
+lowlight.register('java', java)
 
 function dirname(path) {
   const parts = path.replace(/\\/g, '/').replace(/\/+$/, '').split('/')

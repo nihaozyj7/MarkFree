@@ -294,6 +294,8 @@ ipcMain.on('window:maximize', () => {
 
 ipcMain.on('window:close', () => mainWindow?.close())
 
+app.disableHardwareAcceleration()
+
 app.whenReady().then(() => {
   writeDefaultThemes()
   createWindow()

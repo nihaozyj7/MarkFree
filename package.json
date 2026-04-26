@@ -15,6 +15,7 @@
   "build": {
     "appId": "com.markdownpad.app",
     "productName": "MarkdownPad",
+    "compression": "maximum",
     "directories": {
       "output": "dist"
     },

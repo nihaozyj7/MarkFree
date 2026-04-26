@@ -16,55 +16,57 @@ function SettingsDialog({ onClose, currentTheme, onThemeChange, onSaveSettings }
     }
   })
   const [themes, setThemes] = useState([])
+  const [closing, setClosing] = useState(false)
+  const [open, setOpen] = useState(false)
 
   useEffect(() => {
+    requestAnimationFrame(() => setOpen(true))
     window.electronAPI.getThemes().then(setThemes).catch(() => {})
   }, [])
+
+  const startClose = () => {
+    setClosing(true)
+    setTimeout(() => onClose(), 200)
+  }
 
   const handleSave = () => {
     localStorage.setItem('editorSettings', JSON.stringify(settings))
     onSaveSettings?.(settings)
-    onClose()
+    startClose()
   }
 
   return (
-    <div className="settings-overlay" onClick={onClose}>
-      <div className="settings-dialog" onClick={e => e.stopPropagation()}>
+    <div className={`settings-overlay${open ? ' open' : ''}${closing ? ' closing' : ''}`} onClick={startClose}>
+      <div className={`settings-dialog${open ? ' open' : ''}${closing ? ' closing' : ''}`} onClick={e => e.stopPropagation()}>
         <div className="settings-header">
           <span>设置</span>
-          <button className="settings-close-btn" onClick={onClose}>✕</button>
+          <button className="settings-close-btn" onClick={startClose}>✕</button>
         </div>
         <div className="settings-body">
           <div className="settings-section">
             <h3 className="settings-section-title">主题</h3>
             {themes.length === 0 ? (
-              <div style={{ color: 'var(--text-secondary)', fontSize: 13 }}>加载中...</div>
+              <div className="settings-loading">加载中...</div>
             ) : (
-              themes.map(t => (
-                <label key={t.name} className="settings-radio">
-                  <input
-                    type="radio"
-                    name="theme"
-                    value={t.name}
-                    checked={currentTheme === t.name}
-                    onChange={() => onThemeChange(t.name)}
-                  />
-                  <span>{t.label}</span>
-                  {t.builtin && <span style={{ color: 'var(--text-muted)', fontSize: 11, marginLeft: 6 }}>(默认)</span>}
-                </label>
-              ))
-            )}
-            <div style={{ marginTop: 8 }}>
-              <button
-                className="settings-btn"
-                style={{ fontSize: 12, padding: '4px 12px', background: 'transparent', border: '1px solid var(--border-color)', borderRadius: 4, color: 'var(--text-secondary)', cursor: 'pointer' }}
-                onClick={() => window.electronAPI.openThemeFolder()}
+              <select
+                className="settings-select"
+                value={currentTheme}
+                onChange={e => onThemeChange(e.target.value)}
               >
+                {themes.map(t => (
+                  <option key={t.name} value={t.name}>
+                    {t.label}{t.builtin ? '（默认）' : ''}
+                  </option>
+                ))}
+              </select>
+            )}
+            <div className="settings-section-actions">
+              <button className="settings-btn settings-btn-ghost" onClick={() => window.electronAPI.openThemeFolder()}>
                 打开主题文件夹
               </button>
             </div>
           </div>
-          <div style={{ height: 1, background: 'var(--border-color)', marginBottom: 24 }} />
+          <div className="settings-divider" />
           <div className="settings-section">
             <h3 className="settings-section-title">编辑器</h3>
             <label className="settings-radio">
@@ -72,7 +74,7 @@ function SettingsDialog({ onClose, currentTheme, onThemeChange, onSaveSettings }
               <span>语法检查</span>
             </label>
           </div>
-          <div style={{ height: 1, background: 'var(--border-color)', marginBottom: 24 }} />
+          <div className="settings-divider" />
           <div className="settings-section">
             <h3 className="settings-section-title">图片插入位置</h3>
             <label className="settings-radio">
