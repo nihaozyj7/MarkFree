@@ -86,6 +86,7 @@ function App() {
   const modifiedRef = useRef(false)
   const filePathRef = useRef('')
   const saveAsFileRef = useRef()
+  const editorRef = useRef(null)
 
   const editor = useEditor({
     extensions: [
@@ -113,10 +114,83 @@ function App() {
     editorProps: {
       attributes: {
         class: 'prose-editor'
+      },
+      handlePaste: (view, event) => {
+        const items = event.clipboardData?.items
+        if (!items) return false
+
+        for (let i = 0; i < items.length; i++) {
+          const item = items[i]
+          if (!item.type.startsWith('image/')) continue
+
+          event.preventDefault()
+          const file = item.getAsFile()
+          if (!file) return true
+
+          const reader = new FileReader()
+          reader.onload = async (e) => {
+            const result = e.target.result
+            const base64Data = result.split(',')[1]
+
+            const MIME_MAP_EXT = {
+              'image/png': '.png', 'image/jpeg': '.jpg',
+              'image/gif': '.gif', 'image/webp': '.webp',
+              'image/bmp': '.bmp', 'image/svg+xml': '.svg'
+            }
+            const ext = MIME_MAP_EXT[file.type] || '.png'
+
+            const settings = getSettings()
+            const { imageInsertMode, imageFolder } = settings
+
+            const ed = editorRef.current
+            if (!ed) return
+
+            if (imageInsertMode === 'base64') {
+              const src = `data:${file.type};base64,${base64Data}`
+              ed.chain().focus().setImage({ src }).run()
+              return
+            }
+
+            if (imageInsertMode === 'relative') {
+              const fp = filePathRef.current
+              if (!fp) {
+                alert('请先保存文件再插入相对路径图片')
+                return
+              }
+              const saveResult = await window.electronAPI.saveImageToDisk({
+                base64Data, ext, folderPath: imageFolder, fileDir: dirname(fp)
+              })
+              if (!saveResult || saveResult.error) return
+
+              const platform = window.electronAPI.platform
+              const prefix = platform === 'win32' ? 'file:///' : 'file://'
+              const src = prefix + saveResult.absolutePath.replace(/\\/g, '/')
+              ed.chain().focus().setImage({ src }).run()
+              return
+            }
+
+            const fp = filePathRef.current
+            const saveResult = await window.electronAPI.saveImageToDisk({
+              base64Data, ext, folderPath: imageFolder, fileDir: fp ? dirname(fp) : ''
+            })
+            if (!saveResult || saveResult.error) return
+            const platform = window.electronAPI.platform
+            const prefix = platform === 'win32' ? 'file:///' : 'file://'
+            const src = prefix + saveResult.absolutePath.replace(/\\/g, '/')
+            ed.chain().focus().setImage({ src }).run()
+          }
+          reader.readAsDataURL(file)
+          return true
+        }
+        return false
       }
     },
     onUpdate: ({ editor }) => {
-      const md = editor.storage.markdown.getMarkdown()
+      let md = editor.storage.markdown.getMarkdown()
+      const settings = getSettings()
+      if (settings.imageInsertMode === 'relative' && filePathRef.current) {
+        md = convertToRelativePaths(md, filePathRef.current, settings.imageFolder)
+      }
       setMarkdownContent(md)
       contentRef.current = md
       if (!modifiedRef.current) {
@@ -125,6 +199,8 @@ function App() {
       }
     }
   })
+
+  editorRef.current = editor
 
   const loadContent = useCallback(({ content, filePath: fp, fileName: fn }) => {
     let processedContent = content
@@ -146,7 +222,7 @@ function App() {
     }
     modifiedRef.current = false
     setModified(false)
-    window.electronAPI.setTitle(`${fn} - Markdown WYSIWYG Editor`)
+    window.electronAPI.setTitle(`${fn}  - MarkdownPad`)
   }, [editor])
 
   useEffect(() => {
@@ -246,7 +322,7 @@ function App() {
         setFilePath(result.filePath)
         modifiedRef.current = false
         setModified(false)
-        window.electronAPI.setTitle(`${result.fileName} - Markdown WYSIWYG Editor`)
+        window.electronAPI.setTitle(`${result.fileName}  - MarkdownPad`)
       }
     } catch (err) {
       alert('保存失败: ' + (err.message || err))
@@ -269,7 +345,7 @@ function App() {
         setFilePath(result.filePath)
         modifiedRef.current = false
         setModified(false)
-        window.electronAPI.setTitle(`${result.fileName} - Markdown WYSIWYG Editor`)
+        window.electronAPI.setTitle(`${result.fileName}  - MarkdownPad`)
       }
     } catch (err) {
       alert('另存失败: ' + (err.message || err))

@@ -1,5 +1,5 @@
 {
-  "name": "markdown-wysiwyg",
+  "name": "markdownpad",
   "version": "1.0.0",
   "private": true,
   "description": "A WYSIWYG Markdown editor built with Electron, React, and TipTap.",
@@ -13,8 +13,8 @@
     "pack:dir": "npm run generate-icon && npm run build && electron-builder --win --x64 --dir"
   },
   "build": {
-    "appId": "com.markdown.wysiwyg",
-    "productName": "Markdown WYSIWYG",
+    "appId": "com.markdownpad.app",
+    "productName": "MarkdownPad",
     "directories": {
       "output": "dist"
     },
@@ -42,7 +42,7 @@
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
-      "shortcutName": "Markdown WYSIWYG"
+      "shortcutName": "MarkdownPad"
     },
     "fileAssociations": [
       {

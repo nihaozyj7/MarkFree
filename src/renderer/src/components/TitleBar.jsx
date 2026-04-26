@@ -53,7 +53,7 @@ function TitleBar({ fileName, onMenuAction }) {
           <polyline points="10 9 9 9 8 9" />
         </svg>
         <div className="title-bar-text" onClick={handleTitleClick}>
-          <span>{fileName || 'Markdown WYSIWYG Editor'}</span>
+          <span>{fileName || 'MarkdownPad'}</span>
           <svg className="title-bar-arrow" viewBox="0 0 24 24" width="12" height="12" fill="currentColor">
             <polygon points="6,9 12,15 18,9" />
           </svg>
