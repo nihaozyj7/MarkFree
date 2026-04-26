@@ -15,6 +15,8 @@ document.addEventListener('drop', (e) => {
 contextBridge.exposeInMainWorld('electronAPI', {
   platform: process.platform,
   openFile: () => ipcRenderer.invoke('dialog:openFile'),
+  openMultipleFiles: () => ipcRenderer.invoke('dialog:openMultipleFiles'),
+  openFolder: () => ipcRenderer.invoke('dialog:openFolder'),
   saveFile: (content, filePath) => ipcRenderer.invoke('dialog:saveFile', { content, filePath }),
   saveAsFile: (content) => ipcRenderer.invoke('dialog:saveAsFile', content),
   openFileByPath: (filePath) => ipcRenderer.invoke('file:openByPath', filePath),

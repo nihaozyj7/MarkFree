@@ -29,6 +29,7 @@ import java from 'highlight.js/lib/languages/java'
 import { Markdown } from 'tiptap-markdown'
 import Toolbar from './components/Toolbar'
 import TitleBar from './components/TitleBar'
+import StatusBar from './components/StatusBar'
 import SettingsDialog from './components/SettingsDialog'
 import './styles/editor.css'
 
@@ -101,6 +102,11 @@ function getSettings() {
 }
 
 function App() {
+  const [tabs, setTabs] = useState([])
+  const [activeTabId, setActiveTabId] = useState(null)
+  const tabsRef = useRef([])
+  const activeTabIdRef = useRef(null)
+
   const [showPreview, setShowPreview] = useState(false)
   const [markdownContent, setMarkdownContent] = useState('')
   const [fileName, setFileName] = useState('')
@@ -215,44 +221,144 @@ function App() {
       }
     },
     onUpdate: ({ editor }) => {
+      const tabId = activeTabIdRef.current
+      if (!tabId) return
+
       let md = editor.storage.markdown.getMarkdown()
       const settings = getSettings()
-      if (settings.imageInsertMode === 'relative' && filePathRef.current) {
-        md = convertToRelativePaths(md, filePathRef.current, settings.imageFolder)
+      const fp = filePathRef.current
+      if (settings.imageInsertMode === 'relative' && fp) {
+        md = convertToRelativePaths(md, fp, settings.imageFolder)
       }
       setMarkdownContent(md)
       contentRef.current = md
-      if (!modifiedRef.current) {
-        modifiedRef.current = true
-        setModified(true)
-      }
+
+      const currentTab = tabsRef.current.find(t => t.id === tabId)
+      if (!currentTab) return
+
+      const isModified = md !== currentTab.savedContent
+      tabsRef.current = tabsRef.current.map(t =>
+        t.id === tabId ? { ...t, content: md, modified: isModified } : t
+      )
+      setTabs([...tabsRef.current])
+
+      modifiedRef.current = isModified
+      setModified(isModified)
     }
   })
 
   editorRef.current = editor
 
-  const loadContent = useCallback(({ content, filePath: fp, fileName: fn }) => {
-    let processedContent = content
+  const syncDisplayFromTab = useCallback(() => {
+    const tab = tabsRef.current.find(t => t.id === activeTabIdRef.current)
+    if (tab) {
+      setFileName(tab.fileName)
+      setFilePath(tab.filePath)
+      filePathRef.current = tab.filePath
+      modifiedRef.current = tab.modified
+      setModified(tab.modified)
+      const prefix = tab.modified ? '* ' : ''
+      window.electronAPI.setTitle(`${prefix}${tab.fileName}  - MarkdownPad`)
+    } else {
+      setFileName('')
+      setFilePath('')
+      filePathRef.current = ''
+      modifiedRef.current = false
+      setModified(false)
+      window.electronAPI.setTitle('MarkdownPad')
+    }
+  }, [])
+
+  useEffect(() => {
+    syncDisplayFromTab()
+  }, [activeTabId, syncDisplayFromTab])
+
+  useEffect(() => {
+    if (!editor) return
+    const tab = tabsRef.current.find(t => t.id === activeTabIdRef.current)
+    if (!tab) {
+      contentRef.current = ''
+      setMarkdownContent('')
+      editor.commands.setContent('')
+      return
+    }
+    const md = tab.content || ''
+    contentRef.current = md
+    setMarkdownContent(md)
+    editor.commands.setContent(md || '')
+    editor.commands.focus()
+  }, [activeTabId]) // eslint-disable-line
+
+  const switchTab = useCallback((tabId) => {
+    if (tabId === activeTabIdRef.current) return
+
+    const prevId = activeTabIdRef.current
+    if (prevId && editor) {
+      const currentMd = editor.storage.markdown.getMarkdown()
+      tabsRef.current = tabsRef.current.map(t =>
+        t.id === prevId ? { ...t, content: currentMd } : t
+      )
+      setTabs([...tabsRef.current])
+    }
+
+    activeTabIdRef.current = tabId
+    setActiveTabId(tabId)
+  }, [editor])
+
+  const closeTab = useCallback((tabId) => {
+    const idx = tabsRef.current.findIndex(t => t.id === tabId)
+    if (idx === -1) return
+
+    const newTabs = tabsRef.current.filter(t => t.id !== tabId)
+    tabsRef.current = newTabs
+    setTabs(newTabs)
+
+    if (tabId === activeTabIdRef.current) {
+      if (newTabs.length === 0) {
+        activeTabIdRef.current = null
+        setActiveTabId(null)
+      } else {
+        const nextIdx = Math.min(idx, newTabs.length - 1)
+        activeTabIdRef.current = newTabs[nextIdx].id
+        setActiveTabId(newTabs[nextIdx].id)
+      }
+    }
+  }, [])
+
+  const addTab = useCallback((fileData) => {
+    if (!fileData) return null
+
+    const { content, filePath: fp, fileName: fn } = fileData
+
+    if (fp) {
+      const existing = tabsRef.current.find(t => t.filePath === fp)
+      if (existing) {
+        switchTab(existing.id)
+        return existing.id
+      }
+    }
+
+    let processedContent = content || ''
     const settings = getSettings()
     if (settings.imageInsertMode === 'relative' && fp) {
-      processedContent = convertToAbsolutePaths(content, fp, settings.imageFolder)
+      processedContent = convertToAbsolutePaths(processedContent, fp, settings.imageFolder)
     }
-    setFileName(fn)
-    setFilePath(fp)
-    filePathRef.current = fp
-    contentRef.current = processedContent
-    if (editor) {
-      try {
-        editor.commands.setContent(processedContent)
-      } catch (err) {
-        console.error('设置编辑器内容失败:', err)
-      }
-      editor.commands.focus()
+
+    const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 8)
+    const newTab = {
+      id,
+      fileName: fn || '未命名',
+      filePath: fp || '',
+      content: processedContent,
+      modified: false,
+      savedContent: processedContent
     }
-    modifiedRef.current = false
-    setModified(false)
-    window.electronAPI.setTitle(`${fn}  - MarkdownPad`)
-  }, [editor])
+    tabsRef.current = [...tabsRef.current, newTab]
+    setTabs([...tabsRef.current])
+    activeTabIdRef.current = id
+    setActiveTabId(id)
+    return id
+  }, [switchTab])
 
   useEffect(() => {
     if (editor) {
@@ -264,11 +370,13 @@ function App() {
 
   useEffect(() => {
     if (!editor) return
-    window.electronAPI.onFileOpened(loadContent)
+    window.electronAPI.onFileOpened((data) => {
+      addTab(data)
+    })
     return () => {
       window.electronAPI.removeFileOpenedListener()
     }
-  }, [editor, loadContent])
+  }, [editor, addTab])
 
   useEffect(() => {
     if (!editor) return
@@ -304,11 +412,11 @@ function App() {
       const file = e.dataTransfer.files[0]
       if (!file || !/\.md$|\.markdown$/i.test(file.name)) return
 
-      const filePath = window.electronAPI.getPendingDropPath() || file.path || ''
+      const droppedPath = window.electronAPI.getPendingDropPath() || file.path || ''
 
       const reader = new FileReader()
       reader.onload = (event) => {
-        loadContent({ content: event.target.result, filePath, fileName: file.name })
+        addTab({ content: event.target.result, filePath: droppedPath, fileName: file.name })
       }
       reader.readAsText(file)
     }
@@ -324,34 +432,52 @@ function App() {
       document.removeEventListener('dragleave', handleDragLeave)
       document.removeEventListener('drop', handleDrop)
     }
-  }, [editor, loadContent])
+  }, [editor, addTab])
 
   const handleOpenFile = useCallback(async () => {
     if (!editor) return
     const result = await window.electronAPI.openFile()
-    if (result) loadContent(result)
-  }, [editor, loadContent])
+    if (result) addTab(result)
+  }, [editor, addTab])
+
+  const handleOpenMultipleFiles = useCallback(async () => {
+    const results = await window.electronAPI.openMultipleFiles()
+    if (results && results.length > 0) {
+      for (const r of results) addTab(r)
+    }
+  }, [addTab])
+
+  const handleOpenFolder = useCallback(async () => {
+    const results = await window.electronAPI.openFolder()
+    if (results && results.length > 0) {
+      for (const r of results) addTab(r)
+    }
+  }, [addTab])
 
   const handleSaveFile = useCallback(async () => {
     if (!editor) return
+    const tabId = activeTabIdRef.current
+    const tab = tabsRef.current.find(t => t.id === tabId)
+    if (!tab) return
+
     try {
-      const currentPath = filePathRef.current
+      const currentPath = tab.filePath
       if (!currentPath) {
         return saveAsFileRef.current?.()
       }
-      let content = contentRef.current
+      let md = contentRef.current
       const settings = getSettings()
       if (settings.imageInsertMode === 'relative' && currentPath) {
-        content = convertToRelativePaths(content, currentPath, settings.imageFolder)
+        md = convertToRelativePaths(md, currentPath, settings.imageFolder)
       }
-      const result = await window.electronAPI.saveFile(content, currentPath)
+      const result = await window.electronAPI.saveFile(md, currentPath)
       if (result) {
-        filePathRef.current = result.filePath
-        setFileName(result.fileName)
-        setFilePath(result.filePath)
+        tabsRef.current = tabsRef.current.map(t =>
+          t.id === tabId ? { ...t, filePath: result.filePath, fileName: result.fileName, modified: false, savedContent: t.content } : t
+        )
+        setTabs([...tabsRef.current])
         modifiedRef.current = false
         setModified(false)
-        window.electronAPI.setTitle(`${result.fileName}  - MarkdownPad`)
       }
     } catch (err) {
       alert('保存失败: ' + (err.message || err))
@@ -360,21 +486,23 @@ function App() {
 
   const handleSaveAsFile = useCallback(async () => {
     if (!editor) return
+    const tabId = activeTabIdRef.current
+    const tab = tabsRef.current.find(t => t.id === tabId)
+    if (!tab) return
+
     try {
-      const currentPath = filePathRef.current
-      let content = contentRef.current
+      let md = contentRef.current
+      const currentPath = tab.filePath
       const settings = getSettings()
       if (settings.imageInsertMode === 'relative' && currentPath) {
-        content = convertToRelativePaths(content, currentPath, settings.imageFolder)
+        md = convertToRelativePaths(md, currentPath, settings.imageFolder)
       }
-      const result = await window.electronAPI.saveAsFile(content)
+      const result = await window.electronAPI.saveAsFile(md)
       if (result) {
-        filePathRef.current = result.filePath
-        setFileName(result.fileName)
-        setFilePath(result.filePath)
-        modifiedRef.current = false
-        setModified(false)
-        window.electronAPI.setTitle(`${result.fileName}  - MarkdownPad`)
+        tabsRef.current = tabsRef.current.map(t =>
+          t.id === tabId ? { ...t, filePath: result.filePath, fileName: result.fileName, modified: false, savedContent: t.content } : t
+        )
+        setTabs([...tabsRef.current])
       }
     } catch (err) {
       alert('另存失败: ' + (err.message || err))
@@ -464,6 +592,7 @@ function App() {
   const handleMenuAction = useCallback((action) => {
     switch (action) {
       case 'open': handleOpenFile(); break
+      case 'openFolder': handleOpenFolder(); break
       case 'save': handleSaveFile(); break
       case 'saveAs': handleSaveAsFile(); break
       case 'exportHtml': handleExportHtml(); break
@@ -471,7 +600,7 @@ function App() {
       case 'unregisterAssociation': handleUnregisterAssociation(); break
       case 'settings': handleOpenSettings(); break
     }
-  }, [handleOpenFile, handleSaveFile, handleSaveAsFile, handleExportHtml, handleRegisterAssociation, handleUnregisterAssociation, handleOpenSettings])
+  }, [handleOpenFile, handleOpenFolder, handleSaveFile, handleSaveAsFile, handleExportHtml, handleRegisterAssociation, handleUnregisterAssociation, handleOpenSettings])
 
   const handleThemeChange = useCallback((themeName) => {
     setCurrentTheme(themeName)
@@ -538,11 +667,17 @@ function App() {
 
   if (!editor) return null
 
-  const displayName = modified && fileName ? `* ${fileName}` : fileName
+  const activeTab = tabs.find(t => t.id === activeTabId)
 
   return (
     <div className={`app-container${dragOver ? ' drag-over' : ''}`}>
-      <TitleBar fileName={displayName} onMenuAction={handleMenuAction} />
+      <TitleBar
+        tabs={tabs}
+        activeTabId={activeTabId}
+        onSwitchTab={switchTab}
+        onCloseTab={closeTab}
+        onMenuAction={handleMenuAction}
+      />
       <Toolbar
         editor={editor}
         showPreview={showPreview}
@@ -576,6 +711,7 @@ function App() {
       </div>
       {dragOver && <div className="drag-overlay"><span>释放以打开 .md 文件</span></div>}
       {showSettings && <SettingsDialog onClose={() => setShowSettings(false)} currentTheme={currentTheme} onThemeChange={handleThemeChange} onSaveSettings={handleSaveSettings} />}
+      <StatusBar filePath={filePath} modified={modified} tabs={tabs} />
     </div>
   )
 }

@@ -160,6 +160,33 @@ ipcMain.handle('dialog:openFile', async () => {
   return { content, filePath, fileName: filePath.split(/[/\\]/).pop() }
 })
 
+ipcMain.handle('dialog:openMultipleFiles', async () => {
+  const result = await dialog.showOpenDialog(mainWindow, {
+    properties: ['openFile', 'multiSelections'],
+    filters: [{ name: 'Markdown', extensions: ['md', 'markdown'] }]
+  })
+  if (result.canceled || result.filePaths.length === 0) return null
+  return result.filePaths.map(filePath => {
+    const content = readFileSync(filePath, 'utf-8')
+    return { content, filePath, fileName: filePath.split(/[/\\]/).pop() }
+  })
+})
+
+ipcMain.handle('dialog:openFolder', async () => {
+  const result = await dialog.showOpenDialog(mainWindow, {
+    properties: ['openDirectory']
+  })
+  if (result.canceled || result.filePaths.length === 0) return null
+  const folderPath = result.filePaths[0]
+  const entries = readdirSync(folderPath)
+  const files = entries.filter(f => /\.md$|\.markdown$/i.test(f))
+  return files.map(file => {
+    const filePath = join(folderPath, file)
+    const content = readFileSync(filePath, 'utf-8')
+    return { content, filePath, fileName: file }
+  })
+})
+
 ipcMain.handle('dialog:saveFile', async (_event, { content, filePath }) => {
   if (!filePath) {
     const result = await dialog.showSaveDialog(mainWindow, {
