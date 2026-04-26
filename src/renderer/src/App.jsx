@@ -153,9 +153,10 @@ function App() {
   const [showSettings, setShowSettings] = useState(false)
   const [currentTheme, setCurrentTheme] = useState(() => localStorage.getItem('appTheme') || 'dark')
   const [hwAccel, setHwAccel] = useState('auto')
+  const [defaultOpenPath, setDefaultOpenPath] = useState('')
   const [spellcheck, setSpellcheck] = useState(() => getSettings().spellcheck !== false)
   const [showToolbar, setShowToolbar] = useState(() => getSettings().showToolbar !== false)
-  const [sidebarVisible, setSidebarVisible] = useState(true)
+  const [sidebarVisible, setSidebarVisible] = useState(false)
   const [folderFiles, setFolderFiles] = useState([])
   const [currentFolderPath, setCurrentFolderPath] = useState('')
   const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0 })
@@ -442,8 +443,15 @@ function App() {
     window.electronAPI.onFileOpened((data) => {
       addTab(data)
     })
+    window.electronAPI.onFolderOpened((data) => {
+      const { folderPath, files } = data
+      setCurrentFolderPath(folderPath)
+      setFolderFiles(files)
+      setSidebarVisible(true)
+    })
     return () => {
       window.electronAPI.removeFileOpenedListener()
+      window.electronAPI.removeFolderOpenedListener()
     }
   }, [editor, addTab])
 
@@ -687,6 +695,7 @@ function App() {
     setCurrentFolderPath(folderPath)
     const files = await window.electronAPI.listMdFiles(folderPath)
     setFolderFiles(files)
+    setSidebarVisible(true)
   }, [])
 
   const handleOpenFolderFile = useCallback(async (filePath) => {
@@ -708,6 +717,11 @@ function App() {
   const handleHwAccelChange = useCallback((value) => {
     setHwAccel(value)
     window.electronAPI.saveAppSettings({ hardwareAcceleration: value }).catch(() => {})
+  }, [])
+
+  const handleDefaultOpenPathChange = useCallback((value) => {
+    setDefaultOpenPath(value)
+    window.electronAPI.saveAppSettings({ defaultOpenPath: value }).catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -732,6 +746,9 @@ function App() {
     window.electronAPI.getAppSettings().then(s => {
       if (s && s.hardwareAcceleration) {
         setHwAccel(s.hardwareAcceleration)
+      }
+      if (s && s.defaultOpenPath) {
+        setDefaultOpenPath(s.defaultOpenPath)
       }
     }).catch(() => {})
   }, [])
@@ -873,7 +890,7 @@ function App() {
         )}
       </div>
       {dragOver && <div className="drag-overlay"><span>释放以打开 .md 文件</span></div>}
-      {showSettings && <SettingsDialog onClose={() => setShowSettings(false)} currentTheme={currentTheme} onThemeChange={handleThemeChange} onSaveSettings={handleSaveSettings} hwAccel={hwAccel} onHwAccelChange={handleHwAccelChange} />}
+      {showSettings && <SettingsDialog onClose={() => setShowSettings(false)} currentTheme={currentTheme} onThemeChange={handleThemeChange} onSaveSettings={handleSaveSettings} hwAccel={hwAccel} onHwAccelChange={handleHwAccelChange} defaultOpenPath={defaultOpenPath} onDefaultOpenPathChange={handleDefaultOpenPathChange} />}
       {showAbout && <AboutDialog onClose={() => setShowAbout(false)} />}
       <ContextMenu
         editor={editor}

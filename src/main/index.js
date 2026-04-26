@@ -1,6 +1,6 @@
 import { app, shell, BrowserWindow, ipcMain, dialog } from 'electron'
 import { join, resolve, extname } from 'path'
-import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync } from 'fs'
+import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, statSync } from 'fs'
 
 import { execFile } from 'child_process'
 import { DARK_THEME, LIGHT_THEME } from './themes/defaults.js'
@@ -65,6 +65,21 @@ function openFileAndSend(filePath) {
   } catch (err) {
     dialog.showErrorBox('打开文件错误', `无法打开文件: ${err.message}`)
   }
+}
+
+function openFolderAndSend(folderPath) {
+  try {
+    const entries = readdirSync(folderPath)
+    const files = entries
+      .filter(f => /\.md$|\.markdown$/i.test(f))
+      .map(f => ({
+        name: f,
+        filePath: join(folderPath, f)
+      }))
+    if (mainWindow) {
+      mainWindow.webContents.send('folder:opened', { folderPath, files })
+    }
+  } catch {}
 }
 
 function createWindow() {
@@ -389,6 +404,22 @@ app.whenReady().then(() => {
     mainWindow.webContents.once('did-finish-load', () => {
       openFileAndSend(initialFile)
     })
+  } else {
+    const defaultPath = loadSettings().defaultOpenPath
+    if (defaultPath) {
+      mainWindow.webContents.once('did-finish-load', () => {
+        try {
+          if (existsSync(defaultPath)) {
+            const s = statSync(defaultPath)
+            if (s.isDirectory()) {
+              openFolderAndSend(defaultPath)
+            } else if (/\.md$|\.markdown$/i.test(defaultPath)) {
+              openFileAndSend(defaultPath)
+            }
+          }
+        } catch {}
+      })
+    }
   }
 
   app.on('activate', () => {

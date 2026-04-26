@@ -31,6 +31,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
   removeFileOpenedListener: () => {
     ipcRenderer.removeAllListeners('file:opened')
   },
+  onFolderOpened: (callback) => {
+    ipcRenderer.on('folder:opened', (_event, data) => callback(data))
+  },
+  removeFolderOpenedListener: () => {
+    ipcRenderer.removeAllListeners('folder:opened')
+  },
   setTitle: (title) => ipcRenderer.send('window:setTitle', title),
   minimizeWindow: () => ipcRenderer.send('window:minimize'),
   maximizeWindow: () => ipcRenderer.send('window:maximize'),

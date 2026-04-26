@@ -25,7 +25,7 @@ const SHORTCUT_LABELS = {
   sidebarToggle: '侧边栏'
 }
 
-function SettingsDialog({ onClose, currentTheme, onThemeChange, onSaveSettings, hwAccel, onHwAccelChange }) {
+function SettingsDialog({ onClose, currentTheme, onThemeChange, onSaveSettings, hwAccel, onHwAccelChange, defaultOpenPath, onDefaultOpenPathChange }) {
   const [settings, setSettings] = useState(() => {
     try {
       const saved = localStorage.getItem('editorSettings')
@@ -209,6 +209,18 @@ function SettingsDialog({ onClose, currentTheme, onThemeChange, onSaveSettings, 
               <option value="closeApp">关闭最后一个标签页时关闭软件</option>
               <option value="newTab">关闭最后一个标签页时创建新标签页</option>
             </select>
+          </div>
+          <div className="settings-divider" />
+          <div className="settings-section">
+            <h3 className="settings-section-title">默认打开路径</h3>
+            <p className="settings-section-desc">应用直接启动时（非命令行调用）默认打开的文件或文件夹，留空则创建未命名文件</p>
+            <input
+              className="settings-input"
+              type="text"
+              value={defaultOpenPath}
+              onChange={e => onDefaultOpenPathChange?.(e.target.value)}
+              placeholder="例如: C:\Users\Docs 或 C:\Users\Docs\readme.md"
+            />
           </div>
           <div className="settings-divider" />
           <div className="settings-section">
