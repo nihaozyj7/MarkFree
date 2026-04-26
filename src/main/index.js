@@ -1,8 +1,9 @@
 import { app, shell, BrowserWindow, ipcMain, dialog } from 'electron'
 import { join, resolve, extname } from 'path'
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs'
-import { createHash } from 'crypto'
+import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync } from 'fs'
+
 import { execFile } from 'child_process'
+import { DARK_THEME, LIGHT_THEME } from './themes/defaults.js'
 
 let mainWindow
 
@@ -45,6 +46,8 @@ function createWindow() {
     minHeight: 600,
     title: 'Markdown WYSIWYG Editor',
     frame: false,
+    show: false,
+    backgroundColor: '#1a1a2e',
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false,
@@ -76,7 +79,75 @@ function createWindow() {
   } else {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
   }
+
+  mainWindow.once('ready-to-show', () => {
+    mainWindow.show()
+  })
 }
+
+// ===== 主题管理 =====
+
+function getThemesDir() {
+  return join(app.getPath('userData'), 'themes')
+}
+
+function ensureThemesDir() {
+  const dir = getThemesDir()
+  if (!existsSync(dir)) {
+    mkdirSync(dir, { recursive: true })
+  }
+  return dir
+}
+
+function writeDefaultThemes() {
+  const dir = ensureThemesDir()
+  const darkPath = join(dir, 'dark.css')
+  const lightPath = join(dir, 'light.css')
+  if (!existsSync(darkPath)) {
+    writeFileSync(darkPath, DARK_THEME, 'utf-8')
+  }
+  if (!existsSync(lightPath)) {
+    writeFileSync(lightPath, LIGHT_THEME, 'utf-8')
+  }
+}
+
+ipcMain.handle('theme:list', async () => {
+  const themes = [
+    { name: 'dark', label: '深色主题', builtin: true },
+    { name: 'light', label: '浅色主题', builtin: true }
+  ]
+  const dir = getThemesDir()
+  if (existsSync(dir)) {
+    const files = readdirSync(dir)
+    for (const file of files) {
+      if (file.endsWith('.css')) {
+        const name = file.slice(0, -4)
+        if (!themes.some(t => t.name === name)) {
+          themes.push({ name, label: name, builtin: false })
+        }
+      }
+    }
+  }
+  return themes
+})
+
+ipcMain.handle('theme:load', async (_event, name) => {
+  const dir = getThemesDir()
+  const filePath = join(dir, `${name}.css`)
+  if (existsSync(filePath)) {
+    try {
+      const css = readFileSync(filePath, 'utf-8')
+      return { name, css }
+    } catch (_) {}
+  }
+  if (name === 'light') return { name, css: LIGHT_THEME }
+  return { name, css: DARK_THEME }
+})
+
+ipcMain.handle('theme:openFolder', async () => {
+  const dir = ensureThemesDir()
+  shell.openPath(dir)
+})
 
 ipcMain.handle('dialog:openFile', async () => {
   const result = await dialog.showOpenDialog(mainWindow, {
@@ -132,7 +203,7 @@ ipcMain.handle('dialog:selectImageFile', async () => {
   }
 })
 
-ipcMain.handle('image:saveToDisk', async (_event, { base64Data, ext, folderPath, naming, fileDir }) => {
+ipcMain.handle('image:saveToDisk', async (_event, { base64Data, ext, folderPath, fileDir }) => {
   try {
     let targetDir
     if (folderPath.startsWith('./') || folderPath.startsWith('.\\')) {
@@ -147,13 +218,9 @@ ipcMain.handle('image:saveToDisk', async (_event, { base64Data, ext, folderPath,
       mkdirSync(targetDir, { recursive: true })
     }
 
-    let filename
-    if (naming === 'hash') {
-      const hash = createHash('sha256').update(Buffer.from(base64Data, 'base64')).digest('hex').slice(0, 16)
-      filename = hash + ext
-    } else {
-      filename = Date.now() + ext
-    }
+    const ts = Date.now().toString().slice(-8)
+    const rand = String(Math.floor(1000 + Math.random() * 9000))
+    const filename = ts + rand + ext
 
     const absolutePath = join(targetDir, filename)
     writeFileSync(absolutePath, Buffer.from(base64Data, 'base64'))
@@ -228,6 +295,7 @@ ipcMain.on('window:maximize', () => {
 ipcMain.on('window:close', () => mainWindow?.close())
 
 app.whenReady().then(() => {
+  writeDefaultThemes()
   createWindow()
 
   const initialFile = process.argv.find(a => /\.md$|\.markdown$/i.test(a) && a !== process.execPath)

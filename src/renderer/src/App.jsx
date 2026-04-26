@@ -61,8 +61,7 @@ function convertToAbsolutePaths(md, filePath, imageFolder) {
 
 const DEFAULT_SETTINGS = {
   imageInsertMode: 'base64',
-  imageFolder: './assets',
-  imageNaming: 'hash'
+  imageFolder: '.assets'
 }
 
 function getSettings() {
@@ -82,6 +81,7 @@ function App() {
   const [modified, setModified] = useState(false)
   const [dragOver, setDragOver] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
+  const [currentTheme, setCurrentTheme] = useState(() => localStorage.getItem('appTheme') || 'dark')
   const contentRef = useRef('')
   const modifiedRef = useRef(false)
   const filePathRef = useRef('')
@@ -289,7 +289,7 @@ function App() {
       }
 
       const settings = getSettings()
-      const { imageInsertMode, imageFolder, imageNaming } = settings
+      const { imageInsertMode, imageFolder } = settings
 
       if (imageInsertMode === 'base64') {
         const src = `data:${result.mime};base64,${result.base64}`
@@ -307,7 +307,6 @@ function App() {
           base64Data: result.base64,
           ext: result.ext,
           folderPath: imageFolder,
-          naming: imageNaming,
           fileDir: dirname(fp)
         })
         if (!saveResult) return
@@ -368,6 +367,29 @@ function App() {
       case 'settings': handleOpenSettings(); break
     }
   }, [handleOpenFile, handleSaveFile, handleSaveAsFile, handleExportHtml, handleRegisterAssociation, handleUnregisterAssociation, handleOpenSettings])
+
+  const handleThemeChange = useCallback((themeName) => {
+    setCurrentTheme(themeName)
+    localStorage.setItem('appTheme', themeName)
+  }, [])
+
+  useEffect(() => {
+    const loadTheme = async () => {
+      try {
+        const result = await window.electronAPI.loadTheme(currentTheme)
+        if (result && result.css) {
+          let el = document.getElementById('app-theme')
+          if (!el) {
+            el = document.createElement('style')
+            el.id = 'app-theme'
+            document.head.appendChild(el)
+          }
+          el.textContent = result.css
+        }
+      } catch (_) {}
+    }
+    loadTheme()
+  }, [currentTheme])
 
   useEffect(() => {
     function handleKeyDown(e) {
@@ -438,7 +460,7 @@ function App() {
         )}
       </div>
       {dragOver && <div className="drag-overlay"><span>释放以打开 .md 文件</span></div>}
-      {showSettings && <SettingsDialog onClose={() => setShowSettings(false)} />}
+      {showSettings && <SettingsDialog onClose={() => setShowSettings(false)} currentTheme={currentTheme} onThemeChange={handleThemeChange} />}
     </div>
   )
 }

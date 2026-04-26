@@ -1,12 +1,11 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 
 const DEFAULT_SETTINGS = {
   imageInsertMode: 'base64',
-  imageFolder: './assets',
-  imageNaming: 'hash'
+  imageFolder: '.assets'
 }
 
-function SettingsDialog({ onClose }) {
+function SettingsDialog({ onClose, currentTheme, onThemeChange }) {
   const [settings, setSettings] = useState(() => {
     try {
       const saved = localStorage.getItem('editorSettings')
@@ -15,6 +14,11 @@ function SettingsDialog({ onClose }) {
       return DEFAULT_SETTINGS
     }
   })
+  const [themes, setThemes] = useState([])
+
+  useEffect(() => {
+    window.electronAPI.getThemes().then(setThemes).catch(() => {})
+  }, [])
 
   const handleSave = () => {
     localStorage.setItem('editorSettings', JSON.stringify(settings))
@@ -29,6 +33,36 @@ function SettingsDialog({ onClose }) {
           <button className="settings-close-btn" onClick={onClose}>✕</button>
         </div>
         <div className="settings-body">
+          <div className="settings-section">
+            <h3 className="settings-section-title">主题</h3>
+            {themes.length === 0 ? (
+              <div style={{ color: 'var(--text-secondary)', fontSize: 13 }}>加载中...</div>
+            ) : (
+              themes.map(t => (
+                <label key={t.name} className="settings-radio">
+                  <input
+                    type="radio"
+                    name="theme"
+                    value={t.name}
+                    checked={currentTheme === t.name}
+                    onChange={() => onThemeChange(t.name)}
+                  />
+                  <span>{t.label}</span>
+                  {t.builtin && <span style={{ color: 'var(--text-muted)', fontSize: 11, marginLeft: 6 }}>(默认)</span>}
+                </label>
+              ))
+            )}
+            <div style={{ marginTop: 8 }}>
+              <button
+                className="settings-btn"
+                style={{ fontSize: 12, padding: '4px 12px', background: 'transparent', border: '1px solid var(--border-color)', borderRadius: 4, color: 'var(--text-secondary)', cursor: 'pointer' }}
+                onClick={() => window.electronAPI.openThemeFolder()}
+              >
+                打开主题文件夹
+              </button>
+            </div>
+          </div>
+          <div style={{ height: 1, background: 'var(--border-color)', marginBottom: 24 }} />
           <div className="settings-section">
             <h3 className="settings-section-title">图片插入位置</h3>
             <label className="settings-radio">
@@ -47,22 +81,10 @@ function SettingsDialog({ onClose }) {
           {settings.imageInsertMode === 'relative' && (
             <div className="settings-section">
               <h3 className="settings-section-title">图片存储文件夹</h3>
-              <input className="settings-input" type="text" value={settings.imageFolder} onChange={e => setSettings({...settings, imageFolder: e.target.value})} placeholder="./assets" />
+              <input className="settings-input" type="text" value={settings.imageFolder} onChange={e => setSettings({...settings, imageFolder: e.target.value})} placeholder=".assets" />
             </div>
           )}
-          {settings.imageInsertMode !== 'base64' && (
-            <div className="settings-section">
-              <h3 className="settings-section-title">图片命名方式</h3>
-              <label className="settings-radio">
-                <input type="radio" name="imageNaming" value="hash" checked={settings.imageNaming === 'hash'} onChange={() => setSettings({...settings, imageNaming: 'hash'})} />
-                <span>Hash（前16位）</span>
-              </label>
-              <label className="settings-radio">
-                <input type="radio" name="imageNaming" value="timestamp" checked={settings.imageNaming === 'timestamp'} onChange={() => setSettings({...settings, imageNaming: 'timestamp'})} />
-                <span>时间戳</span>
-              </label>
-            </div>
-          )}
+
           <div className="settings-actions">
             <button className="settings-btn settings-btn-primary" onClick={handleSave}>保存</button>
           </div>

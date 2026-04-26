@@ -37,5 +37,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
     const path = pendingDropPath
     pendingDropPath = ''
     return path
-  }
+  },
+
+  getThemes: () => ipcRenderer.invoke('theme:list'),
+  loadTheme: (name) => ipcRenderer.invoke('theme:load', name),
+  openThemeFolder: () => ipcRenderer.invoke('theme:openFolder')
 })
