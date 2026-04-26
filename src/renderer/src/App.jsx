@@ -199,7 +199,12 @@ function App() {
       },
       handleKeyDown: (view, event) => {
         if (event.ctrlKey || event.metaKey) {
-          return true
+          const key = event.key.toLowerCase()
+          if (key === 'n' && !event.shiftKey) return true
+          if (key === 'o' && !event.shiftKey) return true
+          if (key === 's') return true
+          if (key === 'b' && !event.shiftKey) return true
+          return false
         }
         return false
       },
