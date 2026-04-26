@@ -25,7 +25,7 @@ const SHORTCUT_LABELS = {
   sidebarToggle: '侧边栏'
 }
 
-function SettingsDialog({ onClose, currentTheme, onThemeChange, onSaveSettings, hwAccel, onHwAccelChange, defaultOpenPath, onDefaultOpenPathChange }) {
+function SettingsDialog({ onClose, currentTheme, onThemeChange, onSaveSettings, hwAccel, onHwAccelChange, defaultOpenPath, onDefaultOpenPathChange, windowMode, windowBounds, onWindowModeChange, onWindowBoundsChange }) {
   const [settings, setSettings] = useState(() => {
     try {
       const saved = localStorage.getItem('editorSettings')
@@ -58,25 +58,25 @@ function SettingsDialog({ onClose, currentTheme, onThemeChange, onSaveSettings, 
       let displayKey = key.length === 1 ? key.toUpperCase() : key === ' ' ? 'Space' : key.charAt(0).toUpperCase() + key.slice(1)
       keys.push(displayKey)
       const shortcut = keys.join('+')
-      setSettings(s => ({
-        ...s,
-        shortcuts: { ...s.shortcuts, [editingShortcut]: shortcut }
-      }))
+      updateSettings({
+        shortcuts: { ...settings.shortcuts, [editingShortcut]: shortcut }
+      })
       setEditingShortcut(null)
     }
     window.addEventListener('keydown', handler, true)
     return () => window.removeEventListener('keydown', handler, true)
   }, [editingShortcut])
 
+  const updateSettings = (partial) => {
+    const newSettings = { ...settings, ...partial }
+    setSettings(newSettings)
+    localStorage.setItem('editorSettings', JSON.stringify(newSettings))
+    onSaveSettings?.(newSettings)
+  }
+
   const startClose = () => {
     setClosing(true)
     setTimeout(() => onClose(), 200)
-  }
-
-  const handleSave = () => {
-    localStorage.setItem('editorSettings', JSON.stringify(settings))
-    onSaveSettings?.(settings)
-    startClose()
   }
 
   return (
@@ -128,11 +128,11 @@ function SettingsDialog({ onClose, currentTheme, onThemeChange, onSaveSettings, 
           <div className="settings-section">
             <h3 className="settings-section-title">编辑器</h3>
             <label className="settings-radio">
-              <input type="checkbox" checked={settings.spellcheck !== false} onChange={e => setSettings({...settings, spellcheck: e.target.checked})} />
+              <input type="checkbox" checked={settings.spellcheck !== false} onChange={e => updateSettings({spellcheck: e.target.checked})} />
               <span>语法检查</span>
             </label>
             <label className="settings-radio">
-              <input type="checkbox" checked={settings.showToolbar !== false} onChange={e => setSettings({...settings, showToolbar: e.target.checked})} />
+              <input type="checkbox" checked={settings.showToolbar !== false} onChange={e => updateSettings({showToolbar: e.target.checked})} />
               <span>显示工具栏</span>
             </label>
           </div>
@@ -144,7 +144,7 @@ function SettingsDialog({ onClose, currentTheme, onThemeChange, onSaveSettings, 
               <select
                 className="settings-select settings-select-inline"
                 value={settings.fontFamily || 'default'}
-                onChange={e => setSettings({...settings, fontFamily: e.target.value})}
+                onChange={e => updateSettings({fontFamily: e.target.value})}
               >
                 <option value="default">系统默认</option>
                 <option value="system-ui, -apple-system, sans-serif">Sans Serif</option>
@@ -159,7 +159,7 @@ function SettingsDialog({ onClose, currentTheme, onThemeChange, onSaveSettings, 
               <select
                 className="settings-select settings-select-inline"
                 value={settings.fontSize || 16}
-                onChange={e => setSettings({...settings, fontSize: Number(e.target.value)})}
+                onChange={e => updateSettings({fontSize: Number(e.target.value)})}
               >
                 <option value={14}>14px</option>
                 <option value={15}>15px</option>
@@ -186,10 +186,9 @@ function SettingsDialog({ onClose, currentTheme, onThemeChange, onSaveSettings, 
                 {(settings.shortcuts?.[key] && settings.shortcuts[key] !== DEFAULT_SETTINGS.shortcuts[key]) && (
                   <button
                     className="settings-shortcut-reset"
-                    onClick={() => setSettings(s => ({
-                      ...s,
-                      shortcuts: { ...s.shortcuts, [key]: DEFAULT_SETTINGS.shortcuts[key] }
-                    }))}
+                    onClick={() => updateSettings({
+                      shortcuts: { ...settings.shortcuts, [key]: DEFAULT_SETTINGS.shortcuts[key] }
+                    })}
                     title="恢复默认"
                   >
                     ↺
@@ -204,7 +203,7 @@ function SettingsDialog({ onClose, currentTheme, onThemeChange, onSaveSettings, 
             <select
               className="settings-select"
               value={settings.closeLastTabAction}
-              onChange={e => setSettings({...settings, closeLastTabAction: e.target.value})}
+                onChange={e => updateSettings({closeLastTabAction: e.target.value})}
             >
               <option value="closeApp">关闭最后一个标签页时关闭软件</option>
               <option value="newTab">关闭最后一个标签页时创建新标签页</option>
@@ -224,11 +223,67 @@ function SettingsDialog({ onClose, currentTheme, onThemeChange, onSaveSettings, 
           </div>
           <div className="settings-divider" />
           <div className="settings-section">
+            <h3 className="settings-section-title">窗口启动位置与尺寸</h3>
+            <p className="settings-section-desc">修改后需重启应用生效</p>
+            <select
+              className="settings-select"
+              value={windowMode}
+              onChange={e => onWindowModeChange(e.target.value)}
+            >
+              <option value="center">居中（默认）</option>
+              <option value="auto">自动记忆上次位置</option>
+              <option value="fixed">固定</option>
+            </select>
+            {windowMode === 'fixed' && (
+              <div className="settings-window-bounds">
+                <div className="settings-row">
+                  <label className="settings-row-label">X</label>
+                  <input
+                    className="settings-input settings-input-inline"
+                    type="number"
+                    value={windowBounds?.x ?? 0}
+                    onChange={e => onWindowBoundsChange({ ...windowBounds, x: Number(e.target.value) })}
+                  />
+                </div>
+                <div className="settings-row">
+                  <label className="settings-row-label">Y</label>
+                  <input
+                    className="settings-input settings-input-inline"
+                    type="number"
+                    value={windowBounds?.y ?? 0}
+                    onChange={e => onWindowBoundsChange({ ...windowBounds, y: Number(e.target.value) })}
+                  />
+                </div>
+                <div className="settings-row">
+                  <label className="settings-row-label">宽</label>
+                  <input
+                    className="settings-input settings-input-inline"
+                    type="number"
+                    min={850}
+                    value={windowBounds?.width ?? 1200}
+                    onChange={e => onWindowBoundsChange({ ...windowBounds, width: Number(e.target.value) })}
+                  />
+                </div>
+                <div className="settings-row">
+                  <label className="settings-row-label">高</label>
+                  <input
+                    className="settings-input settings-input-inline"
+                    type="number"
+                    min={600}
+                    value={windowBounds?.height ?? 800}
+                    onChange={e => onWindowBoundsChange({ ...windowBounds, height: Number(e.target.value) })}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+          <div className="settings-divider" />
+          <div className="settings-section">
             <h3 className="settings-section-title">图片插入位置</h3>
             <select
               className="settings-select"
               value={settings.imageInsertMode}
-              onChange={e => setSettings({...settings, imageInsertMode: e.target.value})}
+                onChange={e => updateSettings({imageInsertMode: e.target.value})}
             >
               <option value="base64">插入为 Base64</option>
               <option value="relative">相对路径（图片保存至项目文件夹）</option>
@@ -238,13 +293,9 @@ function SettingsDialog({ onClose, currentTheme, onThemeChange, onSaveSettings, 
           {settings.imageInsertMode === 'relative' && (
             <div className="settings-section">
               <h3 className="settings-section-title">图片存储文件夹</h3>
-              <input className="settings-input" type="text" value={settings.imageFolder} onChange={e => setSettings({...settings, imageFolder: e.target.value})} placeholder=".assets" />
+              <input className="settings-input" type="text" value={settings.imageFolder} onChange={e => updateSettings({imageFolder: e.target.value})} placeholder=".assets" />
             </div>
           )}
-
-          <div className="settings-actions">
-            <button className="settings-btn settings-btn-primary" onClick={handleSave}>保存</button>
-          </div>
         </div>
       </div>
     </div>

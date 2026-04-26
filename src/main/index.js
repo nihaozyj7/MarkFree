@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow, ipcMain, dialog } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, dialog, screen } from 'electron'
 import { join, resolve, extname } from 'path'
 import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, statSync } from 'fs'
 
@@ -82,10 +82,31 @@ function openFolderAndSend(folderPath) {
   } catch {}
 }
 
+function ensureWindowVisible(bounds) {
+  const displays = screen.getAllDisplays()
+  const onScreen = displays.some(display => {
+    const { x, y, width, height } = display.bounds
+    return (
+      bounds.x < x + width &&
+      bounds.x + bounds.width > x &&
+      bounds.y < y + height &&
+      bounds.y + bounds.height > y
+    )
+  })
+  if (onScreen) return bounds
+  const primary = screen.getPrimaryDisplay().workArea
+  return {
+    x: Math.max(0, Math.round((primary.width - bounds.width) / 2)),
+    y: Math.max(0, Math.round((primary.height - bounds.height) / 2)),
+    width: bounds.width,
+    height: bounds.height
+  }
+}
+
 function createWindow() {
-  mainWindow = new BrowserWindow({
-    width: 1200,
-    height: 800,
+  const windowMode = appSettings.windowMode || 'center'
+  const defaultBounds = { width: 1200, height: 800 }
+  let windowOptions = {
     minWidth: 850,
     minHeight: 600,
     title: 'MarkdownPad',
@@ -98,7 +119,37 @@ function createWindow() {
       contextIsolation: true,
       nodeIntegration: false
     }
-  })
+  }
+
+  if (windowMode === 'center') {
+    windowOptions.width = defaultBounds.width
+    windowOptions.height = defaultBounds.height
+  } else if (windowMode === 'auto') {
+    const lastBounds = appSettings.lastWindowBounds
+    if (lastBounds && lastBounds.width && lastBounds.height) {
+      const visible = ensureWindowVisible(lastBounds)
+      windowOptions.x = visible.x
+      windowOptions.y = visible.y
+      windowOptions.width = visible.width
+      windowOptions.height = visible.height
+    } else {
+      windowOptions.width = defaultBounds.width
+      windowOptions.height = defaultBounds.height
+    }
+  } else if (windowMode === 'fixed') {
+    const bounds = appSettings.windowBounds
+    if (bounds && bounds.width && bounds.height) {
+      windowOptions.x = bounds.x ?? undefined
+      windowOptions.y = bounds.y ?? undefined
+      windowOptions.width = bounds.width
+      windowOptions.height = bounds.height
+    } else {
+      windowOptions.width = defaultBounds.width
+      windowOptions.height = defaultBounds.height
+    }
+  }
+
+  mainWindow = new BrowserWindow(windowOptions)
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
     shell.openExternal(details.url)
@@ -126,6 +177,20 @@ function createWindow() {
 
   mainWindow.once('ready-to-show', () => {
     mainWindow.show()
+  })
+
+  mainWindow.on('close', () => {
+    const currentSettings = loadSettings()
+    if (currentSettings.windowMode === 'auto') {
+      const bounds = mainWindow.getBounds()
+      currentSettings.lastWindowBounds = {
+        x: bounds.x,
+        y: bounds.y,
+        width: bounds.width,
+        height: bounds.height
+      }
+      saveSettingsFile(currentSettings)
+    }
   })
 }
 
@@ -196,8 +261,10 @@ ipcMain.handle('theme:openFolder', async () => {
 ipcMain.handle('settings:get', async () => loadSettings())
 
 ipcMain.handle('settings:save', async (_event, settings) => {
-  saveSettingsFile(settings)
-  return settings
+  const current = loadSettings()
+  const merged = { ...current, ...settings }
+  saveSettingsFile(merged)
+  return merged
 })
 
 ipcMain.handle('dialog:openFile', async () => {

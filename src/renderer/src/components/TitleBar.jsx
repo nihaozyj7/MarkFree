@@ -87,7 +87,7 @@ function TitleBar({ tabs, activeTabId, onSwitchTab, onCloseTab, onMenuAction, on
             <line x1="16" y1="17" x2="8" y2="17" />
             <polyline points="10 9 9 9 8 9" />
           </svg>
-          <span>mdPad</span>
+          <span>MdPad</span>
           <svg className="title-bar-arrow" viewBox="0 0 24 24" width="10" height="10" fill="currentColor">
             <polygon points="6,9 12,15 18,9" />
           </svg>

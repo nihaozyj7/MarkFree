@@ -154,6 +154,8 @@ function App() {
   const [currentTheme, setCurrentTheme] = useState(() => localStorage.getItem('appTheme') || 'dark')
   const [hwAccel, setHwAccel] = useState('auto')
   const [defaultOpenPath, setDefaultOpenPath] = useState('')
+  const [windowMode, setWindowMode] = useState('center')
+  const [windowBounds, setWindowBounds] = useState({ x: 0, y: 0, width: 1200, height: 800 })
   const [spellcheck, setSpellcheck] = useState(() => getSettings().spellcheck !== false)
   const [showToolbar, setShowToolbar] = useState(() => getSettings().showToolbar !== false)
   const [sidebarVisible, setSidebarVisible] = useState(false)
@@ -740,6 +742,16 @@ function App() {
     window.electronAPI.saveAppSettings({ defaultOpenPath: value }).catch(() => {})
   }, [])
 
+  const handleWindowModeChange = useCallback((value) => {
+    setWindowMode(value)
+    window.electronAPI.saveAppSettings({ windowMode: value }).catch(() => {})
+  }, [])
+
+  const handleWindowBoundsChange = useCallback((bounds) => {
+    setWindowBounds(bounds)
+    window.electronAPI.saveAppSettings({ windowBounds: bounds }).catch(() => {})
+  }, [])
+
   useEffect(() => {
     const loadTheme = async () => {
       try {
@@ -765,6 +777,12 @@ function App() {
       }
       if (s && s.defaultOpenPath) {
         setDefaultOpenPath(s.defaultOpenPath)
+      }
+      if (s && s.windowMode) {
+        setWindowMode(s.windowMode)
+      }
+      if (s && s.windowBounds) {
+        setWindowBounds(s.windowBounds)
       }
     }).catch(() => {})
   }, [])
@@ -892,7 +910,7 @@ function App() {
         )}
       </div>
       {dragOver && <div className="drag-overlay"><span>释放以打开 .md 文件</span></div>}
-      {showSettings && <SettingsDialog onClose={() => setShowSettings(false)} currentTheme={currentTheme} onThemeChange={handleThemeChange} onSaveSettings={handleSaveSettings} hwAccel={hwAccel} onHwAccelChange={handleHwAccelChange} defaultOpenPath={defaultOpenPath} onDefaultOpenPathChange={handleDefaultOpenPathChange} />}
+      {showSettings && <SettingsDialog onClose={() => setShowSettings(false)} currentTheme={currentTheme} onThemeChange={handleThemeChange} onSaveSettings={handleSaveSettings} hwAccel={hwAccel} onHwAccelChange={handleHwAccelChange} defaultOpenPath={defaultOpenPath} onDefaultOpenPathChange={handleDefaultOpenPathChange} windowMode={windowMode} windowBounds={windowBounds} onWindowModeChange={handleWindowModeChange} onWindowBoundsChange={handleWindowBoundsChange} />}
       {showAbout && <AboutDialog onClose={() => setShowAbout(false)} />}
       <ContextMenu
         editor={editor}
