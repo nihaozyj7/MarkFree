@@ -42,7 +42,7 @@ function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
-    minWidth: 800,
+    minWidth: 850,
     minHeight: 600,
     title: 'MarkdownPad',
     frame: false,
