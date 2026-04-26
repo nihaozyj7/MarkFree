@@ -752,6 +752,25 @@
   margin-bottom: 10px;
 }
 
+.settings-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+}
+
+.settings-row-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+  min-width: 40px;
+  flex-shrink: 0;
+}
+
+.settings-select-inline {
+  flex: 1;
+  width: auto;
+}
+
 .settings-loading {
   color: var(--text-secondary);
   font-size: 13px;

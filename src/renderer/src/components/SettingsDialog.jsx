@@ -6,11 +6,14 @@ const DEFAULT_SETTINGS = {
   spellcheck: true,
   closeLastTabAction: 'closeApp',
   showToolbar: true,
+  fontFamily: 'default',
+  fontSize: 16,
   shortcuts: {
     newFile: 'Ctrl+N',
     open: 'Ctrl+O',
     save: 'Ctrl+S',
-    saveAs: 'Ctrl+Shift+S'
+    saveAs: 'Ctrl+Shift+S',
+    sidebarToggle: 'Ctrl+B'
   }
 }
 
@@ -18,7 +21,8 @@ const SHORTCUT_LABELS = {
   newFile: '新建文件',
   open: '打开文件',
   save: '保存',
-  saveAs: '另存为'
+  saveAs: '另存为',
+  sidebarToggle: '侧边栏'
 }
 
 function SettingsDialog({ onClose, currentTheme, onThemeChange, onSaveSettings, hwAccel, onHwAccelChange }) {
@@ -110,18 +114,15 @@ function SettingsDialog({ onClose, currentTheme, onThemeChange, onSaveSettings, 
           <div className="settings-section">
             <h3 className="settings-section-title">硬件加速</h3>
             <p className="settings-section-desc">修改后需重启应用生效</p>
-            <label className="settings-radio">
-              <input type="radio" name="hwAccel" value="auto" checked={hwAccel === 'auto'} onChange={() => onHwAccelChange('auto')} />
-              <span>自动（推荐） — 启动时抑制屏闪，保持流畅滚动</span>
-            </label>
-            <label className="settings-radio">
-              <input type="radio" name="hwAccel" value="always" checked={hwAccel === 'always'} onChange={() => onHwAccelChange('always')} />
-              <span>启用 — 始终开启硬件加速，滚动最流畅</span>
-            </label>
-            <label className="settings-radio">
-              <input type="radio" name="hwAccel" value="never" checked={hwAccel === 'never'} onChange={() => onHwAccelChange('never')} />
-              <span>禁用 — 关闭硬件加速，避免启动屏闪</span>
-            </label>
+            <select
+              className="settings-select"
+              value={hwAccel}
+              onChange={e => onHwAccelChange(e.target.value)}
+            >
+              <option value="auto">自动（推荐）</option>
+              <option value="always">始终启用</option>
+              <option value="never">禁用</option>
+            </select>
           </div>
           <div className="settings-divider" />
           <div className="settings-section">
@@ -134,6 +135,41 @@ function SettingsDialog({ onClose, currentTheme, onThemeChange, onSaveSettings, 
               <input type="checkbox" checked={settings.showToolbar !== false} onChange={e => setSettings({...settings, showToolbar: e.target.checked})} />
               <span>显示工具栏</span>
             </label>
+          </div>
+          <div className="settings-divider" />
+          <div className="settings-section">
+            <h3 className="settings-section-title">字体</h3>
+            <div className="settings-row">
+              <label className="settings-row-label">字体</label>
+              <select
+                className="settings-select settings-select-inline"
+                value={settings.fontFamily || 'default'}
+                onChange={e => setSettings({...settings, fontFamily: e.target.value})}
+              >
+                <option value="default">系统默认</option>
+                <option value="system-ui, -apple-system, sans-serif">Sans Serif</option>
+                <option value="Georgia, 'Times New Roman', serif">Serif</option>
+                <option value="'Fira Code', 'Cascadia Code', 'JetBrains Mono', monospace">Monospace</option>
+                <option value="'Microsoft YaHei', 'PingFang SC', sans-serif">微软雅黑</option>
+                <option value="'Noto Serif SC', 'SimSun', serif">宋体</option>
+              </select>
+            </div>
+            <div className="settings-row">
+              <label className="settings-row-label">字号</label>
+              <select
+                className="settings-select settings-select-inline"
+                value={settings.fontSize || 16}
+                onChange={e => setSettings({...settings, fontSize: Number(e.target.value)})}
+              >
+                <option value={14}>14px</option>
+                <option value={15}>15px</option>
+                <option value={16}>16px</option>
+                <option value={18}>18px</option>
+                <option value={20}>20px</option>
+                <option value={22}>22px</option>
+                <option value={24}>24px</option>
+              </select>
+            </div>
           </div>
           <div className="settings-divider" />
           <div className="settings-section">
@@ -165,30 +201,27 @@ function SettingsDialog({ onClose, currentTheme, onThemeChange, onSaveSettings, 
           <div className="settings-divider" />
           <div className="settings-section">
             <h3 className="settings-section-title">标签页</h3>
-            <label className="settings-radio">
-              <input type="radio" name="closeAction" value="closeApp" checked={settings.closeLastTabAction === 'closeApp'} onChange={() => setSettings({...settings, closeLastTabAction: 'closeApp'})} />
-              <span>关闭最后一个标签页时关闭软件</span>
-            </label>
-            <label className="settings-radio">
-              <input type="radio" name="closeAction" value="newTab" checked={settings.closeLastTabAction === 'newTab'} onChange={() => setSettings({...settings, closeLastTabAction: 'newTab'})} />
-              <span>关闭最后一个标签页时创建新标签页</span>
-            </label>
+            <select
+              className="settings-select"
+              value={settings.closeLastTabAction}
+              onChange={e => setSettings({...settings, closeLastTabAction: e.target.value})}
+            >
+              <option value="closeApp">关闭最后一个标签页时关闭软件</option>
+              <option value="newTab">关闭最后一个标签页时创建新标签页</option>
+            </select>
           </div>
           <div className="settings-divider" />
           <div className="settings-section">
             <h3 className="settings-section-title">图片插入位置</h3>
-            <label className="settings-radio">
-              <input type="radio" name="imageMode" value="base64" checked={settings.imageInsertMode === 'base64'} onChange={() => setSettings({...settings, imageInsertMode: 'base64'})} />
-              <span>插入为 Base64</span>
-            </label>
-            <label className="settings-radio">
-              <input type="radio" name="imageMode" value="relative" checked={settings.imageInsertMode === 'relative'} onChange={() => setSettings({...settings, imageInsertMode: 'relative'})} />
-              <span>相对路径（图片保存至项目文件夹）</span>
-            </label>
-            <label className="settings-radio">
-              <input type="radio" name="imageMode" value="absolute" checked={settings.imageInsertMode === 'absolute'} onChange={() => setSettings({...settings, imageInsertMode: 'absolute'})} />
-              <span>绝对路径</span>
-            </label>
+            <select
+              className="settings-select"
+              value={settings.imageInsertMode}
+              onChange={e => setSettings({...settings, imageInsertMode: e.target.value})}
+            >
+              <option value="base64">插入为 Base64</option>
+              <option value="relative">相对路径（图片保存至项目文件夹）</option>
+              <option value="absolute">绝对路径</option>
+            </select>
           </div>
           {settings.imageInsertMode === 'relative' && (
             <div className="settings-section">

@@ -94,11 +94,14 @@ const DEFAULT_SETTINGS = {
   spellcheck: true,
   closeLastTabAction: 'closeApp',
   showToolbar: true,
+  fontFamily: 'default',
+  fontSize: 16,
   shortcuts: {
     newFile: 'Ctrl+N',
     open: 'Ctrl+O',
     save: 'Ctrl+S',
-    saveAs: 'Ctrl+Shift+S'
+    saveAs: 'Ctrl+Shift+S',
+    sidebarToggle: 'Ctrl+B'
   }
 }
 
@@ -109,6 +112,20 @@ function getSettings() {
   } catch {
     return DEFAULT_SETTINGS
   }
+}
+
+function applyFontSettings(settings) {
+  const fontFamily = settings.fontFamily && settings.fontFamily !== 'default'
+    ? settings.fontFamily
+    : 'inherit'
+  const fontSize = settings.fontSize || 16
+  let el = document.getElementById('editor-font')
+  if (!el) {
+    el = document.createElement('style')
+    el.id = 'editor-font'
+    document.head.appendChild(el)
+  }
+  el.textContent = `.ProseMirror { font-family: ${fontFamily} !important; font-size: ${fontSize}px !important; }`
 }
 
 function App() {
@@ -174,6 +191,14 @@ function App() {
       attributes: {
         class: 'prose-editor',
         spellcheck: spellcheck ? 'true' : 'false'
+      },
+      handleKeyDown: (view, event) => {
+        if ((event.ctrlKey || event.metaKey) && !event.shiftKey && !event.altKey && event.key.toLowerCase() === 'b') {
+          event.preventDefault()
+          setSidebarVisible(v => !v)
+          return true
+        }
+        return false
       },
       handlePaste: (view, event) => {
         const items = event.clipboardData?.items
@@ -666,6 +691,7 @@ function App() {
   const handleSaveSettings = useCallback((settings) => {
     setSpellcheck(settings.spellcheck !== false)
     setShowToolbar(settings.showToolbar !== false)
+    applyFontSettings(settings)
   }, [])
 
   const handleHwAccelChange = useCallback((value) => {
@@ -707,6 +733,11 @@ function App() {
 
   useEffect(() => {
     const settings = getSettings()
+    applyFontSettings(settings)
+  }, [])
+
+  useEffect(() => {
+    const settings = getSettings()
     const shortcuts = settings.shortcuts || DEFAULT_SETTINGS.shortcuts
 
     function parseShortcut(shortcut) {
@@ -740,6 +771,9 @@ function App() {
       } else if (matchesShortcut(e, shortcuts.saveAs)) {
         e.preventDefault()
         handleSaveAsFile()
+      } else if (matchesShortcut(e, shortcuts.sidebarToggle || 'Ctrl+B')) {
+        e.preventDefault()
+        setSidebarVisible(v => !v)
       }
     }
     document.addEventListener('keydown', handleKeyDown)
