@@ -1,0 +1,22 @@
+import { contextBridge, ipcRenderer } from 'electron'
+
+contextBridge.exposeInMainWorld('electronAPI', {
+  platform: process.platform,
+  openFile: () => ipcRenderer.invoke('dialog:openFile'),
+  saveFile: (content, filePath) => ipcRenderer.invoke('dialog:saveFile', { content, filePath }),
+  saveAsFile: (content) => ipcRenderer.invoke('dialog:saveAsFile', content),
+  openFileByPath: (filePath) => ipcRenderer.invoke('file:openByPath', filePath),
+  registerAssociation: () => ipcRenderer.invoke('file:registerAssociation'),
+  unregisterAssociation: () => ipcRenderer.invoke('file:unregisterAssociation'),
+  getAssociationStatus: () => ipcRenderer.invoke('file:getAssociationStatus'),
+  onFileOpened: (callback) => {
+    ipcRenderer.on('file:opened', (_event, data) => callback(data))
+  },
+  removeFileOpenedListener: () => {
+    ipcRenderer.removeAllListeners('file:opened')
+  },
+  setTitle: (title) => ipcRenderer.send('window:setTitle', title),
+  minimizeWindow: () => ipcRenderer.send('window:minimize'),
+  maximizeWindow: () => ipcRenderer.send('window:maximize'),
+  closeWindow: () => ipcRenderer.send('window:close')
+})
