@@ -10,6 +10,9 @@ const menuGroups = [
     { id: 'exportHtml', label: '导出 HTML' }
   ],
   [
+    { id: 'settings', label: '设置' }
+  ],
+  [
     { id: 'registerAssociation', label: '注册 .md 文件关联' },
     { id: 'unregisterAssociation', label: '取消 .md 文件关联' }
   ]

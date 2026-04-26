@@ -16,6 +16,7 @@ import { common, createLowlight } from 'lowlight'
 import { Markdown } from 'tiptap-markdown'
 import Toolbar from './components/Toolbar'
 import TitleBar from './components/TitleBar'
+import SettingsDialog from './components/SettingsDialog'
 import './styles/editor.css'
 
 const lowlight = createLowlight(common)
@@ -27,6 +28,7 @@ function App() {
   const [filePath, setFilePath] = useState('')
   const [modified, setModified] = useState(false)
   const [dragOver, setDragOver] = useState(false)
+  const [showSettings, setShowSettings] = useState(false)
   const contentRef = useRef('')
 
   const loadContent = useCallback(({ content, filePath: fp, fileName: fn }) => {
@@ -208,6 +210,10 @@ function App() {
     alert(result.message)
   }, [])
 
+  const handleOpenSettings = useCallback(() => {
+    setShowSettings(true)
+  }, [])
+
   const handleMenuAction = useCallback((action) => {
     switch (action) {
       case 'open': handleOpenFile(); break
@@ -216,8 +222,9 @@ function App() {
       case 'exportHtml': handleExportHtml(); break
       case 'registerAssociation': handleRegisterAssociation(); break
       case 'unregisterAssociation': handleUnregisterAssociation(); break
+      case 'settings': handleOpenSettings(); break
     }
-  }, [handleOpenFile, handleSaveFile, handleSaveAsFile, handleExportHtml, handleRegisterAssociation, handleUnregisterAssociation])
+  }, [handleOpenFile, handleSaveFile, handleSaveAsFile, handleExportHtml, handleRegisterAssociation, handleUnregisterAssociation, handleOpenSettings])
 
   useEffect(() => {
     function handleKeyDown(e) {
@@ -287,6 +294,7 @@ function App() {
         )}
       </div>
       {dragOver && <div className="drag-overlay"><span>释放以打开 .md 文件</span></div>}
+      {showSettings && <SettingsDialog onClose={() => setShowSettings(false)} />}
     </div>
   )
 }

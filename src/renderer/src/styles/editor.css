@@ -505,6 +505,62 @@
   border-radius: 8px;
 }
 
+/* ===== Settings Dialog ===== */
+.settings-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.settings-dialog {
+  width: 480px;
+  max-width: 90vw;
+  background: #16213e;
+  border: 1px solid #0f3460;
+  border-radius: 12px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+}
+
+.settings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #0f3460;
+  font-size: 15px;
+  font-weight: 600;
+  color: #e0e0e0;
+}
+
+.settings-close-btn {
+  background: transparent;
+  border: none;
+  color: #a8b2d1;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.settings-close-btn:hover {
+  background: rgba(168, 178, 209, 0.1);
+  color: #e0e0e0;
+}
+
+.settings-body {
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.settings-placeholder {
+  color: #555;
+  font-size: 14px;
+}
+
 /* ===== Scrollbar ===== */
 ::-webkit-scrollbar {
   width: 8px;
