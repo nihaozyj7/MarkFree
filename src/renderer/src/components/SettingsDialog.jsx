@@ -3,7 +3,8 @@ import React, { useState, useEffect } from 'react'
 const DEFAULT_SETTINGS = {
   imageInsertMode: 'base64',
   imageFolder: '.assets',
-  spellcheck: true
+  spellcheck: true,
+  closeLastTabAction: 'closeApp'
 }
 
 function SettingsDialog({ onClose, currentTheme, onThemeChange, onSaveSettings }) {
@@ -72,6 +73,18 @@ function SettingsDialog({ onClose, currentTheme, onThemeChange, onSaveSettings }
             <label className="settings-radio">
               <input type="checkbox" checked={settings.spellcheck !== false} onChange={e => setSettings({...settings, spellcheck: e.target.checked})} />
               <span>语法检查</span>
+            </label>
+          </div>
+          <div className="settings-divider" />
+          <div className="settings-section">
+            <h3 className="settings-section-title">标签页</h3>
+            <label className="settings-radio">
+              <input type="radio" name="closeAction" value="closeApp" checked={settings.closeLastTabAction === 'closeApp'} onChange={() => setSettings({...settings, closeLastTabAction: 'closeApp'})} />
+              <span>关闭最后一个标签页时关闭软件</span>
+            </label>
+            <label className="settings-radio">
+              <input type="radio" name="closeAction" value="newTab" checked={settings.closeLastTabAction === 'newTab'} onChange={() => setSettings({...settings, closeLastTabAction: 'newTab'})} />
+              <span>关闭最后一个标签页时创建新标签页</span>
             </label>
           </div>
           <div className="settings-divider" />

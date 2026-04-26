@@ -90,7 +90,8 @@ function convertToAbsolutePaths(md, filePath, imageFolder) {
 const DEFAULT_SETTINGS = {
   imageInsertMode: 'base64',
   imageFolder: '.assets',
-  spellcheck: true
+  spellcheck: true,
+  closeLastTabAction: 'closeApp'
 }
 
 function getSettings() {
@@ -128,6 +129,7 @@ function App() {
   const [spellcheck, setSpellcheck] = useState(() => getSettings().spellcheck !== false)
   const [sidebarVisible, setSidebarVisible] = useState(true)
   const [folderFiles, setFolderFiles] = useState([])
+  const [currentFolderPath, setCurrentFolderPath] = useState('')
   const contentRef = useRef('')
   const modifiedRef = useRef(false)
   const filePathRef = useRef('')
@@ -327,8 +329,17 @@ function App() {
 
     if (tabId === activeTabIdRef.current) {
       if (newTabs.length === 0) {
-        activeTabIdRef.current = null
-        setActiveTabId(null)
+        const settings = getSettings()
+        if (settings.closeLastTabAction === 'closeApp') {
+          window.electronAPI.closeWindow()
+        } else {
+          const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 8)
+          const newTab = { id, fileName: '未命名', filePath: '', content: '', modified: false, savedContent: '' }
+          tabsRef.current = [newTab]
+          setTabs([newTab])
+          activeTabIdRef.current = id
+          setActiveTabId(id)
+        }
       } else {
         const nextIdx = Math.min(idx, newTabs.length - 1)
         activeTabIdRef.current = newTabs[nextIdx].id
@@ -601,8 +612,13 @@ function App() {
     setShowSettings(true)
   }, [])
 
+  const handleNewFile = useCallback(() => {
+    addTab({ content: '', filePath: '', fileName: '未命名' })
+  }, [addTab])
+
   const handleMenuAction = useCallback((action) => {
     switch (action) {
+      case 'newFile': handleNewFile(); break
       case 'open': handleOpenFile(); break
       case 'openFolder': handleOpenFolder(); break
       case 'save': handleSaveFile(); break
@@ -612,7 +628,7 @@ function App() {
       case 'unregisterAssociation': handleUnregisterAssociation(); break
       case 'settings': handleOpenSettings(); break
     }
-  }, [handleOpenFile, handleOpenFolder, handleSaveFile, handleSaveAsFile, handleExportHtml, handleRegisterAssociation, handleUnregisterAssociation, handleOpenSettings])
+  }, [handleNewFile, handleOpenFile, handleOpenFolder, handleSaveFile, handleSaveAsFile, handleExportHtml, handleRegisterAssociation, handleUnregisterAssociation, handleOpenSettings])
 
   const handleToggleSidebar = useCallback(() => {
     setSidebarVisible(v => !v)
@@ -621,6 +637,7 @@ function App() {
   const handleSelectFolder = useCallback(async () => {
     const folderPath = await window.electronAPI.selectFolder()
     if (!folderPath) return
+    setCurrentFolderPath(folderPath)
     const files = await window.electronAPI.listMdFiles(folderPath)
     setFolderFiles(files)
   }, [])
@@ -666,7 +683,10 @@ function App() {
   useEffect(() => {
     function handleKeyDown(e) {
       const mod = e.ctrlKey || e.metaKey
-      if (mod && e.key === 'o') {
+      if (mod && e.key === 'n') {
+        e.preventDefault()
+        handleNewFile()
+      } else if (mod && e.key === 'o') {
         e.preventDefault()
         handleOpenFile()
       } else if (mod && e.key === 's') {
@@ -677,7 +697,7 @@ function App() {
     }
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [handleOpenFile, handleSaveFile, handleSaveAsFile])
+  }, [handleNewFile, handleOpenFile, handleSaveFile, handleSaveAsFile])
 
   const handleCopyMarkdown = useCallback(() => {
     if (editor) {
@@ -705,6 +725,7 @@ function App() {
         onSwitchTab={switchTab}
         onCloseTab={closeTab}
         onMenuAction={handleMenuAction}
+        onAddTab={handleNewFile}
       />
       <Toolbar
         editor={editor}
@@ -721,8 +742,9 @@ function App() {
             tabs={tabs}
             activeTabId={activeTabId}
             onSwitchTab={switchTab}
-            onOpenFile={handleSelectFolder}
             folderFiles={folderFiles}
+            folderPath={currentFolderPath}
+            onOpenFolder={handleSelectFolder}
             onOpenFolderFile={handleOpenFolderFile}
           />
         )}

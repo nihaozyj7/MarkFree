@@ -216,6 +216,38 @@
   margin: 4px 8px;
 }
 
+.tb-tab-add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin: 0 4px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+  -webkit-app-region: no-drag;
+}
+
+.tb-tab-add:hover {
+  background: var(--hover-bg);
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.title-menu-group-label {
+  padding: 4px 12px 2px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
 .title-menu-item {
   display: flex;
   align-items: center;

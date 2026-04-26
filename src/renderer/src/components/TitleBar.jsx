@@ -1,25 +1,38 @@
 import React, { useState, useRef, useEffect } from 'react'
 
 const menuGroups = [
-  [
-    { id: 'open', label: '打开文件', shortcut: 'Ctrl+O' },
-    { id: 'openFolder', label: '打开文件夹' },
-    { id: 'save', label: '保存', shortcut: 'Ctrl+S' },
-    { id: 'saveAs', label: '另存为', shortcut: 'Ctrl+Shift+S' }
-  ],
-  [
-    { id: 'exportHtml', label: '导出 HTML' }
-  ],
-  [
-    { id: 'settings', label: '设置' }
-  ],
-  [
-    { id: 'registerAssociation', label: '注册 .md 文件关联' },
-    { id: 'unregisterAssociation', label: '取消 .md 文件关联' }
-  ]
+  {
+    label: '文件',
+    items: [
+      { id: 'newFile', label: '新建文件', shortcut: 'Ctrl+N' },
+      { id: 'open', label: '打开文件', shortcut: 'Ctrl+O' },
+      { id: 'openFolder', label: '打开文件夹' },
+      { id: 'save', label: '保存', shortcut: 'Ctrl+S' },
+      { id: 'saveAs', label: '另存为', shortcut: 'Ctrl+Shift+S' }
+    ]
+  },
+  {
+    label: '导出',
+    items: [
+      { id: 'exportHtml', label: '导出 HTML' }
+    ]
+  },
+  {
+    label: '设置',
+    items: [
+      { id: 'settings', label: '设置' }
+    ]
+  },
+  {
+    label: '文件关联',
+    items: [
+      { id: 'registerAssociation', label: '注册 .md 文件关联' },
+      { id: 'unregisterAssociation', label: '取消 .md 文件关联' }
+    ]
+  }
 ]
 
-function TitleBar({ tabs, activeTabId, onSwitchTab, onCloseTab, onMenuAction }) {
+function TitleBar({ tabs, activeTabId, onSwitchTab, onCloseTab, onMenuAction, onAddTab }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef(null)
   const tabListRef = useRef(null)
@@ -98,6 +111,12 @@ function TitleBar({ tabs, activeTabId, onSwitchTab, onCloseTab, onMenuAction }) 
               </button>
             </div>
           ))}
+          <button className="tb-tab-add" onClick={() => onAddTab?.()} title="新建标签页">
+            <svg viewBox="0 0 14 14" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="7" y1="2" x2="7" y2="12" />
+              <line x1="2" y1="7" x2="12" y2="7" />
+            </svg>
+          </button>
           <div className="title-bar-spacer"></div>
         </div>
       </div>
@@ -124,7 +143,8 @@ function TitleBar({ tabs, activeTabId, onSwitchTab, onCloseTab, onMenuAction }) 
           {menuGroups.map((group, gi) => (
             <React.Fragment key={gi}>
               {gi > 0 && <div className="title-menu-divider" />}
-              {group.map(item => (
+              <div className="title-menu-group-label">{group.label}</div>
+              {group.items.map(item => (
                 <div key={item.id} className="title-menu-item" onClick={() => handleItemClick(item.id)}>
                   <span>{item.label}</span>
                   {item.shortcut && <span className="title-menu-shortcut">{item.shortcut}</span>}
