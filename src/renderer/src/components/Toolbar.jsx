@@ -33,14 +33,17 @@ const TOOL_GROUPS = [
       const url = window.prompt('输入链接 URL:')
       if (url) e.chain().focus().setLink({ href: url }).run()
     }, isActive: (e) => e.isActive('link') },
-    { id: 'image', label: '🖼', action: (e) => {
-      const url = window.prompt('输入图片 URL:')
-      if (url) e.chain().focus().setImage({ src: url }).run()
+    { id: 'image', label: '🖼', action: (e, onInsertImage) => {
+      if (onInsertImage) onInsertImage()
+      else {
+        const url = window.prompt('输入图片 URL:')
+        if (url) e.chain().focus().setImage({ src: url }).run()
+      }
     }, isActive: () => false }
   ]
 ]
 
-function Toolbar({ editor, showPreview, onTogglePreview, onCopyMarkdown, onPasteMarkdown, onExportHtml }) {
+function Toolbar({ editor, showPreview, onTogglePreview, onCopyMarkdown, onPasteMarkdown, onExportHtml, onInsertImage }) {
   const handleUndo = useCallback(() => editor.chain().focus().undo().run(), [editor])
   const handleRedo = useCallback(() => editor.chain().focus().redo().run(), [editor])
 
@@ -56,7 +59,7 @@ function Toolbar({ editor, showPreview, onTogglePreview, onCopyMarkdown, onPaste
                   <button
                     key={item.id}
                     className={`toolbar-btn ${item.isActive(editor) ? 'active' : ''}`}
-                    onClick={() => item.action(editor)}
+                    onClick={() => item.action(editor, onInsertImage)}
                     title={item.id}
                     style={item.style}
                   >

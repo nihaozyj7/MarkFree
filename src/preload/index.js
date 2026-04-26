@@ -6,6 +6,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   saveFile: (content, filePath) => ipcRenderer.invoke('dialog:saveFile', { content, filePath }),
   saveAsFile: (content) => ipcRenderer.invoke('dialog:saveAsFile', content),
   openFileByPath: (filePath) => ipcRenderer.invoke('file:openByPath', filePath),
+  selectImageFile: () => ipcRenderer.invoke('dialog:selectImageFile'),
+  saveImageToDisk: (params) => ipcRenderer.invoke('image:saveToDisk', params),
   registerAssociation: () => ipcRenderer.invoke('file:registerAssociation'),
   unregisterAssociation: () => ipcRenderer.invoke('file:unregisterAssociation'),
   getAssociationStatus: () => ipcRenderer.invoke('file:getAssociationStatus'),

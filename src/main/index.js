@@ -1,6 +1,7 @@
 import { app, shell, BrowserWindow, ipcMain, dialog } from 'electron'
-import { join } from 'path'
-import { readFileSync, writeFileSync } from 'fs'
+import { join, resolve, extname } from 'path'
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs'
+import { createHash } from 'crypto'
 import { execFile } from 'child_process'
 
 let mainWindow
@@ -107,6 +108,63 @@ ipcMain.handle('dialog:saveAsFile', async (_event, content) => {
   if (result.canceled) return null
   writeFileSync(result.filePath, content, 'utf-8')
   return { filePath: result.filePath, fileName: result.filePath.split(/[/\\]/).pop() }
+})
+
+const MIME_MAP = {
+  '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
+  '.gif': 'image/gif', '.svg': 'image/svg+xml', '.webp': 'image/webp',
+  '.bmp': 'image/bmp', '.ico': 'image/x-icon'
+}
+
+ipcMain.handle('dialog:selectImageFile', async () => {
+  try {
+    const result = await dialog.showOpenDialog(mainWindow, {
+      properties: ['openFile'],
+      filters: [{ name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp', 'bmp', 'ico'] }]
+    })
+    if (result.canceled || result.filePaths.length === 0) return null
+    const filePath = result.filePaths[0]
+    const data = readFileSync(filePath)
+    const ext = extname(filePath).toLowerCase()
+    return { filePath, base64: data.toString('base64'), ext, mime: MIME_MAP[ext] || 'image/png' }
+  } catch (err) {
+    return { error: err.message }
+  }
+})
+
+ipcMain.handle('image:saveToDisk', async (_event, { base64Data, ext, folderPath, naming, fileDir }) => {
+  try {
+    let targetDir
+    if (folderPath.startsWith('./') || folderPath.startsWith('.\\')) {
+      targetDir = resolve(fileDir, folderPath)
+    } else if (folderPath.startsWith('/') || /^[a-zA-Z]:\\/.test(folderPath)) {
+      targetDir = folderPath
+    } else {
+      targetDir = resolve(fileDir, folderPath)
+    }
+
+    if (!existsSync(targetDir)) {
+      mkdirSync(targetDir, { recursive: true })
+    }
+
+    let filename
+    if (naming === 'hash') {
+      const hash = createHash('sha256').update(Buffer.from(base64Data, 'base64')).digest('hex').slice(0, 16)
+      filename = hash + ext
+    } else {
+      filename = Date.now() + ext
+    }
+
+    const absolutePath = join(targetDir, filename)
+    writeFileSync(absolutePath, Buffer.from(base64Data, 'base64'))
+
+    const normalizedFolder = folderPath.replace(/^\.\//, '').replace(/\\/g, '/')
+    const relativePath = `./${normalizedFolder}/${filename}`
+
+    return { absolutePath, relativePath }
+  } catch (err) {
+    return { error: err.message }
+  }
 })
 
 ipcMain.handle('file:openByPath', async (_event, filePath) => {
