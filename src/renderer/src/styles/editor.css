@@ -27,7 +27,7 @@
 
 .title-bar-spacer {
   flex: 1;
-  min-width: 0;
+  min-width: 32px;
   height: 100%;
 }
 
@@ -122,8 +122,8 @@
   user-select: none;
   border-right: 1px solid var(--border-color);
   transition: background 0.1s ease;
-  min-width: 0;
-  flex-shrink: 0;
+  min-width: 64px;
+  flex-shrink: 1;
   position: relative;
 }
 
@@ -160,6 +160,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 140px;
+  min-width: 0;
 }
 
 .tb-tab-modified {

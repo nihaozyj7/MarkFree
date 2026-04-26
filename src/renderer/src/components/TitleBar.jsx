@@ -117,8 +117,8 @@ function TitleBar({ tabs, activeTabId, onSwitchTab, onCloseTab, onMenuAction, on
               <line x1="2" y1="7" x2="12" y2="7" />
             </svg>
           </button>
-          <div className="title-bar-spacer"></div>
         </div>
+        <div className="title-bar-spacer"></div>
       </div>
       <div className="title-bar-controls">
           <button className="title-btn title-btn-minimize" onClick={() => window.electronAPI.minimizeWindow()}>
