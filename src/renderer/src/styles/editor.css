@@ -507,13 +507,13 @@
 
 .ProseMirror ul[data-type="taskList"] li {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 8px;
 }
 
 .ProseMirror ul[data-type="taskList"] li label {
   flex-shrink: 0;
-  margin-top: 4px;
+  display: flex;
 }
 
 .ProseMirror ul[data-type="taskList"] li label input[type="checkbox"] {
