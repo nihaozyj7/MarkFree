@@ -72,7 +72,7 @@ function TitleBar({ tabs, activeTabId, onSwitchTab, onCloseTab, onMenuAction, on
   return (
     <div className="title-bar">
       <div className="title-bar-left">
-        <div className="title-bar-brand" onClick={handleBrandClick}>
+        <div className="title-bar-brand" onClick={ handleBrandClick }>
           <svg className="title-bar-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
             <polyline points="14 2 14 8 20 8" />
@@ -85,29 +85,29 @@ function TitleBar({ tabs, activeTabId, onSwitchTab, onCloseTab, onMenuAction, on
             <polygon points="6,9 12,15 18,9" />
           </svg>
         </div>
-        <div className="title-bar-tabs" ref={tabListRef}>
-          {tabs.map(tab => (
+        <div className="title-bar-tabs" ref={ tabListRef }>
+          { tabs.map(tab => (
             <div
-              key={tab.id}
-              className={`tb-tab${tab.id === activeTabId ? ' active' : ''}${tab.modified ? ' modified' : ''}`}
-              onClick={() => onSwitchTab(tab.id)}
-              onMouseDown={(e) => {
+              key={ tab.id }
+              className={ `tb-tab${tab.id === activeTabId ? ' active' : ''}${tab.modified ? ' modified' : ''}` }
+              onClick={ () => onSwitchTab(tab.id) }
+              onMouseDown={ (e) => {
                 if (e.button === 1) {
                   e.preventDefault()
                   onCloseTab(tab.id)
                 }
-              }}
-              title={tab.filePath || tab.fileName}
+              } }
+              title={ tab.filePath || tab.fileName }
             >
               <svg className="tb-tab-icon" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                 <polyline points="14 2 14 8 20 8" />
               </svg>
-              <span className="tb-tab-name">{tab.fileName}</span>
-              {tab.modified && <span className="tb-tab-modified">*</span>}
+              <span className="tb-tab-name">{ tab.fileName }</span>
+              { tab.modified && <span className="tb-tab-modified">*</span> }
               <button
                 className="tb-tab-close"
-                onClick={(e) => { e.stopPropagation(); onCloseTab(tab.id) }}
+                onClick={ (e) => { e.stopPropagation(); onCloseTab(tab.id) } }
                 title="关闭"
               >
                 <svg viewBox="0 0 12 12" width="10" height="10">
@@ -116,8 +116,8 @@ function TitleBar({ tabs, activeTabId, onSwitchTab, onCloseTab, onMenuAction, on
                 </svg>
               </button>
             </div>
-          ))}
-          <button className="tb-tab-add" onClick={() => onAddTab?.()} title="新建标签页">
+          )) }
+          <button className="tb-tab-add" onClick={ () => onAddTab?.() } title="新建标签页">
             <svg viewBox="0 0 14 14" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2">
               <line x1="7" y1="2" x2="7" y2="12" />
               <line x1="2" y1="7" x2="12" y2="7" />
@@ -127,39 +127,39 @@ function TitleBar({ tabs, activeTabId, onSwitchTab, onCloseTab, onMenuAction, on
         <div className="title-bar-spacer"></div>
       </div>
       <div className="title-bar-controls">
-          <button className="title-btn title-btn-minimize" onClick={() => window.electronAPI.minimizeWindow()}>
-            <svg viewBox="0 0 12 12" width="12" height="12">
-              <rect x="1" y="5.5" width="10" height="1" fill="currentColor" />
-            </svg>
-          </button>
-          <button className="title-btn title-btn-maximize" onClick={() => window.electronAPI.maximizeWindow()}>
-            <svg viewBox="0 0 12 12" width="12" height="12">
-              <rect x="1.5" y="1.5" width="9" height="9" rx="1" fill="none" stroke="currentColor" strokeWidth="1.2" />
-            </svg>
-          </button>
-          <button className="title-btn title-btn-close" onClick={() => window.electronAPI.closeWindow()}>
-            <svg viewBox="0 0 12 12" width="12" height="12">
-              <line x1="2" y1="2" x2="10" y2="10" stroke="currentColor" strokeWidth="1.5" />
-              <line x1="10" y1="2" x2="2" y2="10" stroke="currentColor" strokeWidth="1.5" />
-            </svg>
-          </button>
-        </div>
-      {menuOpen && (
-        <div className="title-menu" ref={menuRef}>
-          {menuGroups.map((group, gi) => (
-            <React.Fragment key={gi}>
-              {gi > 0 && <div className="title-menu-divider" />}
-              <div className="title-menu-group-label">{group.label}</div>
-              {group.items.map(item => (
-                <div key={item.id} className="title-menu-item" onClick={() => handleItemClick(item.id)}>
-                  <span>{item.label}</span>
-                  {item.shortcut && <span className="title-menu-shortcut">{item.shortcut}</span>}
+        <button className="title-btn title-btn-minimize" onClick={ () => window.electronAPI.minimizeWindow() }>
+          <svg viewBox="0 0 12 12" width="12" height="12">
+            <rect x="1" y="5.5" width="10" height="1" fill="currentColor" />
+          </svg>
+        </button>
+        <button className="title-btn title-btn-maximize" onClick={ () => window.electronAPI.maximizeWindow() }>
+          <svg viewBox="0 0 12 12" width="12" height="12">
+            <rect x="1.5" y="1.5" width="9" height="9" rx="1" fill="none" stroke="currentColor" strokeWidth="1.2" />
+          </svg>
+        </button>
+        <button className="title-btn title-btn-close" onClick={ () => window.electronAPI.closeWindow() }>
+          <svg viewBox="0 0 12 12" width="12" height="12">
+            <line x1="2" y1="2" x2="10" y2="10" stroke="currentColor" strokeWidth="1.5" />
+            <line x1="10" y1="2" x2="2" y2="10" stroke="currentColor" strokeWidth="1.5" />
+          </svg>
+        </button>
+      </div>
+      { menuOpen && (
+        <div className="title-menu" ref={ menuRef }>
+          { menuGroups.map((group, gi) => (
+            <React.Fragment key={ gi }>
+              { gi > 0 && <div className="title-menu-divider" /> }
+              <div className="title-menu-group-label">{ group.label }</div>
+              { group.items.map(item => (
+                <div key={ item.id } className="title-menu-item" onClick={ () => handleItemClick(item.id) }>
+                  <span>{ item.label }</span>
+                  { item.shortcut && <span className="title-menu-shortcut">{ item.shortcut }</span> }
                 </div>
-              ))}
+              )) }
             </React.Fragment>
-          ))}
+          )) }
         </div>
-      )}
+      ) }
     </div>
   )
 }
