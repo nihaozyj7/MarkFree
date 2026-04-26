@@ -199,16 +199,13 @@ function App() {
       const file = e.dataTransfer.files[0]
       if (!file || !/\.md$|\.markdown$/i.test(file.name)) return
 
-      if (file.path) {
-        const result = await window.electronAPI.openFileByPath(file.path)
-        if (result) loadContent(result)
-      } else {
-        const reader = new FileReader()
-        reader.onload = (event) => {
-          loadContent({ content: event.target.result, filePath: '', fileName: file.name })
-        }
-        reader.readAsText(file)
+      const filePath = window.electronAPI.getPendingDropPath() || file.path || ''
+
+      const reader = new FileReader()
+      reader.onload = (event) => {
+        loadContent({ content: event.target.result, filePath, fileName: file.name })
       }
+      reader.readAsText(file)
     }
 
     document.addEventListener('dragenter', handleDragEnter)

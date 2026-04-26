@@ -2,23 +2,32 @@
   "name": "markdown-wysiwyg",
   "version": "1.0.0",
   "private": true,
+  "description": "A WYSIWYG Markdown editor built with Electron, React, and TipTap.",
   "main": "./out/main/index.js",
   "scripts": {
     "dev": "electron-vite dev",
     "build": "electron-vite build",
     "preview": "electron-vite preview",
-    "pack": "npm run build && electron-builder --win --x64"
+    "generate-icon": "node scripts/generate-icon.mjs",
+    "pack": "npm run generate-icon && npm run build && electron-builder --win --x64",
+    "pack:dir": "npm run generate-icon && npm run build && electron-builder --win --x64 --dir"
   },
   "build": {
     "appId": "com.markdown.wysiwyg",
     "productName": "Markdown WYSIWYG",
     "directories": {
-      "output": "release"
+      "output": "dist"
     },
     "files": [
       "out/**/*",
       "node_modules/**/*",
       "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "resources/icon.png",
+        "to": "icon.png"
+      }
     ],
     "win": {
       "target": [
@@ -27,13 +36,28 @@
           "arch": ["x64"]
         }
       ],
-      "icon": null
+      "icon": "resources/icon.png"
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
-      "createDesktopShortcut": true
-    }
+      "createDesktopShortcut": true,
+      "shortcutName": "Markdown WYSIWYG"
+    },
+    "fileAssociations": [
+      {
+        "ext": "md",
+        "name": "Markdown",
+        "description": "Markdown File",
+        "role": "Editor"
+      },
+      {
+        "ext": "markdown",
+        "name": "Markdown",
+        "description": "Markdown File",
+        "role": "Editor"
+      }
+    ]
   },
   "dependencies": {
     "@tiptap/core": "^2.11.5",
@@ -61,6 +85,7 @@
     "electron": "^33.3.1",
     "electron-builder": "^26.8.1",
     "electron-vite": "^2.3.0",
+    "sharp": "^0.34.5",
     "vite": "^5.4.11"
   }
 }

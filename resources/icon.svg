@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#8b5cf6"/>
+    </linearGradient>
+  </defs>
+  <rect width="256" height="256" rx="48" fill="url(#bg)"/>
+  <rect x="48" y="32" width="160" height="192" rx="12" fill="#fff" opacity="0.95"/>
+  <rect x="48" y="32" width="160" height="40" rx="12" fill="#e8e8e8"/>
+  <circle cx="76" cy="52" r="6" fill="#ef4444"/>
+  <circle cx="100" cy="52" r="6" fill="#f59e0b"/>
+  <circle cx="124" cy="52" r="6" fill="#22c55e"/>
+  <text x="144" y="60" font-family="Arial" font-size="22" font-weight="bold" fill="#888">*.md</text>
+  <text x="72" y="108" font-family="monospace" font-size="22" fill="#1f2937" font-weight="bold"># Heading</text>
+  <text x="72" y="140" font-family="monospace" font-size="18" fill="#4b5563">**bold**</text>
+  <text x="72" y="168" font-family="monospace" font-size="18" fill="#4b5563">- list item</text>
+  <text x="72" y="196" font-family="monospace" font-size="18" fill="#6366f1">[link](url)</text>
+  <line x1="48" y1="232" x2="208" y2="232" stroke="#6366f1" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="56" cy="232" r="5" fill="#6366f1"/>
+  <circle cx="74" cy="232" r="5" fill="#8b5cf6"/>
+  <circle cx="92" cy="232" r="5" fill="#a78bfa"/>
+</svg>

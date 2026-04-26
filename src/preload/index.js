@@ -1,4 +1,16 @@
-import { contextBridge, ipcRenderer } from 'electron'
+import { contextBridge, ipcRenderer, webUtils } from 'electron'
+
+let pendingDropPath = ''
+
+document.addEventListener('drop', (e) => {
+  const file = e.dataTransfer?.files?.[0]
+  if (!file || !/\.md$|\.markdown$/i.test(file.name)) return
+  try {
+    pendingDropPath = webUtils.getPathForFile(file) || ''
+  } catch {
+    pendingDropPath = ''
+  }
+}, true)
 
 contextBridge.exposeInMainWorld('electronAPI', {
   platform: process.platform,
@@ -20,5 +32,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   setTitle: (title) => ipcRenderer.send('window:setTitle', title),
   minimizeWindow: () => ipcRenderer.send('window:minimize'),
   maximizeWindow: () => ipcRenderer.send('window:maximize'),
-  closeWindow: () => ipcRenderer.send('window:close')
+  closeWindow: () => ipcRenderer.send('window:close'),
+  getPendingDropPath: () => {
+    const path = pendingDropPath
+    pendingDropPath = ''
+    return path
+  }
 })
