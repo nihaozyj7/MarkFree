@@ -21,7 +21,7 @@ const SHORTCUT_LABELS = {
   saveAs: '另存为'
 }
 
-function SettingsDialog({ onClose, currentTheme, onThemeChange, onSaveSettings }) {
+function SettingsDialog({ onClose, currentTheme, onThemeChange, onSaveSettings, hwAccel, onHwAccelChange }) {
   const [settings, setSettings] = useState(() => {
     try {
       const saved = localStorage.getItem('editorSettings')
@@ -105,6 +105,23 @@ function SettingsDialog({ onClose, currentTheme, onThemeChange, onSaveSettings }
                 打开主题文件夹
               </button>
             </div>
+          </div>
+          <div className="settings-divider" />
+          <div className="settings-section">
+            <h3 className="settings-section-title">硬件加速</h3>
+            <p className="settings-section-desc">修改后需重启应用生效</p>
+            <label className="settings-radio">
+              <input type="radio" name="hwAccel" value="auto" checked={hwAccel === 'auto'} onChange={() => onHwAccelChange('auto')} />
+              <span>自动（推荐） — 启动时抑制屏闪，保持流畅滚动</span>
+            </label>
+            <label className="settings-radio">
+              <input type="radio" name="hwAccel" value="always" checked={hwAccel === 'always'} onChange={() => onHwAccelChange('always')} />
+              <span>启用 — 始终开启硬件加速，滚动最流畅</span>
+            </label>
+            <label className="settings-radio">
+              <input type="radio" name="hwAccel" value="never" checked={hwAccel === 'never'} onChange={() => onHwAccelChange('never')} />
+              <span>禁用 — 关闭硬件加速，避免启动屏闪</span>
+            </label>
           </div>
           <div className="settings-divider" />
           <div className="settings-section">

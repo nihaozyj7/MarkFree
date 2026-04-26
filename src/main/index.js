@@ -7,6 +7,35 @@ import { DARK_THEME, LIGHT_THEME } from './themes/defaults.js'
 
 let mainWindow
 
+function getSettingsPath() {
+  return join(app.getPath('userData'), 'settings.json')
+}
+
+function loadSettings() {
+  try {
+    const p = getSettingsPath()
+    if (existsSync(p)) {
+      return JSON.parse(readFileSync(p, 'utf-8'))
+    }
+  } catch {}
+  return {}
+}
+
+function saveSettingsFile(settings) {
+  try {
+    const dir = app.getPath('userData')
+    if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
+    writeFileSync(getSettingsPath(), JSON.stringify(settings, null, 2), 'utf-8')
+  } catch {}
+}
+
+const appSettings = loadSettings()
+const HW_ACCEL_MODE = appSettings.hardwareAcceleration || 'auto'
+
+if (HW_ACCEL_MODE === 'never') {
+  app.disableHardwareAcceleration()
+}
+
 const gotTheLock = app.requestSingleInstanceLock()
 if (!gotTheLock) {
   app.quit()
@@ -147,6 +176,13 @@ ipcMain.handle('theme:load', async (_event, name) => {
 ipcMain.handle('theme:openFolder', async () => {
   const dir = ensureThemesDir()
   shell.openPath(dir)
+})
+
+ipcMain.handle('settings:get', async () => loadSettings())
+
+ipcMain.handle('settings:save', async (_event, settings) => {
+  saveSettingsFile(settings)
+  return settings
 })
 
 ipcMain.handle('dialog:openFile', async () => {

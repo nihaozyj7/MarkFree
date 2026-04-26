@@ -82,4 +82,10 @@ body {
 #root {
   width: 100vw;
   height: 100vh;
+  animation: appFadeIn 0.2s ease-out;
+}
+
+@keyframes appFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }

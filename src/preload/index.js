@@ -46,5 +46,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   getThemes: () => ipcRenderer.invoke('theme:list'),
   loadTheme: (name) => ipcRenderer.invoke('theme:load', name),
-  openThemeFolder: () => ipcRenderer.invoke('theme:openFolder')
+  openThemeFolder: () => ipcRenderer.invoke('theme:openFolder'),
+
+  getAppSettings: () => ipcRenderer.invoke('settings:get'),
+  saveAppSettings: (settings) => ipcRenderer.invoke('settings:save', settings)
 })
