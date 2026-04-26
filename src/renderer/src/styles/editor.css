@@ -858,3 +858,212 @@
 ::-webkit-scrollbar-thumb:hover {
   background: var(--scrollbar-thumb-hover);
 }
+
+/* ===== Status Bar (VSCode-like) ===== */
+.status-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 24px;
+  background: var(--status-bar-bg);
+  border-top: 1px solid var(--border-color);
+  font-size: 12px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.status-bar-left {
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+
+.status-bar-right {
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+
+.status-bar-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 0 8px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background 0.1s ease, color 0.1s ease;
+}
+
+.status-bar-btn:hover {
+  background: var(--hover-bg);
+  color: var(--text-primary);
+}
+
+.status-bar-btn.active {
+  background: var(--hover-bg);
+  color: var(--text-primary);
+}
+
+.status-bar-text {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  padding: 0 8px;
+  white-space: nowrap;
+}
+
+.status-bar-text:hover {
+  background: var(--hover-bg);
+}
+
+.status-bar-tabs-count {
+  cursor: default;
+}
+
+.status-bar-modified {
+  color: #e2b714;
+}
+
+.status-bar-file {
+  color: var(--text-secondary);
+  cursor: default;
+}
+
+.status-bar-stat {
+  cursor: default;
+}
+
+.status-bar-encoding {
+  cursor: default;
+}
+
+/* ===== Sidebar ===== */
+.sidebar {
+  width: 220px;
+  min-width: 220px;
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sidebar-header {
+  display: flex;
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.sidebar-header-btn {
+  flex: 1;
+  padding: 8px 4px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.1s ease, color 0.1s ease;
+  border-bottom: 2px solid transparent;
+}
+
+.sidebar-header-btn:hover {
+  color: var(--text-primary);
+  background: var(--hover-bg);
+}
+
+.sidebar-header-btn.active {
+  color: var(--text-primary);
+  border-bottom-color: var(--color-accent);
+}
+
+.sidebar-content {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.sidebar-list-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.sidebar-refresh-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-radius: 3px;
+  transition: background 0.1s ease, color 0.1s ease;
+}
+
+.sidebar-refresh-btn:hover {
+  background: var(--hover-bg);
+  color: var(--text-primary);
+}
+
+.sidebar-empty {
+  padding: 12px;
+  font-size: 12px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.1s ease;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.sidebar-item:hover {
+  background: var(--hover-bg);
+  color: var(--text-primary);
+}
+
+.sidebar-item.active {
+  background: var(--active-bg);
+  color: var(--text-primary);
+}
+
+.sidebar-item-icon {
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+
+.sidebar-item.active .sidebar-item-icon {
+  color: var(--color-accent);
+}
+
+.sidebar-item-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-item-modified {
+  color: var(--color-accent);
+  font-weight: 700;
+  margin-left: auto;
+}

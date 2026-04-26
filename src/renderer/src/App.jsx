@@ -31,6 +31,7 @@ import Toolbar from './components/Toolbar'
 import TitleBar from './components/TitleBar'
 import StatusBar from './components/StatusBar'
 import SettingsDialog from './components/SettingsDialog'
+import Sidebar from './components/Sidebar'
 import './styles/editor.css'
 
 const lowlight = createLowlight()
@@ -125,6 +126,8 @@ function App() {
   const [showSettings, setShowSettings] = useState(false)
   const [currentTheme, setCurrentTheme] = useState(() => localStorage.getItem('appTheme') || 'dark')
   const [spellcheck, setSpellcheck] = useState(() => getSettings().spellcheck !== false)
+  const [sidebarVisible, setSidebarVisible] = useState(true)
+  const [folderFiles, setFolderFiles] = useState([])
   const contentRef = useRef('')
   const modifiedRef = useRef(false)
   const filePathRef = useRef('')
@@ -611,6 +614,22 @@ function App() {
     }
   }, [handleOpenFile, handleOpenFolder, handleSaveFile, handleSaveAsFile, handleExportHtml, handleRegisterAssociation, handleUnregisterAssociation, handleOpenSettings])
 
+  const handleToggleSidebar = useCallback(() => {
+    setSidebarVisible(v => !v)
+  }, [])
+
+  const handleSelectFolder = useCallback(async () => {
+    const folderPath = await window.electronAPI.selectFolder()
+    if (!folderPath) return
+    const files = await window.electronAPI.listMdFiles(folderPath)
+    setFolderFiles(files)
+  }, [])
+
+  const handleOpenFolderFile = useCallback(async (filePath) => {
+    const result = await window.electronAPI.openFileByPath(filePath)
+    if (result) addTab(result)
+  }, [addTab])
+
   const handleThemeChange = useCallback((themeName) => {
     setCurrentTheme(themeName)
     localStorage.setItem('appTheme', themeName)
@@ -697,6 +716,16 @@ function App() {
         onInsertImage={handleInsertImage}
       />
       <div className="editor-wrapper">
+        {sidebarVisible && (
+          <Sidebar
+            tabs={tabs}
+            activeTabId={activeTabId}
+            onSwitchTab={switchTab}
+            onOpenFile={handleSelectFolder}
+            folderFiles={folderFiles}
+            onOpenFolderFile={handleOpenFolderFile}
+          />
+        )}
         <div className={`editor-area ${showPreview ? 'split' : 'full'}`}>
           <EditorContent editor={editor} className="editor-content" />
         </div>
@@ -720,7 +749,14 @@ function App() {
       </div>
       {dragOver && <div className="drag-overlay"><span>释放以打开 .md 文件</span></div>}
       {showSettings && <SettingsDialog onClose={() => setShowSettings(false)} currentTheme={currentTheme} onThemeChange={handleThemeChange} onSaveSettings={handleSaveSettings} />}
-      <StatusBar filePath={filePath} modified={modified} tabs={tabs} />
+      <StatusBar
+        editor={editor}
+        filePath={filePath}
+        modified={modified}
+        tabs={tabs}
+        onToggleSidebar={handleToggleSidebar}
+        sidebarVisible={sidebarVisible}
+      />
     </div>
   )
 }

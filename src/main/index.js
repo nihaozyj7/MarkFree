@@ -271,6 +271,29 @@ ipcMain.handle('file:openByPath', async (_event, filePath) => {
   }
 })
 
+ipcMain.handle('dialog:selectFolder', async () => {
+  const result = await dialog.showOpenDialog(mainWindow, {
+    properties: ['openDirectory']
+  })
+  if (result.canceled || result.filePaths.length === 0) return null
+  return result.filePaths[0]
+})
+
+ipcMain.handle('folder:listMdFiles', async (_event, folderPath) => {
+  try {
+    const entries = readdirSync(folderPath)
+    const files = entries
+      .filter(f => /\.md$|\.markdown$/i.test(f))
+      .map(f => ({
+        name: f,
+        filePath: join(folderPath, f)
+      }))
+    return files
+  } catch (err) {
+    return []
+  }
+})
+
 ipcMain.handle('file:registerAssociation', async () => {
   if (process.platform !== 'win32') {
     return { success: false, message: '仅支持 Windows 系统' }

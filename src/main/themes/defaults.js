@@ -64,6 +64,12 @@ export const DARK_THEME = `/* ===== 深色主题 (Dark Theme) ===== */
   --scrollbar-thumb: #0f3460;    /* 滚动条滑块 */
   --scrollbar-thumb-hover: #e94560; /* 滚动条滑块悬停 */
 
+  /* ===== 状态栏 ===== */
+  --status-bar-bg: #0f1a2e;      /* 状态栏背景 */
+
+  /* ===== 侧边栏 ===== */
+  --active-bg: rgba(233, 69, 96, 0.15); /* 侧边栏选中项背景 */
+
   /* ===== 预览面板 ===== */
   --preview-toggle-bg: #533483;  /* 预览切换按钮激活背景 */
 }
@@ -134,6 +140,12 @@ export const LIGHT_THEME = `/* ===== 浅色主题 (Light Theme) ===== */
   --scrollbar-track: #f0f0f0;       /* 滚动条轨道 */
   --scrollbar-thumb: #cccccc;       /* 滚动条滑块 */
   --scrollbar-thumb-hover: #999999; /* 滚动条滑块悬停 */
+
+  /* ===== 状态栏 ===== */
+  --status-bar-bg: #e8e8e8;        /* 状态栏背景 */
+
+  /* ===== 侧边栏 ===== */
+  --active-bg: rgba(233, 69, 96, 0.12); /* 侧边栏选中项背景 */
 
   /* ===== 预览面板 ===== */
   --preview-toggle-bg: #533483;  /* 预览切换按钮激活背景 */

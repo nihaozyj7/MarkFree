@@ -41,6 +41,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
     return path
   },
 
+  selectFolder: () => ipcRenderer.invoke('dialog:selectFolder'),
+  listMdFiles: (folderPath) => ipcRenderer.invoke('folder:listMdFiles', folderPath),
+
   getThemes: () => ipcRenderer.invoke('theme:list'),
   loadTheme: (name) => ipcRenderer.invoke('theme:load', name),
   openThemeFolder: () => ipcRenderer.invoke('theme:openFolder')
