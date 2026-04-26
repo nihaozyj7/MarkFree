@@ -4,7 +4,21 @@ const DEFAULT_SETTINGS = {
   imageInsertMode: 'base64',
   imageFolder: '.assets',
   spellcheck: true,
-  closeLastTabAction: 'closeApp'
+  closeLastTabAction: 'closeApp',
+  showToolbar: true,
+  shortcuts: {
+    newFile: 'Ctrl+N',
+    open: 'Ctrl+O',
+    save: 'Ctrl+S',
+    saveAs: 'Ctrl+Shift+S'
+  }
+}
+
+const SHORTCUT_LABELS = {
+  newFile: '新建文件',
+  open: '打开文件',
+  save: '保存',
+  saveAs: '另存为'
 }
 
 function SettingsDialog({ onClose, currentTheme, onThemeChange, onSaveSettings }) {
@@ -19,11 +33,36 @@ function SettingsDialog({ onClose, currentTheme, onThemeChange, onSaveSettings }
   const [themes, setThemes] = useState([])
   const [closing, setClosing] = useState(false)
   const [open, setOpen] = useState(false)
+  const [editingShortcut, setEditingShortcut] = useState(null)
 
   useEffect(() => {
     requestAnimationFrame(() => setOpen(true))
     window.electronAPI.getThemes().then(setThemes).catch(() => {})
   }, [])
+
+  useEffect(() => {
+    if (!editingShortcut) return
+    const handler = (e) => {
+      e.preventDefault()
+      e.stopPropagation()
+      const keys = []
+      if (e.ctrlKey || e.metaKey) keys.push('Ctrl')
+      if (e.shiftKey) keys.push('Shift')
+      if (e.altKey) keys.push('Alt')
+      const key = e.key
+      if (['Control', 'Shift', 'Alt', 'Meta'].includes(key)) return
+      let displayKey = key.length === 1 ? key.toUpperCase() : key === ' ' ? 'Space' : key.charAt(0).toUpperCase() + key.slice(1)
+      keys.push(displayKey)
+      const shortcut = keys.join('+')
+      setSettings(s => ({
+        ...s,
+        shortcuts: { ...s.shortcuts, [editingShortcut]: shortcut }
+      }))
+      setEditingShortcut(null)
+    }
+    window.addEventListener('keydown', handler, true)
+    return () => window.removeEventListener('keydown', handler, true)
+  }, [editingShortcut])
 
   const startClose = () => {
     setClosing(true)
@@ -74,6 +113,37 @@ function SettingsDialog({ onClose, currentTheme, onThemeChange, onSaveSettings }
               <input type="checkbox" checked={settings.spellcheck !== false} onChange={e => setSettings({...settings, spellcheck: e.target.checked})} />
               <span>语法检查</span>
             </label>
+            <label className="settings-radio">
+              <input type="checkbox" checked={settings.showToolbar !== false} onChange={e => setSettings({...settings, showToolbar: e.target.checked})} />
+              <span>显示工具栏</span>
+            </label>
+          </div>
+          <div className="settings-divider" />
+          <div className="settings-section">
+            <h3 className="settings-section-title">快捷键</h3>
+            {Object.keys(settings.shortcuts || DEFAULT_SETTINGS.shortcuts).map(key => (
+              <div key={key} className="settings-shortcut-row">
+                <span className="settings-shortcut-label">{SHORTCUT_LABELS[key] || key}</span>
+                <button
+                  className={`settings-shortcut-key${editingShortcut === key ? ' recording' : ''}`}
+                  onClick={() => setEditingShortcut(editingShortcut === key ? null : key)}
+                >
+                  {editingShortcut === key ? '按下快捷键...' : (settings.shortcuts?.[key] || DEFAULT_SETTINGS.shortcuts[key])}
+                </button>
+                {(settings.shortcuts?.[key] && settings.shortcuts[key] !== DEFAULT_SETTINGS.shortcuts[key]) && (
+                  <button
+                    className="settings-shortcut-reset"
+                    onClick={() => setSettings(s => ({
+                      ...s,
+                      shortcuts: { ...s.shortcuts, [key]: DEFAULT_SETTINGS.shortcuts[key] }
+                    }))}
+                    title="恢复默认"
+                  >
+                    ↺
+                  </button>
+                )}
+              </div>
+            ))}
           </div>
           <div className="settings-divider" />
           <div className="settings-section">

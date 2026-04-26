@@ -39,6 +39,7 @@
   --hover-bg-accent: rgba(233, 69, 96, 0.15);
   --accent-bg-subtle: rgba(233, 69, 96, 0.05);
   --selected-bg: rgba(233, 69, 96, 0.1);
+  --active-bg: rgba(233, 69, 96, 0.15);
   --settings-radio-hover: rgba(168, 178, 209, 0.08);
 
   /* ===== 阴影 ===== */

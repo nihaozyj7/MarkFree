@@ -32,6 +32,7 @@ import TitleBar from './components/TitleBar'
 import StatusBar from './components/StatusBar'
 import SettingsDialog from './components/SettingsDialog'
 import Sidebar from './components/Sidebar'
+import ContextMenu from './components/ContextMenu'
 import './styles/editor.css'
 
 const lowlight = createLowlight()
@@ -91,7 +92,14 @@ const DEFAULT_SETTINGS = {
   imageInsertMode: 'base64',
   imageFolder: '.assets',
   spellcheck: true,
-  closeLastTabAction: 'closeApp'
+  closeLastTabAction: 'closeApp',
+  showToolbar: true,
+  shortcuts: {
+    newFile: 'Ctrl+N',
+    open: 'Ctrl+O',
+    save: 'Ctrl+S',
+    saveAs: 'Ctrl+Shift+S'
+  }
 }
 
 function getSettings() {
@@ -127,9 +135,11 @@ function App() {
   const [showSettings, setShowSettings] = useState(false)
   const [currentTheme, setCurrentTheme] = useState(() => localStorage.getItem('appTheme') || 'dark')
   const [spellcheck, setSpellcheck] = useState(() => getSettings().spellcheck !== false)
+  const [showToolbar, setShowToolbar] = useState(() => getSettings().showToolbar !== false)
   const [sidebarVisible, setSidebarVisible] = useState(true)
   const [folderFiles, setFolderFiles] = useState([])
   const [currentFolderPath, setCurrentFolderPath] = useState('')
+  const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0 })
   const contentRef = useRef('')
   const modifiedRef = useRef(false)
   const filePathRef = useRef('')
@@ -654,6 +664,7 @@ function App() {
 
   const handleSaveSettings = useCallback((settings) => {
     setSpellcheck(settings.spellcheck !== false)
+    setShowToolbar(settings.showToolbar !== false)
   }, [])
 
   useEffect(() => {
@@ -681,18 +692,40 @@ function App() {
   }, [editor, spellcheck])
 
   useEffect(() => {
+    const settings = getSettings()
+    const shortcuts = settings.shortcuts || DEFAULT_SETTINGS.shortcuts
+
+    function parseShortcut(shortcut) {
+      const parts = shortcut.split('+')
+      return {
+        ctrl: parts.includes('Ctrl'),
+        shift: parts.includes('Shift'),
+        alt: parts.includes('Alt'),
+        key: parts[parts.length - 1]?.toLowerCase()
+      }
+    }
+
+    function matchesShortcut(e, shortcut) {
+      const s = parseShortcut(shortcut)
+      return (e.ctrlKey || e.metaKey) === s.ctrl
+        && e.shiftKey === s.shift
+        && e.altKey === s.alt
+        && e.key.toLowerCase() === s.key
+    }
+
     function handleKeyDown(e) {
-      const mod = e.ctrlKey || e.metaKey
-      if (mod && e.key === 'n') {
+      if (matchesShortcut(e, shortcuts.newFile)) {
         e.preventDefault()
         handleNewFile()
-      } else if (mod && e.key === 'o') {
+      } else if (matchesShortcut(e, shortcuts.open)) {
         e.preventDefault()
         handleOpenFile()
-      } else if (mod && e.key === 's') {
+      } else if (matchesShortcut(e, shortcuts.save)) {
         e.preventDefault()
-        if (e.shiftKey) handleSaveAsFile()
-        else handleSaveFile()
+        handleSaveFile()
+      } else if (matchesShortcut(e, shortcuts.saveAs)) {
+        e.preventDefault()
+        handleSaveAsFile()
       }
     }
     document.addEventListener('keydown', handleKeyDown)
@@ -713,6 +746,15 @@ function App() {
     }
   }, [editor])
 
+  const handleContextMenu = useCallback((e) => {
+    e.preventDefault()
+    setContextMenu({ visible: true, x: e.clientX, y: e.clientY })
+  }, [])
+
+  const closeContextMenu = useCallback(() => {
+    setContextMenu({ visible: false, x: 0, y: 0 })
+  }, [])
+
   if (!editor) return null
 
   const activeTab = tabs.find(t => t.id === activeTabId)
@@ -727,6 +769,7 @@ function App() {
         onMenuAction={handleMenuAction}
         onAddTab={handleNewFile}
       />
+      {showToolbar && (
       <Toolbar
         editor={editor}
         showPreview={showPreview}
@@ -736,7 +779,8 @@ function App() {
         onExportHtml={handleExportHtml}
         onInsertImage={handleInsertImage}
       />
-      <div className="editor-wrapper">
+      )}
+      <div className="editor-wrapper" onContextMenu={handleContextMenu}>
         {sidebarVisible && (
           <Sidebar
             tabs={tabs}
@@ -771,6 +815,15 @@ function App() {
       </div>
       {dragOver && <div className="drag-overlay"><span>释放以打开 .md 文件</span></div>}
       {showSettings && <SettingsDialog onClose={() => setShowSettings(false)} currentTheme={currentTheme} onThemeChange={handleThemeChange} onSaveSettings={handleSaveSettings} />}
+      <ContextMenu
+        editor={editor}
+        visible={contextMenu.visible}
+        position={{ x: contextMenu.x, y: contextMenu.y }}
+        onClose={closeContextMenu}
+        onCopyMarkdown={handleCopyMarkdown}
+        onPasteMarkdown={handlePasteMarkdown}
+        onExportHtml={handleExportHtml}
+      />
       <StatusBar
         editor={editor}
         filePath={filePath}
