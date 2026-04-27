@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
+import { TextSelection } from '@tiptap/pm/state'
 import StarterKit from '@tiptap/starter-kit'
 import Underline from '@tiptap/extension-underline'
 import Image from '@tiptap/extension-image'
@@ -208,6 +209,22 @@ function App() {
           if (key === 's') return true
           if (key === 'b' && !event.shiftKey) return true
           return false
+        }
+        return false
+      },
+      handleClick: (view, pos, event) => {
+        const { doc, schema } = view.state
+        const docEnd = doc.content.size
+        if (pos >= docEnd - 1) {
+          const lastChild = doc.lastChild
+          if (lastChild && lastChild.type.name === 'table') {
+            const tr = view.state.tr
+            const paragraph = schema.nodes.paragraph.create()
+            tr.insert(docEnd, paragraph)
+            tr.setSelection(TextSelection.create(tr.doc, docEnd + 1))
+            view.dispatch(tr)
+            return true
+          }
         }
         return false
       },
