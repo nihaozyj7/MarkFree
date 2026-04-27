@@ -215,17 +215,6 @@ function App() {
       handleClick: (view, pos, event) => {
         const { doc, schema } = view.state
         const docEnd = doc.content.size
-        if (pos <= 1) {
-          const firstChild = doc.firstChild
-          if (firstChild && !firstChild.isTextblock) {
-            const tr = view.state.tr
-            const paragraph = schema.nodes.paragraph.create()
-            tr.insert(0, paragraph)
-            tr.setSelection(TextSelection.create(tr.doc, 1))
-            view.dispatch(tr)
-            return true
-          }
-        }
         if (pos >= docEnd - 1) {
           const lastChild = doc.lastChild
           if (lastChild && !lastChild.isTextblock) {
@@ -238,6 +227,25 @@ function App() {
           }
         }
         return false
+      },
+      handleDOMEvents: {
+        mousedown: (view, event) => {
+          if (event.target === view.dom) {
+            const { doc, schema } = view.state
+            const firstChild = doc.firstChild
+            if (firstChild && !firstChild.isTextblock) {
+              const coords = view.coordsAtPos(0)
+              if (coords && event.clientY < coords.top) {
+                const tr = view.state.tr
+                tr.insert(0, schema.nodes.paragraph.create())
+                tr.setSelection(TextSelection.create(tr.doc, 1))
+                view.dispatch(tr)
+                return true
+              }
+            }
+          }
+          return false
+        }
       },
       handlePaste: (view, event) => {
         const items = event.clipboardData?.items
