@@ -113,8 +113,8 @@
   border-radius: 4px;
   background: transparent;
   transition: background 0.1s ease, border-color 0.1s ease, color 0.1s ease;
-  min-width: 64px;
-  flex-shrink: 0;
+  min-width: 56px;
+  flex-shrink: 1;
   position: relative;
 }
 .tb-tab:hover {
@@ -139,6 +139,7 @@
   text-overflow: ellipsis;
   max-width: 140px;
   min-width: 0;
+  flex-shrink: 1;
 }
 .tb-tab-modified {
   color: var(--color-accent);

@@ -124,13 +124,13 @@ function TitleBar({ tabs, activeTabId, onSwitchTab, onCloseTab, onMenuAction, on
               </button>
             </div>
           )) }
-          <button className="tb-tab-add" onClick={ () => onAddTab?.() } title="新建标签页">
-            <svg viewBox="0 0 14 14" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2">
-              <line x1="7" y1="2" x2="7" y2="12" />
-              <line x1="2" y1="7" x2="12" y2="7" />
-            </svg>
-          </button>
         </div>
+        <button className="tb-tab-add" onClick={ () => onAddTab?.() } title="新建标签页">
+          <svg viewBox="0 0 14 14" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2">
+            <line x1="7" y1="2" x2="7" y2="12" />
+            <line x1="2" y1="7" x2="12" y2="7" />
+          </svg>
+        </button>
         <div className="title-bar-spacer"></div>
       </div>
       <div className="title-bar-controls">
