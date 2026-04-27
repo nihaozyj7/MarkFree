@@ -7,10 +7,13 @@ function StatusBar({ editor, filePath, modified, tabs, onToggleSidebar, sidebarV
     if (!editor) return
 
     const updateStats = () => {
-      const text = editor.state.doc.textContent
-      const words = text.trim() ? text.trim().split(/\s+/).length : 0
-      const chars = text.length
-      const lines = editor.state.doc.nodeSize - 2
+      const doc = editor.state.doc
+      const text = doc.textContent
+      const textWithoutNewlines = text.replace(/\n/g, '')
+      const wordMatches = text.match(/[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff]|[^\s]+/g)
+      const words = wordMatches ? wordMatches.length : 0
+      const chars = textWithoutNewlines.length
+      const lines = doc.childCount
       setStats({ words, chars, lines })
     }
 
