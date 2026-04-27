@@ -138,7 +138,7 @@ function SettingsDialog({ onClose, currentTheme, onThemeChange, onSaveSettings, 
             </label>
             <label className="settings-radio">
               <input type="checkbox" checked={settings.showOpenFilesModule !== false} onChange={e => updateSettings({showOpenFilesModule: e.target.checked})} />
-              <span>显示侧栏打开文件列表</span>
+              <span>打开文件夹时显示已打开的文件</span>
             </label>
           </div>
           <div className="settings-divider" />

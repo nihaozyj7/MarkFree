@@ -7,7 +7,7 @@ function Sidebar({ tabs, activeTabId, onSwitchTab, folderFiles, folderPath, onOp
   return (
     <div className="sidebar">
       <div className="sidebar-content">
-        {showOpenFilesModule !== false && (
+        {(folderFiles.length === 0 || showOpenFilesModule !== false) && (
           <div className="sidebar-list">
             <div className="sidebar-list-title sidebar-list-collapsible" onClick={() => setOpenFilesCollapsed(v => !v)}>
               <span className="sidebar-list-title-label">
