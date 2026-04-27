@@ -292,6 +292,8 @@ function App() {
   const editor = useEditor({
     extensions,
     editorProps: {
+      scrollThreshold: { bottom: 150 },
+      scrollMargin: { bottom: 300 },
       attributes: {
         class: 'prose-editor',
         spellcheck: spellcheck ? 'true' : 'false'

@@ -338,6 +338,7 @@
 }
 .editor-content .ProseMirror {
   padding: 32px 48px;
+  padding-bottom: 256px;
   outline: none;
   min-height: calc(100vh - 56px);
   font-size: 16px;
@@ -917,6 +918,7 @@
 }
 .compact .editor-content .ProseMirror {
   padding: 16px 24px;
+  padding-bottom: 160px;
   min-height: calc(100vh - 88px);
   font-size: 14px;
   line-height: 1.6;
