@@ -297,6 +297,24 @@ function App() {
         spellcheck: spellcheck ? 'true' : 'false'
       },
       handleKeyDown: (view, event) => {
+        if (event.key === 'Enter' && !event.shiftKey && !event.ctrlKey && !event.metaKey) {
+          const { state } = view
+          const { selection } = state
+          if (selection.empty) {
+            const marks = selection.$from.marks()
+            if (marks.length > 0) {
+              const node = selection.$from.parent
+              if (node.isTextblock && node.content.size === 0) {
+                event.preventDefault()
+                let tr = state.tr
+                marks.forEach(m => { tr = tr.removeStoredMark(m) })
+                view.dispatch(tr)
+                return true
+              }
+            }
+          }
+        }
+
         if (event.ctrlKey || event.metaKey) {
           const key = event.key.toLowerCase()
           if (key === 'n' && !event.shiftKey) return true
