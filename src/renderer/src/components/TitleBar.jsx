@@ -66,6 +66,83 @@ function TitleBar({ tabs, activeTabId, onSwitchTab, onCloseTab, onMenuAction, on
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
   }, [activeTabId])
 
+  // Wheel → horizontal scroll for tab overflow
+  useEffect(() => {
+    const el = tabListRef.current
+    if (!el) return
+    const onWheel = (e) => {
+      if (Math.abs(e.deltaY) > 0 && el.scrollWidth > el.clientWidth) {
+        el.scrollLeft += e.deltaY
+        e.preventDefault()
+      }
+    }
+    el.addEventListener('wheel', onWheel, { passive: false })
+    return () => el.removeEventListener('wheel', onWheel)
+  }, [])
+
+  // Middle-button drag scroll
+  const midState = useRef({
+    down: false,
+    startX: 0,
+    startScroll: 0,
+    dragged: false,
+    targetTab: null
+  })
+
+  const onCloseTabRef = useRef(onCloseTab)
+  useEffect(() => {
+    onCloseTabRef.current = onCloseTab
+  })
+
+  useEffect(() => {
+    const el = tabListRef.current
+    if (!el) return
+    const s = midState.current
+
+    const onDown = (e) => {
+      if (e.button !== 1) return
+      s.down = true
+      s.startX = e.clientX
+      s.startScroll = el.scrollLeft
+      s.dragged = false
+      s.targetTab = e.target.closest('.tb-tab')
+      e.preventDefault()
+    }
+
+    const onMove = (e) => {
+      if (!s.down) return
+      const dx = e.clientX - s.startX
+      if (Math.abs(dx) > 5) {
+        s.dragged = true
+        el.scrollLeft = s.startScroll - dx
+        el.style.cursor = 'grabbing'
+        el.style.userSelect = 'none'
+      }
+    }
+
+    const onUp = () => {
+      if (!s.down) return
+      s.down = false
+      el.style.cursor = ''
+      el.style.userSelect = ''
+      if (!s.dragged && s.targetTab) {
+        const tabId = s.targetTab.dataset.tabId
+        if (tabId) onCloseTabRef.current(tabId)
+      }
+      s.targetTab = null
+    }
+
+    el.addEventListener('mousedown', onDown)
+    document.addEventListener('mousemove', onMove)
+    document.addEventListener('mouseup', onUp)
+
+    return () => {
+      el.removeEventListener('mousedown', onDown)
+      document.removeEventListener('mousemove', onMove)
+      document.removeEventListener('mouseup', onUp)
+    }
+  }, [])
+
   const handleBrandClick = (e) => {
     e.stopPropagation()
     setMenuOpen(!menuOpen)
@@ -97,14 +174,9 @@ function TitleBar({ tabs, activeTabId, onSwitchTab, onCloseTab, onMenuAction, on
             { tabs.map(tab => (
               <div
                 key={ tab.id }
+                data-tab-id={ tab.id }
                 className={ `tb-tab${tab.id === activeTabId ? ' active' : ''}${tab.modified ? ' modified' : ''}` }
                 onClick={ () => onSwitchTab(tab.id) }
-                onMouseDown={ (e) => {
-                  if (e.button === 1) {
-                    e.preventDefault()
-                    onCloseTab(tab.id)
-                  }
-                } }
                 title={ tab.filePath || tab.fileName }
               >
                 <svg className="tb-tab-icon" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2">
