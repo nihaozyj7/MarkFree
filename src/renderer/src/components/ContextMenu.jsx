@@ -329,14 +329,14 @@ const ContextMenu = memo(function ContextMenu({ editor, visible, position, onClo
     })
   }, [visible, position])
 
-  if (!visible) return null
-
   const handleItemClick = useCallback((item) => {
     if (item.action) {
       item.action(editor)
       onClose()
     }
   }, [editor, onClose])
+
+  if (!visible) return null
 
   return (
     <div
