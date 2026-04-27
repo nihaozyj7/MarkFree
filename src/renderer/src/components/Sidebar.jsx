@@ -1,11 +1,53 @@
-import React, { useState } from 'react'
+import React, { useState, useRef, useCallback, useEffect } from 'react'
 
-function Sidebar({ tabs, activeTabId, onSwitchTab, folderFiles, folderPath, onOpenFolder, onOpenFolderFile, showOpenFilesModule }) {
+function Sidebar({ tabs, activeTabId, onSwitchTab, folderFiles, folderPath, onOpenFolder, onOpenFolderFile, showOpenFilesModule, width, onWidthChange }) {
   const folderName = folderPath ? folderPath.split(/[/\\]/).filter(Boolean).pop() : ''
   const [openFilesCollapsed, setOpenFilesCollapsed] = useState(false)
+  const sidebarRef = useRef(null)
+  const dragging = useRef(false)
+  const startX = useRef(0)
+  const startWidth = useRef(0)
+
+  const handleMouseDown = useCallback((e) => {
+    dragging.current = true
+    startX.current = e.clientX
+    startWidth.current = sidebarRef.current?.offsetWidth || 220
+    document.body.style.cursor = 'col-resize'
+    document.body.style.userSelect = 'none'
+    e.preventDefault()
+  }, [])
+
+  const handleMouseMove = useCallback((e) => {
+    if (!dragging.current) return
+    const newWidth = Math.max(120, Math.min(500, startWidth.current + (e.clientX - startX.current)))
+    if (sidebarRef.current) {
+      sidebarRef.current.style.width = newWidth + 'px'
+      sidebarRef.current.style.minWidth = newWidth + 'px'
+    }
+  }, [])
+
+  const handleMouseUp = useCallback(() => {
+    if (!dragging.current) return
+    dragging.current = false
+    document.body.style.cursor = ''
+    document.body.style.userSelect = ''
+    if (sidebarRef.current) {
+      onWidthChange(sidebarRef.current.offsetWidth)
+    }
+  }, [onWidthChange])
+
+  useEffect(() => {
+    document.addEventListener('mousemove', handleMouseMove)
+    document.addEventListener('mouseup', handleMouseUp)
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove)
+      document.removeEventListener('mouseup', handleMouseUp)
+    }
+  }, [handleMouseMove, handleMouseUp])
 
   return (
-    <div className="sidebar">
+    <div ref={sidebarRef} className="sidebar" style={{ width, minWidth: width }}>
+      <div className="sidebar-resize-handle" onMouseDown={handleMouseDown} />
       <div className="sidebar-content">
         {(folderFiles.length === 0 || showOpenFilesModule !== false) && (
           <div className="sidebar-list">

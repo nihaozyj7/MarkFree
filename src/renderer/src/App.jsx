@@ -99,6 +99,8 @@ const DEFAULT_SETTINGS = {
   showOpenFilesModule: true,
   fontFamily: 'default',
   fontSize: 16,
+  compactMode: false,
+  sidebarWidth: 220,
   shortcuts: {
     newFile: 'Ctrl+N',
     open: 'Ctrl+O',
@@ -166,7 +168,8 @@ function App() {
   const [currentFolderPath, setCurrentFolderPath] = useState('')
   const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0 })
   const [showAbout, setShowAbout] = useState(false)
-  const [compactMode, setCompactMode] = useState(false)
+  const [compactMode, setCompactMode] = useState(() => getSettings().compactMode === true)
+  const [sidebarWidth, setSidebarWidth] = useState(() => getSettings().sidebarWidth || 220)
   const contentRef = useRef('')
   const modifiedRef = useRef(false)
   const filePathRef = useRef('')
@@ -751,6 +754,25 @@ function App() {
     setSidebarVisible(v => !v)
   }, [])
 
+  const handleToggleCompactMode = useCallback(() => {
+    const next = !compactMode
+    setCompactMode(next)
+    try {
+      const settings = JSON.parse(localStorage.getItem('editorSettings') || '{}')
+      settings.compactMode = next
+      localStorage.setItem('editorSettings', JSON.stringify(settings))
+    } catch {}
+  }, [compactMode])
+
+  const handleSidebarWidthChange = useCallback((width) => {
+    setSidebarWidth(width)
+    try {
+      const settings = JSON.parse(localStorage.getItem('editorSettings') || '{}')
+      settings.sidebarWidth = width
+      localStorage.setItem('editorSettings', JSON.stringify(settings))
+    } catch {}
+  }, [])
+
   const handleSelectFolder = useCallback(async () => {
     const folderPath = await window.electronAPI.selectFolder()
     if (!folderPath) return
@@ -932,6 +954,8 @@ function App() {
             onOpenFolder={handleSelectFolder}
             onOpenFolderFile={handleOpenFolderFile}
             showOpenFilesModule={showOpenFilesModule}
+            width={sidebarWidth}
+            onWidthChange={handleSidebarWidthChange}
           />
         )}
         <div className={`editor-area ${showPreview ? 'split' : 'full'}`}>
@@ -972,7 +996,7 @@ function App() {
         onToggleSidebar={handleToggleSidebar}
         sidebarVisible={sidebarVisible}
         compactMode={compactMode}
-        onToggleCompactMode={() => setCompactMode(v => !v)}
+        onToggleCompactMode={handleToggleCompactMode}
       />
     </div>
   )
