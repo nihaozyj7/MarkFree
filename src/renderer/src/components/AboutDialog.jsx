@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback, useMemo, memo } from 'react'
 
-function AboutDialog({ onClose }) {
+const AboutDialog = memo(function AboutDialog({ onClose }) {
   const [closing, setClosing] = useState(false)
   const [open, setOpen] = useState(false)
 
@@ -8,10 +8,13 @@ function AboutDialog({ onClose }) {
     requestAnimationFrame(() => setOpen(true))
   }, [])
 
-  const startClose = () => {
+  const startClose = useCallback(() => {
     setClosing(true)
     setTimeout(() => onClose(), 200)
-  }
+  }, [onClose])
+
+  const chromeVersion = useMemo(() => navigator.userAgent.match(/Chrome\/(\d+)/)?.[1] || '—', [])
+  const electronVersion = useMemo(() => navigator.userAgent.match(/Electron\/(\S+)/)?.[1] || '—', [])
 
   return (
     <div className={`settings-overlay${open ? ' open' : ''}${closing ? ' closing' : ''}`} onClick={startClose}>
@@ -87,11 +90,11 @@ function AboutDialog({ onClose }) {
             <div className="about-tech-grid">
               <div className="about-tech-item">
                 <span className="about-tech-label">Chrome</span>
-                <span className="about-tech-value">{navigator.userAgent.match(/Chrome\/(\d+)/)?.[1] || '—'}</span>
+                <span className="about-tech-value">{chromeVersion}</span>
               </div>
               <div className="about-tech-item">
                 <span className="about-tech-label">Node.js</span>
-                <span className="about-tech-value">{navigator.userAgent.match(/Electron\/(\S+)/)?.[1] ? '—' : '—'}</span>
+                <span className="about-tech-value">{electronVersion}</span>
               </div>
               <div className="about-tech-item">
                 <span className="about-tech-label">平台</span>
@@ -125,6 +128,6 @@ function AboutDialog({ onClose }) {
       </div>
     </div>
   )
-}
+})
 
 export default AboutDialog

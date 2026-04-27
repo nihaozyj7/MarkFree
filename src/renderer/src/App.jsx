@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react'
+import React, { useState, useCallback, useEffect, useRef, useMemo, lazy, Suspense } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import { TextSelection } from '@tiptap/pm/state'
 import StarterKit from '@tiptap/starter-kit'
@@ -14,43 +14,65 @@ import TableCell from '@tiptap/extension-table-cell'
 import TableHeader from '@tiptap/extension-table-header'
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
 import { createLowlight } from 'lowlight'
-import javascript from 'highlight.js/lib/languages/javascript'
-import typescript from 'highlight.js/lib/languages/typescript'
-import python from 'highlight.js/lib/languages/python'
-import xml from 'highlight.js/lib/languages/xml'
-import css from 'highlight.js/lib/languages/css'
-import json from 'highlight.js/lib/languages/json'
-import bash from 'highlight.js/lib/languages/bash'
-import markdown from 'highlight.js/lib/languages/markdown'
-import sql from 'highlight.js/lib/languages/sql'
-import yaml from 'highlight.js/lib/languages/yaml'
-import rust from 'highlight.js/lib/languages/rust'
-import go from 'highlight.js/lib/languages/go'
-import java from 'highlight.js/lib/languages/java'
 import { Markdown } from 'tiptap-markdown'
 import Toolbar from './components/Toolbar'
 import TitleBar from './components/TitleBar'
 import StatusBar from './components/StatusBar'
-import SettingsDialog from './components/SettingsDialog'
 import Sidebar from './components/Sidebar'
-import AboutDialog from './components/AboutDialog'
-import ContextMenu from './components/ContextMenu'
+
+const SettingsDialog = lazy(() => import('./components/SettingsDialog'))
+const AboutDialog = lazy(() => import('./components/AboutDialog'))
+const ContextMenu = lazy(() => import('./components/ContextMenu'))
+
 import './styles/editor.css'
 
 const lowlight = createLowlight()
-lowlight.register('javascript', javascript)
-lowlight.register('typescript', typescript)
-lowlight.register('python', python)
-lowlight.register('xml', xml)
-lowlight.register('css', css)
-lowlight.register('json', json)
-lowlight.register('bash', bash)
-lowlight.register('markdown', markdown)
-lowlight.register('sql', sql)
-lowlight.register('yaml', yaml)
-lowlight.register('rust', rust)
-lowlight.register('go', go)
-lowlight.register('java', java)
+
+const LANGUAGE_LOADERS = {
+  javascript: () => import('highlight.js/lib/languages/javascript'),
+  typescript: () => import('highlight.js/lib/languages/typescript'),
+  python: () => import('highlight.js/lib/languages/python'),
+  xml: () => import('highlight.js/lib/languages/xml'),
+  css: () => import('highlight.js/lib/languages/css'),
+  json: () => import('highlight.js/lib/languages/json'),
+  bash: () => import('highlight.js/lib/languages/bash'),
+  markdown: () => import('highlight.js/lib/languages/markdown'),
+  sql: () => import('highlight.js/lib/languages/sql'),
+  yaml: () => import('highlight.js/lib/languages/yaml'),
+  rust: () => import('highlight.js/lib/languages/rust'),
+  go: () => import('highlight.js/lib/languages/go'),
+  java: () => import('highlight.js/lib/languages/java')
+}
+
+const languageCache = {}
+let languageInitDone = false
+
+async function ensureLanguage(name) {
+  if (languageCache[name]) return
+  const loader = LANGUAGE_LOADERS[name]
+  if (!loader) return
+  try {
+    const mod = await loader()
+    languageCache[name] = true
+    lowlight.register(name, mod.default)
+  } catch {}
+}
+
+function initLanguages() {
+  if (languageInitDone) return
+  languageInitDone = true
+  ensureLanguage('javascript')
+  ensureLanguage('typescript')
+  ensureLanguage('python')
+  ensureLanguage('css')
+  ensureLanguage('json')
+  ensureLanguage('bash')
+  ensureLanguage('xml')
+  ensureLanguage('markdown')
+  ensureLanguage('sql')
+}
+
+initLanguages()
 
 function dirname(path) {
   const parts = path.replace(/\\/g, '/').replace(/\/+$/, '').split('/')
@@ -62,6 +84,16 @@ function escapeRegex(str) {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
+const regexCache = {}
+
+function getCachedRegex(pattern, key) {
+  const entry = regexCache[key]
+  if (entry && entry.pattern === pattern) return entry.regex
+  const regex = new RegExp(pattern, 'g')
+  regexCache[key] = { pattern, regex }
+  return regex
+}
+
 function convertToRelativePaths(md, filePath, imageFolder) {
   const fileDir = dirname(filePath)
   const folder = imageFolder.replace(/\\/g, '/').replace(/^\.\//, '')
@@ -69,9 +101,11 @@ function convertToRelativePaths(md, filePath, imageFolder) {
   const platform = window.electronAPI.platform
   const prefix = platform === 'win32' ? 'file:///' : 'file://'
   const fullPrefix = prefix + resolvedDir
+  const escaped = escapeRegex(fullPrefix)
+  const cacheKey = `rel:${escaped}`
 
   return md.replace(
-    new RegExp('\\]\\(' + escapeRegex(fullPrefix) + '/([^)]+)\\)', 'g'),
+    getCachedRegex('\\]\\(' + escaped + '/([^)]+)\\)', cacheKey),
     (match, filename) => `](./${folder}/${filename})`
   )
 }
@@ -83,9 +117,11 @@ function convertToAbsolutePaths(md, filePath, imageFolder) {
   const platform = window.electronAPI.platform
   const prefix = platform === 'win32' ? 'file:///' : 'file://'
   const fullPrefix = prefix + resolvedDir
+  const escaped = escapeRegex(folder)
+  const cacheKey = `abs:${escaped}`
 
   return md.replace(
-    new RegExp('\\]\\((\\./)?' + escapeRegex(folder) + '/([^)]+)\\)', 'g'),
+    getCachedRegex('\\]\\((\\./)?' + escaped + '/([^)]+)\\)', cacheKey),
     (match, dotSlash, filename) => `](${fullPrefix}/${filename})`
   )
 }
@@ -133,6 +169,47 @@ function applyFontSettings(settings) {
   el.textContent = `.ProseMirror { font-family: ${fontFamily} !important; font-size: ${fontSize}px !important; }`
 }
 
+const extensions = [
+  StarterKit.configure({
+    codeBlock: false,
+    heading: { levels: [1, 2, 3, 4, 5, 6] }
+  }),
+  Underline,
+  Image.configure({ inline: true, allowBase64: true }),
+  Link.configure({ openOnClick: false }),
+  Placeholder.configure({ placeholder: '开始写作...' }),
+  TaskList,
+  TaskItem.configure({ nested: true }),
+  Table.configure({ resizable: true }),
+  TableRow,
+  TableCell,
+  TableHeader,
+  CodeBlockLowlight.configure({ lowlight }),
+  Markdown.configure({
+    html: true,
+    transformPastedText: true,
+    transformCopiedText: true
+  })
+]
+
+function parseShortcut(shortcut) {
+  const parts = shortcut.split('+')
+  return {
+    ctrl: parts.includes('Ctrl'),
+    shift: parts.includes('Shift'),
+    alt: parts.includes('Alt'),
+    key: parts[parts.length - 1]?.toLowerCase()
+  }
+}
+
+function matchesShortcut(e, shortcut) {
+  const s = parseShortcut(shortcut)
+  return (e.ctrlKey || e.metaKey) === s.ctrl
+    && e.shiftKey === s.shift
+    && e.altKey === s.alt
+    && e.key.toLowerCase() === s.key
+}
+
 function App() {
   const defaultTabId = Date.now().toString(36) + Math.random().toString(36).slice(2, 8)
 
@@ -145,14 +222,10 @@ function App() {
     savedContent: ''
   }])
   const [activeTabId, setActiveTabId] = useState(defaultTabId)
-  const tabsRef = useRef(tabs)
   const activeTabIdRef = useRef(activeTabId)
 
   const [showPreview, setShowPreview] = useState(false)
   const [markdownContent, setMarkdownContent] = useState('')
-  const [fileName, setFileName] = useState('')
-  const [filePath, setFilePath] = useState('')
-  const [modified, setModified] = useState(false)
   const [dragOver, setDragOver] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [currentTheme, setCurrentTheme] = useState(() => localStorage.getItem('appTheme') || 'dark')
@@ -170,35 +243,54 @@ function App() {
   const [showAbout, setShowAbout] = useState(false)
   const [compactMode, setCompactMode] = useState(() => getSettings().compactMode === true)
   const [sidebarWidth, setSidebarWidth] = useState(() => getSettings().sidebarWidth || 220)
+  const settingsRef = useRef(getSettings())
   const contentRef = useRef('')
-  const modifiedRef = useRef(false)
   const filePathRef = useRef('')
   const saveAsFileRef = useRef()
   const editorRef = useRef(null)
+  const debounceRef = useRef(null)
+
+  const activeTab = useMemo(
+    () => tabs.find(t => t.id === activeTabId),
+    [tabs, activeTabId]
+  )
+  const fileName = activeTab?.fileName ?? ''
+  const filePath = activeTab?.filePath ?? ''
+  const modified = activeTab?.modified ?? false
+
+  useEffect(() => {
+    filePathRef.current = filePath
+  }, [filePath])
+
+  const onUpdate = useCallback(({ editor }) => {
+    const tabId = activeTabIdRef.current
+    if (!tabId) return
+
+    let md = editor.storage.markdown.getMarkdown()
+    const settings = settingsRef.current
+    const fp = filePathRef.current
+    if (settings.imageInsertMode === 'relative' && fp) {
+      md = convertToRelativePaths(md, fp, settings.imageFolder)
+    }
+    contentRef.current = md
+
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => {
+      if (activeTabIdRef.current !== tabId) return
+      setMarkdownContent(md)
+      setTabs(prev => {
+        const currentTab = prev.find(t => t.id === tabId)
+        if (!currentTab) return prev
+        const isModified = md !== currentTab.savedContent
+        return prev.map(t =>
+          t.id === tabId ? { ...t, content: md, modified: isModified } : t
+        )
+      })
+    }, 150)
+  }, [])
 
   const editor = useEditor({
-    extensions: [
-      StarterKit.configure({
-        codeBlock: false,
-        heading: { levels: [1, 2, 3, 4, 5, 6] }
-      }),
-      Underline,
-      Image.configure({ inline: true, allowBase64: true }),
-      Link.configure({ openOnClick: false }),
-      Placeholder.configure({ placeholder: '开始写作...' }),
-      TaskList,
-      TaskItem.configure({ nested: true }),
-      Table.configure({ resizable: true }),
-      TableRow,
-      TableCell,
-      TableHeader,
-      CodeBlockLowlight.configure({ lowlight }),
-      Markdown.configure({
-        html: true,
-        transformPastedText: true,
-        transformCopiedText: true
-      })
-    ],
+    extensions,
     editorProps: {
       attributes: {
         class: 'prose-editor',
@@ -274,7 +366,7 @@ function App() {
             }
             const ext = MIME_MAP_EXT[file.type] || '.png'
 
-            const settings = getSettings()
+            const settings = settingsRef.current
             const { imageInsertMode, imageFolder } = settings
 
             const ed = editorRef.current
@@ -320,62 +412,32 @@ function App() {
         return false
       }
     },
-    onUpdate: ({ editor }) => {
-      const tabId = activeTabIdRef.current
-      if (!tabId) return
-
-      let md = editor.storage.markdown.getMarkdown()
-      const settings = getSettings()
-      const fp = filePathRef.current
-      if (settings.imageInsertMode === 'relative' && fp) {
-        md = convertToRelativePaths(md, fp, settings.imageFolder)
-      }
-      setMarkdownContent(md)
-      contentRef.current = md
-
-      const currentTab = tabsRef.current.find(t => t.id === tabId)
-      if (!currentTab) return
-
-      const isModified = md !== currentTab.savedContent
-      tabsRef.current = tabsRef.current.map(t =>
-        t.id === tabId ? { ...t, content: md, modified: isModified } : t
-      )
-      setTabs([...tabsRef.current])
-
-      modifiedRef.current = isModified
-      setModified(isModified)
-    }
+    onUpdate
   })
 
   editorRef.current = editor
 
-  const syncDisplayFromTab = useCallback(() => {
-    const tab = tabsRef.current.find(t => t.id === activeTabIdRef.current)
-    if (tab) {
-      setFileName(tab.fileName)
-      setFilePath(tab.filePath)
-      filePathRef.current = tab.filePath
-      modifiedRef.current = tab.modified
-      setModified(tab.modified)
-      const prefix = tab.modified ? '* ' : ''
-      window.electronAPI.setTitle(`${prefix}${tab.fileName}  - MarkdownPad`)
-    } else {
-      setFileName('')
-      setFilePath('')
-      filePathRef.current = ''
-      modifiedRef.current = false
-      setModified(false)
-      window.electronAPI.setTitle('MarkdownPad')
+  const syncRef = useCallback(() => {
+    if (editor) {
+      const md = editor.storage.markdown.getMarkdown()
+      setMarkdownContent(md)
+      contentRef.current = md
     }
-  }, [])
+  }, [editor])
 
   useEffect(() => {
-    syncDisplayFromTab()
-  }, [activeTabId, syncDisplayFromTab])
+    syncRef()
+  }, [syncRef])
+
+  useEffect(() => {
+    window.electronAPI.setTitle(
+      `${modified ? '* ' : ''}${fileName || tabs[0]?.fileName || 'MarkdownPad'}  - MarkdownPad`
+    )
+  }, [fileName, modified])
 
   useEffect(() => {
     if (!editor) return
-    const tab = tabsRef.current.find(t => t.id === activeTabIdRef.current)
+    const tab = tabs.find(t => t.id === activeTabId)
     if (!tab) {
       contentRef.current = ''
       setMarkdownContent('')
@@ -394,11 +456,10 @@ function App() {
 
     const prevId = activeTabIdRef.current
     if (prevId && editor) {
-      const currentMd = editor.storage.markdown.getMarkdown()
-      tabsRef.current = tabsRef.current.map(t =>
+      const currentMd = contentRef.current
+      setTabs(prev => prev.map(t =>
         t.id === prevId ? { ...t, content: currentMd } : t
-      )
-      setTabs([...tabsRef.current])
+      ))
     }
 
     activeTabIdRef.current = tabId
@@ -406,41 +467,43 @@ function App() {
   }, [editor])
 
   const closeTab = useCallback((tabId) => {
-    const idx = tabsRef.current.findIndex(t => t.id === tabId)
+    const allTabs = tabs
+    const idx = allTabs.findIndex(t => t.id === tabId)
     if (idx === -1) return
+    const wouldBeEmpty = allTabs.length === 1
 
-    const newTabs = tabsRef.current.filter(t => t.id !== tabId)
-    tabsRef.current = newTabs
+    if (wouldBeEmpty) {
+      const settings = settingsRef.current
+      if (settings.closeLastTabAction === 'closeApp') {
+        window.electronAPI.closeWindow()
+        return
+      }
+      const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 8)
+      const newTab = { id, fileName: '未命名', filePath: '', content: '', modified: false, savedContent: '' }
+      setTabs([newTab])
+      activeTabIdRef.current = id
+      setActiveTabId(id)
+      return
+    }
+
+    const newTabs = allTabs.filter(t => t.id !== tabId)
     setTabs(newTabs)
 
     if (tabId === activeTabIdRef.current) {
-      if (newTabs.length === 0) {
-        const settings = getSettings()
-        if (settings.closeLastTabAction === 'closeApp') {
-          window.electronAPI.closeWindow()
-        } else {
-          const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 8)
-          const newTab = { id, fileName: '未命名', filePath: '', content: '', modified: false, savedContent: '' }
-          tabsRef.current = [newTab]
-          setTabs([newTab])
-          activeTabIdRef.current = id
-          setActiveTabId(id)
-        }
-      } else {
-        const nextIdx = Math.min(idx, newTabs.length - 1)
-        activeTabIdRef.current = newTabs[nextIdx].id
-        setActiveTabId(newTabs[nextIdx].id)
-      }
+      const nextIdx = Math.min(idx, newTabs.length - 1)
+      activeTabIdRef.current = newTabs[nextIdx].id
+      setActiveTabId(newTabs[nextIdx].id)
     }
-  }, [])
+  }, [tabs])
 
+  const addTabRef = useRef()
   const addTab = useCallback((fileData) => {
     if (!fileData) return null
 
     const { content, filePath: fp, fileName: fn } = fileData
 
     if (fp) {
-      const existing = tabsRef.current.find(t => t.filePath === fp)
+      const existing = tabs.find(t => t.filePath === fp)
       if (existing) {
         switchTab(existing.id)
         return existing.id
@@ -448,7 +511,7 @@ function App() {
     }
 
     let processedContent = content || ''
-    const settings = getSettings()
+    const settings = settingsRef.current
     if (settings.imageInsertMode === 'relative' && fp) {
       processedContent = convertToAbsolutePaths(processedContent, fp, settings.imageFolder)
     }
@@ -463,34 +526,24 @@ function App() {
       savedContent: processedContent
     }
 
-    const onlyTab = tabsRef.current.length === 1 ? tabsRef.current[0] : null
-    if (onlyTab && !onlyTab.filePath && !onlyTab.content && !onlyTab.modified) {
-      tabsRef.current = [newTab]
-      setTabs([newTab])
-      activeTabIdRef.current = id
-      setActiveTabId(id)
-      return id
-    }
-
-    tabsRef.current = [...tabsRef.current, newTab]
-    setTabs([...tabsRef.current])
+    setTabs(prev => {
+      const onlyTab = prev.length === 1 ? prev[0] : null
+      if (onlyTab && !onlyTab.filePath && !onlyTab.content && !onlyTab.modified) {
+        return [newTab]
+      }
+      return [...prev, newTab]
+    })
     activeTabIdRef.current = id
     setActiveTabId(id)
     return id
-  }, [switchTab])
+  }, [tabs, switchTab])
 
-  useEffect(() => {
-    if (editor) {
-      const md = editor.storage.markdown.getMarkdown()
-      setMarkdownContent(md)
-      contentRef.current = md
-    }
-  }, [editor])
+  addTabRef.current = addTab
 
   useEffect(() => {
     if (!editor) return
     window.electronAPI.onFileOpened((data) => {
-      addTab(data)
+      addTabRef.current(data)
     })
     window.electronAPI.onFolderOpened((data) => {
       const { folderPath, files } = data
@@ -502,7 +555,7 @@ function App() {
       window.electronAPI.removeFileOpenedListener()
       window.electronAPI.removeFolderOpenedListener()
     }
-  }, [editor, addTab])
+  }, [editor])
 
   useEffect(() => {
     if (!editor) return
@@ -542,7 +595,7 @@ function App() {
 
       const reader = new FileReader()
       reader.onload = (event) => {
-        addTab({ content: event.target.result, filePath: droppedPath, fileName: file.name })
+        addTabRef.current({ content: event.target.result, filePath: droppedPath, fileName: file.name })
       }
       reader.readAsText(file)
     }
@@ -558,7 +611,7 @@ function App() {
       document.removeEventListener('dragleave', handleDragLeave)
       document.removeEventListener('drop', handleDrop)
     }
-  }, [editor, addTab])
+  }, [editor])
 
   const handleOpenFile = useCallback(async () => {
     if (!editor) return
@@ -583,7 +636,7 @@ function App() {
   const handleSaveFile = useCallback(async () => {
     if (!editor) return
     const tabId = activeTabIdRef.current
-    const tab = tabsRef.current.find(t => t.id === tabId)
+    const tab = tabs.find(t => t.id === tabId)
     if (!tab) return
 
     try {
@@ -592,48 +645,44 @@ function App() {
         return saveAsFileRef.current?.()
       }
       let md = contentRef.current
-      const settings = getSettings()
+      const settings = settingsRef.current
       if (settings.imageInsertMode === 'relative' && currentPath) {
         md = convertToRelativePaths(md, currentPath, settings.imageFolder)
       }
       const result = await window.electronAPI.saveFile(md, currentPath)
       if (result) {
-        tabsRef.current = tabsRef.current.map(t =>
-          t.id === tabId ? { ...t, filePath: result.filePath, fileName: result.fileName, modified: false, savedContent: t.content } : t
-        )
-        setTabs([...tabsRef.current])
-        modifiedRef.current = false
-        setModified(false)
+        setTabs(prev => prev.map(t =>
+          t.id === tabId ? { ...t, filePath: result.filePath, fileName: result.fileName, content: md, modified: false, savedContent: md } : t
+        ))
       }
     } catch (err) {
       alert('保存失败: ' + (err.message || err))
     }
-  }, [editor])
+  }, [editor, tabs])
 
   const handleSaveAsFile = useCallback(async () => {
     if (!editor) return
     const tabId = activeTabIdRef.current
-    const tab = tabsRef.current.find(t => t.id === tabId)
+    const tab = tabs.find(t => t.id === tabId)
     if (!tab) return
 
     try {
       let md = contentRef.current
       const currentPath = tab.filePath
-      const settings = getSettings()
+      const settings = settingsRef.current
       if (settings.imageInsertMode === 'relative' && currentPath) {
         md = convertToRelativePaths(md, currentPath, settings.imageFolder)
       }
       const result = await window.electronAPI.saveAsFile(md)
       if (result) {
-        tabsRef.current = tabsRef.current.map(t =>
-          t.id === tabId ? { ...t, filePath: result.filePath, fileName: result.fileName, modified: false, savedContent: t.content } : t
-        )
-        setTabs([...tabsRef.current])
+        setTabs(prev => prev.map(t =>
+          t.id === tabId ? { ...t, filePath: result.filePath, fileName: result.fileName, content: md, modified: false, savedContent: md } : t
+        ))
       }
     } catch (err) {
       alert('另存失败: ' + (err.message || err))
     }
-  }, [editor])
+  }, [editor, tabs])
 
   saveAsFileRef.current = handleSaveAsFile
 
@@ -647,7 +696,7 @@ function App() {
         return
       }
 
-      const settings = getSettings()
+      const settings = settingsRef.current
       const { imageInsertMode, imageFolder } = settings
 
       if (imageInsertMode === 'base64') {
@@ -733,36 +782,44 @@ function App() {
     }
   }, [editor])
 
+  const menuActionRefs = useRef({})
+  menuActionRefs.current = {
+    handleNewFile, handleOpenFile, handleOpenFolder, handleSaveFile, handleSaveAsFile,
+    handleExportHtml, handleCopyMarkdown, handlePasteMarkdown,
+    handleRegisterAssociation, handleUnregisterAssociation, handleOpenSettings
+  }
   const handleMenuAction = useCallback((action) => {
     switch (action) {
-      case 'newFile': handleNewFile(); break
-      case 'open': handleOpenFile(); break
-      case 'openFolder': handleOpenFolder(); break
-      case 'save': handleSaveFile(); break
-      case 'saveAs': handleSaveAsFile(); break
-      case 'exportHtml': handleExportHtml(); break
-      case 'copyMarkdown': handleCopyMarkdown(); break
-      case 'pasteMarkdown': handlePasteMarkdown(); break
-      case 'registerAssociation': handleRegisterAssociation(); break
-      case 'unregisterAssociation': handleUnregisterAssociation(); break
-      case 'settings': handleOpenSettings(); break
+      case 'newFile': menuActionRefs.current.handleNewFile(); break
+      case 'open': menuActionRefs.current.handleOpenFile(); break
+      case 'openFolder': menuActionRefs.current.handleOpenFolder(); break
+      case 'save': menuActionRefs.current.handleSaveFile(); break
+      case 'saveAs': menuActionRefs.current.handleSaveAsFile(); break
+      case 'exportHtml': menuActionRefs.current.handleExportHtml(); break
+      case 'copyMarkdown': menuActionRefs.current.handleCopyMarkdown(); break
+      case 'pasteMarkdown': menuActionRefs.current.handlePasteMarkdown(); break
+      case 'registerAssociation': menuActionRefs.current.handleRegisterAssociation(); break
+      case 'unregisterAssociation': menuActionRefs.current.handleUnregisterAssociation(); break
+      case 'settings': menuActionRefs.current.handleOpenSettings(); break
       case 'about': setShowAbout(true); break
     }
-  }, [handleNewFile, handleOpenFile, handleOpenFolder, handleSaveFile, handleSaveAsFile, handleExportHtml, handleCopyMarkdown, handlePasteMarkdown, handleRegisterAssociation, handleUnregisterAssociation, handleOpenSettings])
+  }, [])
 
   const handleToggleSidebar = useCallback(() => {
     setSidebarVisible(v => !v)
   }, [])
 
   const handleToggleCompactMode = useCallback(() => {
-    const next = !compactMode
-    setCompactMode(next)
-    try {
-      const settings = JSON.parse(localStorage.getItem('editorSettings') || '{}')
-      settings.compactMode = next
-      localStorage.setItem('editorSettings', JSON.stringify(settings))
-    } catch {}
-  }, [compactMode])
+    setCompactMode(prev => {
+      const next = !prev
+      try {
+        const settings = JSON.parse(localStorage.getItem('editorSettings') || '{}')
+        settings.compactMode = next
+        localStorage.setItem('editorSettings', JSON.stringify(settings))
+      } catch {}
+      return next
+    })
+  }, [])
 
   const handleSidebarWidthChange = useCallback((width) => {
     setSidebarWidth(width)
@@ -796,6 +853,20 @@ function App() {
     setSpellcheck(settings.spellcheck !== false)
     setShowToolbar(settings.showToolbar !== false)
     setShowOpenFilesModule(settings.showOpenFilesModule !== false)
+    settingsRef.current = {
+      ...settingsRef.current,
+      spellcheck: settings.spellcheck,
+      showToolbar: settings.showToolbar,
+      showOpenFilesModule: settings.showOpenFilesModule,
+      imageInsertMode: settings.imageInsertMode ?? settingsRef.current.imageInsertMode,
+      imageFolder: settings.imageFolder ?? settingsRef.current.imageFolder,
+      closeLastTabAction: settings.closeLastTabAction ?? settingsRef.current.closeLastTabAction,
+      fontFamily: settings.fontFamily ?? settingsRef.current.fontFamily,
+      fontSize: settings.fontSize ?? settingsRef.current.fontSize,
+      compactMode: settings.compactMode ?? settingsRef.current.compactMode,
+      sidebarWidth: settings.sidebarWidth ?? settingsRef.current.sidebarWidth,
+      shortcuts: settings.shortcuts ?? settingsRef.current.shortcuts
+    }
     applyFontSettings(settings)
   }, [])
 
@@ -839,18 +910,10 @@ function App() {
 
   useEffect(() => {
     window.electronAPI.getAppSettings().then(s => {
-      if (s && s.hardwareAcceleration) {
-        setHwAccel(s.hardwareAcceleration)
-      }
-      if (s && s.defaultOpenPath) {
-        setDefaultOpenPath(s.defaultOpenPath)
-      }
-      if (s && s.windowMode) {
-        setWindowMode(s.windowMode)
-      }
-      if (s && s.windowBounds) {
-        setWindowBounds(s.windowBounds)
-      }
+      if (s && s.hardwareAcceleration) setHwAccel(s.hardwareAcceleration)
+      if (s && s.defaultOpenPath) setDefaultOpenPath(s.defaultOpenPath)
+      if (s && s.windowMode) setWindowMode(s.windowMode)
+      if (s && s.windowBounds) setWindowBounds(s.windowBounds)
     }).catch(() => {})
   }, [])
 
@@ -862,44 +925,35 @@ function App() {
 
   useEffect(() => {
     const settings = getSettings()
+    settingsRef.current = settings
     applyFontSettings(settings)
   }, [])
+
+  const keyHandlersRef = useRef({})
+  keyHandlersRef.current = {
+    newFile: handleNewFile,
+    open: handleOpenFile,
+    save: handleSaveFile,
+    saveAs: handleSaveAsFile
+  }
 
   useEffect(() => {
     const settings = getSettings()
     const shortcuts = settings.shortcuts || DEFAULT_SETTINGS.shortcuts
 
-    function parseShortcut(shortcut) {
-      const parts = shortcut.split('+')
-      return {
-        ctrl: parts.includes('Ctrl'),
-        shift: parts.includes('Shift'),
-        alt: parts.includes('Alt'),
-        key: parts[parts.length - 1]?.toLowerCase()
-      }
-    }
-
-    function matchesShortcut(e, shortcut) {
-      const s = parseShortcut(shortcut)
-      return (e.ctrlKey || e.metaKey) === s.ctrl
-        && e.shiftKey === s.shift
-        && e.altKey === s.alt
-        && e.key.toLowerCase() === s.key
-    }
-
     function handleKeyDown(e) {
       if (matchesShortcut(e, shortcuts.newFile)) {
         e.preventDefault()
-        handleNewFile()
+        keyHandlersRef.current.newFile()
       } else if (matchesShortcut(e, shortcuts.open)) {
         e.preventDefault()
-        handleOpenFile()
+        keyHandlersRef.current.open()
       } else if (matchesShortcut(e, shortcuts.save)) {
         e.preventDefault()
-        handleSaveFile()
+        keyHandlersRef.current.save()
       } else if (matchesShortcut(e, shortcuts.saveAs)) {
         e.preventDefault()
-        handleSaveAsFile()
+        keyHandlersRef.current.saveAs()
       } else if (matchesShortcut(e, shortcuts.sidebarToggle || 'Ctrl+B')) {
         e.preventDefault()
         setSidebarVisible(v => !v)
@@ -907,7 +961,7 @@ function App() {
     }
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [handleNewFile, handleOpenFile, handleSaveFile, handleSaveAsFile])
+  }, [])
 
   const handleContextMenu = useCallback((e) => {
     e.preventDefault()
@@ -918,11 +972,23 @@ function App() {
     setContextMenu({ visible: false, x: 0, y: 0 })
   }, [])
 
+  const handleTogglePreview = useCallback(() => {
+    setShowPreview(prev => !prev)
+  }, [])
+
+  const handleCopyPreview = useCallback(() => {
+    navigator.clipboard.writeText(markdownContent)
+  }, [markdownContent])
+
+  const contextMenuPosition = useMemo(
+    () => ({ x: contextMenu.x, y: contextMenu.y }),
+    [contextMenu.x, contextMenu.y]
+  )
+
   if (!editor) return null
 
-  const activeTab = tabs.find(t => t.id === activeTabId)
-
   return (
+    <Suspense fallback={null}>
     <div className={`app-container${dragOver ? ' drag-over' : ''}${compactMode ? ' compact' : ''}`}>
       <TitleBar
         tabs={tabs}
@@ -936,7 +1002,7 @@ function App() {
       <Toolbar
         editor={editor}
         showPreview={showPreview}
-        onTogglePreview={() => setShowPreview(!showPreview)}
+        onTogglePreview={handleTogglePreview}
         onCopyMarkdown={handleCopyMarkdown}
         onPasteMarkdown={handlePasteMarkdown}
         onExportHtml={handleExportHtml}
@@ -967,7 +1033,7 @@ function App() {
               <span>Markdown 源码</span>
               <button
                 className="preview-copy-btn"
-                onClick={() => navigator.clipboard.writeText(markdownContent)}
+                onClick={handleCopyPreview}
                 title="复制 Markdown"
               >
                 📋
@@ -985,7 +1051,7 @@ function App() {
       <ContextMenu
         editor={editor}
         visible={contextMenu.visible}
-        position={{ x: contextMenu.x, y: contextMenu.y }}
+        position={contextMenuPosition}
         onClose={closeContextMenu}
       />
       <StatusBar
@@ -999,6 +1065,7 @@ function App() {
         onToggleCompactMode={handleToggleCompactMode}
       />
     </div>
+    </Suspense>
   )
 }
 

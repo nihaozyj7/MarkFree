@@ -1,6 +1,7 @@
 import { app, shell, BrowserWindow, ipcMain, dialog, screen } from 'electron'
 import { join, resolve, extname } from 'path'
 import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, statSync } from 'fs'
+import { readFile } from 'fs/promises'
 
 import { execFile } from 'child_process'
 import { DARK_THEME, LIGHT_THEME } from './themes/defaults.js'
@@ -297,12 +298,13 @@ ipcMain.handle('dialog:openFolder', async () => {
   if (result.canceled || result.filePaths.length === 0) return null
   const folderPath = result.filePaths[0]
   const entries = readdirSync(folderPath)
-  const files = entries.filter(f => /\.md$|\.markdown$/i.test(f))
-  return files.map(file => {
+  const mdFiles = entries.filter(f => /\.md$|\.markdown$/i.test(f))
+  const files = await Promise.all(mdFiles.map(async (file) => {
     const filePath = join(folderPath, file)
-    const content = readFileSync(filePath, 'utf-8')
+    const content = await readFile(filePath, 'utf-8')
     return { content, filePath, fileName: file }
-  })
+  }))
+  return files
 })
 
 ipcMain.handle('dialog:saveFile', async (_event, { content, filePath }) => {

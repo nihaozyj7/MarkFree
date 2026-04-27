@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useCallback, memo } from 'react'
 
 const ICONS = {
   bold: (
@@ -286,7 +286,7 @@ const MENU_GROUPS = [
   },
 ]
 
-function ContextMenu({ editor, visible, position, onClose }) {
+const ContextMenu = memo(function ContextMenu({ editor, visible, position, onClose }) {
   const menuRef = useRef(null)
   const [adjustedPos, setAdjustedPos] = useState({ x: 0, y: 0 })
 
@@ -331,12 +331,12 @@ function ContextMenu({ editor, visible, position, onClose }) {
 
   if (!visible) return null
 
-  const handleItemClick = (item) => {
+  const handleItemClick = useCallback((item) => {
     if (item.action) {
       item.action(editor)
       onClose()
     }
-  }
+  }, [editor, onClose])
 
   return (
     <div
@@ -373,6 +373,6 @@ function ContextMenu({ editor, visible, position, onClose }) {
       </div>
     </div>
   )
-}
+})
 
 export default ContextMenu

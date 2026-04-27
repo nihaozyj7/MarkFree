@@ -25,7 +25,6 @@
     },
     "files": [
       "out/**/*",
-      "node_modules/**/*",
       "package.json"
     ],
     "extraResources": [

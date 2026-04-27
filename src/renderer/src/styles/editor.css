@@ -658,7 +658,6 @@
   overflow-y: auto;
   padding: 24px 24px 28px;
   text-align: left;
-  will-change: scroll-position;
 }
 .settings-section {
   margin-bottom: 24px;

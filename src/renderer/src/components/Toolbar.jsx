@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react'
+import React, { useCallback, memo } from 'react'
 
 const TOOL_GROUPS = [
   [
@@ -43,7 +43,7 @@ const TOOL_GROUPS = [
   ]
 ]
 
-function Toolbar({ editor, showPreview, onTogglePreview, onCopyMarkdown, onPasteMarkdown, onExportHtml, onInsertImage }) {
+const Toolbar = memo(function Toolbar({ editor, showPreview, onTogglePreview, onCopyMarkdown, onPasteMarkdown, onExportHtml, onInsertImage }) {
   const handleUndo = useCallback(() => editor.chain().focus().undo().run(), [editor])
   const handleRedo = useCallback(() => editor.chain().focus().redo().run(), [editor])
 
@@ -89,6 +89,6 @@ function Toolbar({ editor, showPreview, onTogglePreview, onCopyMarkdown, onPaste
       </div>
     </div>
   )
-}
+})
 
 export default Toolbar

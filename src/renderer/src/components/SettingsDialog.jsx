@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, memo } from 'react'
 
 const DEFAULT_SETTINGS = {
   imageInsertMode: 'base64',
@@ -26,7 +26,7 @@ const SHORTCUT_LABELS = {
   sidebarToggle: '侧边栏'
 }
 
-function SettingsDialog({ onClose, currentTheme, onThemeChange, onSaveSettings, hwAccel, onHwAccelChange, defaultOpenPath, onDefaultOpenPathChange, windowMode, windowBounds, onWindowModeChange, onWindowBoundsChange }) {
+const SettingsDialog = memo(function SettingsDialog({ onClose, currentTheme, onThemeChange, onSaveSettings, hwAccel, onHwAccelChange, defaultOpenPath, onDefaultOpenPathChange, windowMode, windowBounds, onWindowModeChange, onWindowBoundsChange }) {
   const [settings, setSettings] = useState(() => {
     try {
       const saved = localStorage.getItem('editorSettings')
@@ -305,6 +305,6 @@ function SettingsDialog({ onClose, currentTheme, onThemeChange, onSaveSettings, 
       </div>
     </div>
   )
-}
+})
 
 export default SettingsDialog
