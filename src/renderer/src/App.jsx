@@ -165,6 +165,7 @@ function App() {
   const [currentFolderPath, setCurrentFolderPath] = useState('')
   const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0 })
   const [showAbout, setShowAbout] = useState(false)
+  const [compactMode, setCompactMode] = useState(false)
   const contentRef = useRef('')
   const modifiedRef = useRef(false)
   const filePathRef = useRef('')
@@ -864,7 +865,7 @@ function App() {
   const activeTab = tabs.find(t => t.id === activeTabId)
 
   return (
-    <div className={`app-container${dragOver ? ' drag-over' : ''}`}>
+    <div className={`app-container${dragOver ? ' drag-over' : ''}${compactMode ? ' compact' : ''}`}>
       <TitleBar
         tabs={tabs}
         activeTabId={activeTabId}
@@ -934,6 +935,8 @@ function App() {
         tabs={tabs}
         onToggleSidebar={handleToggleSidebar}
         sidebarVisible={sidebarVisible}
+        compactMode={compactMode}
+        onToggleCompactMode={() => setCompactMode(v => !v)}
       />
     </div>
   )

@@ -897,6 +897,85 @@
 .status-bar-encoding {
   cursor: default;
 }
+.status-bar-compact-toggle svg {
+  display: block;
+}
+.status-bar-compact-toggle.active {
+  color: var(--color-accent);
+}
+/* ===== Compact Mode ===== */
+.compact .editor-content {
+  padding: 16px 24px;
+}
+.compact .editor-content .ProseMirror {
+  font-size: 14px;
+  line-height: 1.6;
+}
+.compact .ProseMirror p {
+  margin: 0.3em 0;
+}
+.compact .ProseMirror h1 {
+  font-size: 1.6em;
+  margin: 0.5em 0 0.25em;
+  padding-bottom: 0.15em;
+}
+.compact .ProseMirror h2 {
+  font-size: 1.35em;
+  margin: 0.45em 0 0.2em;
+}
+.compact .ProseMirror h3 {
+  font-size: 1.15em;
+  margin: 0.4em 0 0.2em;
+}
+.compact .ProseMirror h4 {
+  font-size: 1.05em;
+  margin: 0.35em 0 0.15em;
+}
+.compact .ProseMirror h5 {
+  font-size: 1em;
+  margin: 0.35em 0 0.15em;
+}
+.compact .ProseMirror h6 {
+  font-size: 0.9em;
+  margin: 0.35em 0 0.15em;
+}
+.compact .ProseMirror pre {
+  padding: 10px;
+  margin: 0.6em 0;
+}
+.compact .ProseMirror blockquote {
+  margin: 0.6em 0;
+  padding: 0.3em 0.8em;
+}
+.compact .ProseMirror ul,
+.compact .ProseMirror ol {
+  padding-left: 1.2em;
+  margin: 0.3em 0;
+}
+.compact .ProseMirror li {
+  margin: 0.15em 0;
+}
+.compact .ProseMirror hr {
+  margin: 1em 0;
+}
+.compact .ProseMirror img {
+  margin: 0.6em 0;
+}
+.compact .ProseMirror table {
+  margin: 0.5em 0;
+}
+.compact .ProseMirror th,
+.compact .ProseMirror td {
+  padding: 2px 4px;
+}
+.compact .ProseMirror th p,
+.compact .ProseMirror td p {
+  margin: 0;
+}
+.compact .preview-content {
+  padding: 16px;
+  font-size: 12px;
+}
 /* ===== Sidebar ===== */
 .sidebar {
   width: 220px;
