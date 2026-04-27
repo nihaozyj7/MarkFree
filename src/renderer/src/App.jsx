@@ -1042,7 +1042,7 @@ function App() {
         onInsertImage={handleInsertImage}
       />
       )}
-      <div className="editor-wrapper" onContextMenu={handleContextMenu}>
+      <div className="editor-wrapper">
         {sidebarVisible && (
           <Sidebar
             tabs={tabs}
@@ -1057,7 +1057,7 @@ function App() {
             onWidthChange={handleSidebarWidthChange}
           />
         )}
-        <div className={`editor-area ${showPreview ? 'split' : 'full'}`}>
+        <div className={`editor-area ${showPreview ? 'split' : 'full'}`} onContextMenu={handleContextMenu}>
           <EditorContent editor={editor} className="editor-content" />
         </div>
         {showPreview && (
