@@ -6,6 +6,7 @@ const DEFAULT_SETTINGS = {
   spellcheck: true,
   closeLastTabAction: 'closeApp',
   showToolbar: true,
+  showOpenFilesModule: true,
   fontFamily: 'default',
   fontSize: 16,
   shortcuts: {
@@ -134,6 +135,10 @@ function SettingsDialog({ onClose, currentTheme, onThemeChange, onSaveSettings, 
             <label className="settings-radio">
               <input type="checkbox" checked={settings.showToolbar !== false} onChange={e => updateSettings({showToolbar: e.target.checked})} />
               <span>显示工具栏</span>
+            </label>
+            <label className="settings-radio">
+              <input type="checkbox" checked={settings.showOpenFilesModule !== false} onChange={e => updateSettings({showOpenFilesModule: e.target.checked})} />
+              <span>显示侧栏打开文件列表</span>
             </label>
           </div>
           <div className="settings-divider" />

@@ -95,6 +95,7 @@ const DEFAULT_SETTINGS = {
   spellcheck: true,
   closeLastTabAction: 'closeApp',
   showToolbar: true,
+  showOpenFilesModule: true,
   fontFamily: 'default',
   fontSize: 16,
   shortcuts: {
@@ -158,6 +159,7 @@ function App() {
   const [windowBounds, setWindowBounds] = useState({ x: 0, y: 0, width: 1200, height: 800 })
   const [spellcheck, setSpellcheck] = useState(() => getSettings().spellcheck !== false)
   const [showToolbar, setShowToolbar] = useState(() => getSettings().showToolbar !== false)
+  const [showOpenFilesModule, setShowOpenFilesModule] = useState(() => getSettings().showOpenFilesModule !== false)
   const [sidebarVisible, setSidebarVisible] = useState(false)
   const [folderFiles, setFolderFiles] = useState([])
   const [currentFolderPath, setCurrentFolderPath] = useState('')
@@ -734,6 +736,7 @@ function App() {
   const handleSaveSettings = useCallback((settings) => {
     setSpellcheck(settings.spellcheck !== false)
     setShowToolbar(settings.showToolbar !== false)
+    setShowOpenFilesModule(settings.showOpenFilesModule !== false)
     applyFontSettings(settings)
   }, [])
 
@@ -891,6 +894,7 @@ function App() {
             folderPath={currentFolderPath}
             onOpenFolder={handleSelectFolder}
             onOpenFolderFile={handleOpenFolderFile}
+            showOpenFilesModule={showOpenFilesModule}
           />
         )}
         <div className={`editor-area ${showPreview ? 'split' : 'full'}`}>
