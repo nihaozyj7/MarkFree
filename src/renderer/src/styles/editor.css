@@ -1431,19 +1431,23 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
   text-align: center;
   max-width: 360px;
 }
 .welcome-logo {
-  color: var(--color-accent);
-  opacity: 0.6;
-  margin-bottom: 8px;
+  color: var(--text-muted);
+  opacity: 0.4;
+  margin-bottom: 4px;
+}
+.welcome-logo svg {
+  width: 40px;
+  height: 40px;
 }
 .welcome-title {
-  font-size: 28px;
-  font-weight: 700;
-  color: var(--text-primary);
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text-secondary);
   margin: 0;
 }
 .welcome-subtitle {
@@ -1454,28 +1458,32 @@
 .welcome-actions {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  width: 240px;
-  margin-top: 16px;
+  gap: 2px;
+  width: auto;
+  margin-top: 8px;
+  align-items: center;
 }
 .welcome-action-btn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 10px 16px;
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  background: var(--bg-secondary);
-  color: var(--text-secondary);
+  gap: 6px;
+  padding: 4px 0;
+  border: none;
+  background: none;
+  color: var(--text-link);
   font-size: 14px;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: color 0.15s ease;
+  text-decoration: none;
 }
 .welcome-action-btn:hover {
-  background: var(--hover-bg);
-  color: var(--text-primary);
-  border-color: var(--color-accent);
+  color: var(--text-link-hover);
+  text-decoration: underline;
+}
+.welcome-action-btn svg {
+  width: 15px;
+  height: 15px;
+  opacity: 0.6;
 }
 .welcome-hint {
   font-size: 12px;
