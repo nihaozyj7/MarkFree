@@ -1,6 +1,6 @@
 # MarkdownPad
 
-A WYSIWYG Markdown editor built with Electron, React, and TipTap. Write in rich text, save as Markdown.
+> A WYSIWYG Markdown editor built with Electron, React, and TipTap
 
 [中文文档](./README.md)
 
@@ -10,33 +10,32 @@ A WYSIWYG Markdown editor built with Electron, React, and TipTap. Write in rich 
 
 - **WYSIWYG Editing** — TipTap-based rich text editor renders Markdown in real time
 - **Bidirectional Markdown** — toggle between rich text and Markdown source view; copy/paste Markdown directly
-- **Formatting Toolbar** — bold, italic, underline, strikethrough, inline code, H1–H6 headings, bullet/ordered/task lists, blockquote, code blocks, horizontal rule, tables (with add row/column), links, images
+- **Formatting Toolbar** — bold, italic, underline, strikethrough, inline code, H1–H6 headings, lists, blockquotes, code blocks, horizontal rules, tables, links, images
 - **Code Syntax Highlighting** — powered by lowlight with 11+ languages
-- **Task Lists** — interactive checkboxes (nested support)
-- **Tables** — resizable columns, header rows, insert/delete rows/columns, merge/split cells
-- **Image Insertion** — three modes: Base64 (embedded), relative path (saved to a folder), absolute path; paste images from clipboard
-- **Multi-tab Editing** — edit multiple files simultaneously with tab switching and middle-click close
-- **Sidebar** — browse open files list or browse .md files in a folder
-- **Right-click Context Menu** — quick access to formatting, table operations, and editing commands
-- **Status Bar** — real-time word count, character count, line count, encoding, and modification status
-- **Undo/Redo** — toolbar undo/redo buttons
-- **File Management** — open, save, save as Markdown files; support multi-file selection and opening folders
-- **Export HTML** — one-click export editor content to HTML
-- **Drag & Drop** — drag .md / .markdown files onto the window to open
+- **Task Lists** — interactive checkboxes with nesting support
+- **Table Editing** — resizable columns, insert/delete rows/columns, merge/split cells
+- **Image Insertion** — Base64 embedded, relative path, absolute path; paste from clipboard
+- **Multi-tab Editing** — edit multiple files simultaneously, tab switching, middle-click close
+- **Sidebar** — open files list / folder browsing
+- **Context Menu** — right-click for formatting, table operations, editing commands
+- **Status Bar** — real-time word count, character count, line count, encoding, modification status
+- **File Management** — open, save, save as; multi-file selection, folder opening
+- **Export HTML** — one-click export to HTML
+- **Drag & Drop** — drag .md/.markdown files onto the window to open
 - **Command-line Opening** — `MarkdownPad.exe example.md`
-- **File Association** — register/unregister `.md` file association from the menu (Windows only)
-- **Custom Title Bar** — frameless window with custom title bar, tab bar, and menu
-- **Theme System** — dark (default) and light themes built in; select in settings, add custom CSS themes by placing `.css` files in the themes folder
-- **Font Settings** — customize editor font family and font size in settings
-- **Customizable Shortcuts** — customize keyboard shortcuts (new, open, save, save as, sidebar toggle)
-- **Hardware Acceleration Toggle** — switch hardware acceleration mode (auto/always on/disabled)
-- **Window Modes** — center, auto-remember position, or fixed position on startup
-- **Default Open Path** — set a folder or file to auto-open on app startup
-- **Spellcheck Toggle** — enable/disable browser spellcheck in settings
-- **Toolbar Visibility Toggle** — show/hide the toolbar in settings
-- **Last Tab Behavior** — configure close app or create new tab when closing the last tab
-- **About Dialog** — view app version, tech stack, and runtime information
-- **Single Instance** — prevents multiple instances, forwards opened files to the running instance
+- **File Association** — register/unregister .md association (Windows)
+- **Custom Title Bar** — frameless window with custom title bar and tab bar
+- **Theme System** — dark (default) and light themes built in, custom CSS theme support
+- **Font Settings** — customize editor font and size
+- **Customizable Shortcuts** — customize keyboard shortcuts
+- **Hardware Acceleration Toggle** — auto / always on / disabled
+- **Window Modes** — center, auto-remember, fixed position
+- **Default Open Path** — auto-open folder or file on startup
+- **Spellcheck Toggle**
+- **Toolbar Visibility Toggle**
+- **Last Tab Behavior** — close app or create new tab
+- **About Dialog** — version, tech stack, runtime info
+- **Single Instance** — prevents multiple instances, forwards files to running instance
 
 ## Install
 
@@ -44,8 +43,8 @@ Download the latest installer from the [Releases](https://github.com/anomalyco/m
 
 ### Prerequisites
 
-- Windows x64 (NSIS installer)
-- Node.js &gt;= 18 (for development)
+- Windows x64
+- Node.js >= 18 (for development)
 
 ## Development
 
@@ -62,34 +61,34 @@ npm run dev
 # Production build
 npm run build
 
-# Package into Windows installer
-npm run pack
+# Package Windows installer + portable
+npm run pack:win
 ```
 
-The packaged installer will be in the `release/` directory.
+Packaged artifacts will be in the `dist/` directory.
 
 ## Project Structure
 
 ```
 src/
-  main/index.js              — Electron main process (window, IPC, themes, file assoc, single instance)
-  preload/index.js           — contextBridge (electronAPI for renderer)
+  main/index.js              — Main process (window, IPC, themes, file assoc, single instance)
+  preload/index.js           — contextBridge (electronAPI)`
   renderer/
-    index.html               — entry HTML
+    index.html               — Entry HTML
     src/
       main.jsx               — React mount
-      App.jsx                — editor setup, all extensions, multi-tab management, Markdown preview
+      App.jsx                — Editor setup, extensions, multi-tab management
       components/
-        TitleBar.jsx         — custom frameless title bar with tab bar and menu
-        Toolbar.jsx          — formatting toolbar
-        Sidebar.jsx          — sidebar (file list / folder browser)
-        StatusBar.jsx        — status bar (word count, stats)
-        ContextMenu.jsx      — right-click context menu
-        SettingsDialog.jsx   — settings (theme, font, shortcuts, hardware acceleration, etc.)
-        AboutDialog.jsx      — about dialog
+        TitleBar.jsx         — Title bar, tab bar, menu
+        Toolbar.jsx          — Formatting toolbar
+        Sidebar.jsx          — Sidebar
+        StatusBar.jsx        — Status bar
+        ContextMenu.jsx      — Right-click context menu
+        SettingsDialog.jsx   — Settings dialog
+        AboutDialog.jsx      — About dialog
       styles/
-        index.css            — reset + base styles
-        editor.css           — editor, toolbar, preview, sidebar, status bar, scrollbar styles
+        index.css            — Base styles
+        editor.css           — Editor and UI styles
 ```
 
 ## Tech Stack
