@@ -18,7 +18,7 @@ function loadSettings() {
     if (existsSync(p)) {
       return JSON.parse(readFileSync(p, 'utf-8'))
     }
-  } catch {}
+  } catch { }
   return {}
 }
 
@@ -27,7 +27,7 @@ function saveSettingsFile(settings) {
     const dir = app.getPath('userData')
     if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
     writeFileSync(getSettingsPath(), JSON.stringify(settings, null, 2), 'utf-8')
-  } catch {}
+  } catch { }
 }
 
 const appSettings = loadSettings()
@@ -80,7 +80,7 @@ function openFolderAndSend(folderPath) {
     if (mainWindow) {
       mainWindow.webContents.send('folder:opened', { folderPath, files })
     }
-  } catch {}
+  } catch { }
 }
 
 function ensureWindowVisible(bounds) {
@@ -108,8 +108,8 @@ function createWindow() {
   const windowMode = appSettings.windowMode || 'center'
   const defaultBounds = { width: 1200, height: 800 }
   let windowOptions = {
-    minWidth: 680,
-    minHeight: 480,
+    minWidth: 580,
+    minHeight: 400,
     title: 'MarkdownPad',
     frame: false,
     show: false,
@@ -248,7 +248,7 @@ ipcMain.handle('theme:load', async (_event, name) => {
     try {
       const css = readFileSync(filePath, 'utf-8')
       return { name, css }
-    } catch (_) {}
+    } catch (_) { }
   }
   if (name === 'light') return { name, css: LIGHT_THEME }
   return { name, css: DARK_THEME }
@@ -486,7 +486,7 @@ app.whenReady().then(() => {
               openFileAndSend(defaultPath)
             }
           }
-        } catch {}
+        } catch { }
       })
     }
   }
