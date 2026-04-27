@@ -216,8 +216,20 @@ const SettingsDialog = memo(function SettingsDialog({ onClose, currentTheme, onT
           </div>
           <div className="settings-divider" />
           <div className="settings-section">
+            <h3 className="settings-section-title">启动行为</h3>
+            <label className="settings-radio">
+              <input type="radio" name="startupBehavior" checked={settings.startupBehavior !== 'welcome'} onChange={() => updateSettings({startupBehavior: 'newFile'})} />
+              <span>启动时创建未命名文件</span>
+            </label>
+            <label className="settings-radio">
+              <input type="radio" name="startupBehavior" checked={settings.startupBehavior === 'welcome'} onChange={() => updateSettings({startupBehavior: 'welcome'})} />
+              <span>启动时显示欢迎页</span>
+            </label>
+          </div>
+          <div className="settings-divider" />
+          <div className="settings-section">
             <h3 className="settings-section-title">默认打开路径</h3>
-            <p className="settings-section-desc">应用直接启动时（非命令行调用）默认打开的文件或文件夹，留空则创建未命名文件</p>
+            <p className="settings-section-desc">应用直接启动时（非命令行调用）默认打开的文件或文件夹，留空则使用启动行为设置</p>
             <input
               className="settings-input"
               type="text"

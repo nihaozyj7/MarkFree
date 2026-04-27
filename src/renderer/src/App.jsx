@@ -137,6 +137,7 @@ const DEFAULT_SETTINGS = {
   fontSize: 16,
   compactMode: false,
   sidebarWidth: 220,
+  startupBehavior: 'newFile',
   shortcuts: {
     newFile: 'Ctrl+N',
     open: 'Ctrl+O',
@@ -213,15 +214,22 @@ function matchesShortcut(e, shortcut) {
 function App() {
   const defaultTabId = Date.now().toString(36) + Math.random().toString(36).slice(2, 8)
 
-  const [tabs, setTabs] = useState(() => [{
-    id: defaultTabId,
-    fileName: '未命名',
-    filePath: '',
-    content: '',
-    modified: false,
-    savedContent: ''
-  }])
-  const [activeTabId, setActiveTabId] = useState(defaultTabId)
+  const [tabs, setTabs] = useState(() => {
+    const settings = getSettings()
+    if (settings.startupBehavior === 'welcome') return []
+    return [{
+      id: defaultTabId,
+      fileName: '未命名',
+      filePath: '',
+      content: '',
+      modified: false,
+      savedContent: ''
+    }]
+  })
+  const [activeTabId, setActiveTabId] = useState(() => {
+    const settings = getSettings()
+    return settings.startupBehavior === 'welcome' ? '' : defaultTabId
+  })
   const activeTabIdRef = useRef(activeTabId)
 
   const [showPreview, setShowPreview] = useState(false)
@@ -898,6 +906,7 @@ function App() {
       fontSize: settings.fontSize ?? settingsRef.current.fontSize,
       compactMode: settings.compactMode ?? settingsRef.current.compactMode,
       sidebarWidth: settings.sidebarWidth ?? settingsRef.current.sidebarWidth,
+      startupBehavior: settings.startupBehavior ?? settingsRef.current.startupBehavior,
       shortcuts: settings.shortcuts ?? settingsRef.current.shortcuts
     }
     applyFontSettings(settings)
@@ -1031,53 +1040,99 @@ function App() {
         onMenuAction={handleMenuAction}
         onAddTab={handleNewFile}
       />
-      {showToolbar && (
-      <Toolbar
-        editor={editor}
-        showPreview={showPreview}
-        onTogglePreview={handleTogglePreview}
-        onCopyMarkdown={handleCopyMarkdown}
-        onPasteMarkdown={handlePasteMarkdown}
-        onExportHtml={handleExportHtml}
-        onInsertImage={handleInsertImage}
-      />
-      )}
-      <div className="editor-wrapper">
-        {sidebarVisible && (
-          <Sidebar
-            tabs={tabs}
-            activeTabId={activeTabId}
-            onSwitchTab={switchTab}
-            folderFiles={folderFiles}
-            folderPath={currentFolderPath}
-            onOpenFolder={handleSelectFolder}
-            onOpenFolderFile={handleOpenFolderFile}
-            showOpenFilesModule={showOpenFilesModule}
-            width={sidebarWidth}
-            onWidthChange={handleSidebarWidthChange}
+      {tabs.length > 0 ? (
+        <>
+          {showToolbar && (
+          <Toolbar
+            editor={editor}
+            showPreview={showPreview}
+            onTogglePreview={handleTogglePreview}
+            onCopyMarkdown={handleCopyMarkdown}
+            onPasteMarkdown={handlePasteMarkdown}
+            onExportHtml={handleExportHtml}
+            onInsertImage={handleInsertImage}
           />
-        )}
-        <div className={`editor-area ${showPreview ? 'split' : 'full'}`} onContextMenu={handleContextMenu}>
-          <EditorContent editor={editor} className="editor-content" />
-        </div>
-        {showPreview && (
-          <div className="preview-area">
-            <div className="preview-header">
-              <span>Markdown 源码</span>
-              <button
-                className="preview-copy-btn"
-                onClick={handleCopyPreview}
-                title="复制 Markdown"
-              >
-                📋
+          )}
+          <div className="editor-wrapper">
+            {sidebarVisible && (
+              <Sidebar
+                tabs={tabs}
+                activeTabId={activeTabId}
+                onSwitchTab={switchTab}
+                folderFiles={folderFiles}
+                folderPath={currentFolderPath}
+                onOpenFolder={handleSelectFolder}
+                onOpenFolderFile={handleOpenFolderFile}
+                showOpenFilesModule={showOpenFilesModule}
+                width={sidebarWidth}
+                onWidthChange={handleSidebarWidthChange}
+              />
+            )}
+            <div className={`editor-area ${showPreview ? 'split' : 'full'}`} onContextMenu={handleContextMenu}>
+              <EditorContent editor={editor} className="editor-content" />
+            </div>
+            {showPreview && (
+              <div className="preview-area">
+                <div className="preview-header">
+                  <span>Markdown 源码</span>
+                  <button
+                    className="preview-copy-btn"
+                    onClick={handleCopyPreview}
+                    title="复制 Markdown"
+                  >
+                    📋
+                  </button>
+                </div>
+                <pre className="preview-content">
+                  <code>{markdownContent}</code>
+                </pre>
+              </div>
+            )}
+          </div>
+        </>
+      ) : (
+        <div className="welcome-page" onContextMenu={handleContextMenu}>
+          <div className="welcome-content">
+            <div className="welcome-logo">
+              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+                <polyline points="10 9 9 9 8 9"/>
+              </svg>
+            </div>
+            <h1 className="welcome-title">MarkdownPad</h1>
+            <p className="welcome-subtitle">简洁的 Markdown 编辑器</p>
+            <div className="welcome-actions">
+              <button className="welcome-action-btn" onClick={handleNewFile}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                  <line x1="12" y1="18" x2="12" y2="12"/>
+                  <line x1="9" y1="15" x2="15" y2="15"/>
+                </svg>
+                新建文件
+              </button>
+              <button className="welcome-action-btn" onClick={handleOpenFile}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+                </svg>
+                打开文件
+              </button>
+              <button className="welcome-action-btn" onClick={handleOpenFolder}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+                  <line x1="12" y1="11" x2="12" y2="17"/>
+                  <line x1="9" y1="14" x2="15" y2="14"/>
+                </svg>
+                打开文件夹
               </button>
             </div>
-            <pre className="preview-content">
-              <code>{markdownContent}</code>
-            </pre>
+            <p className="welcome-hint">使用 Ctrl+O 打开文件，Ctrl+N 新建文件</p>
           </div>
-        )}
-      </div>
+        </div>
+      )}
       {dragOver && <div className="drag-overlay"><span>释放以打开 .md 文件</span></div>}
       {showSettings && <SettingsDialog onClose={() => setShowSettings(false)} currentTheme={currentTheme} onThemeChange={handleThemeChange} onSaveSettings={handleSaveSettings} hwAccel={hwAccel} onHwAccelChange={handleHwAccelChange} defaultOpenPath={defaultOpenPath} onDefaultOpenPathChange={handleDefaultOpenPathChange} windowMode={windowMode} windowBounds={windowBounds} onWindowModeChange={handleWindowModeChange} onWindowBoundsChange={handleWindowBoundsChange} />}
       {showAbout && <AboutDialog onClose={() => setShowAbout(false)} />}
