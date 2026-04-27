@@ -47,13 +47,8 @@ const StatusBar = memo(function StatusBar({ editor, filePath, modified, tabs, on
             <line x1="9" y1="3" x2="9" y2="21" />
           </svg>
         </button>
-        <span className="status-bar-text status-bar-tabs-count">
-          {tabs.length > 0 ? `${tabs.length} 个标签页` : ''}
-        </span>
-      </div>
-      <div className="status-bar-right">
         <button
-          className={`status-bar-btn status-bar-compact-toggle${compactMode ? ' active' : ''}`}
+          className="status-bar-btn status-bar-compact-toggle"
           onClick={onToggleCompactMode}
           title={compactMode ? '切换为宽松模式' : '切换为紧凑模式'}
         >
@@ -75,6 +70,11 @@ const StatusBar = memo(function StatusBar({ editor, filePath, modified, tabs, on
             )}
           </svg>
         </button>
+        <span className="status-bar-text status-bar-tabs-count">
+          {tabs.length > 0 ? `${tabs.length} 个标签页` : ''}
+        </span>
+      </div>
+      <div className="status-bar-right">
         {modified && <span className="status-bar-text status-bar-modified">已修改</span>}
         {fileName && <span className="status-bar-text status-bar-file">{fileName}</span>}
         <span className="status-bar-text status-bar-stat">{stats.words} 词</span>

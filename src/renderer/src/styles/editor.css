@@ -910,7 +910,7 @@
   display: block;
 }
 .status-bar-compact-toggle.active {
-  color: var(--color-accent);
+  color: inherit;
 }
 /* ===== Compact Mode ===== */
 .compact .editor-content {
