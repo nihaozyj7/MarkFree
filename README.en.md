@@ -4,7 +4,7 @@
 
 [中文文档](./README.md)
 
-![](./.assets/116731528204.png)
+![](./.assets/029563517761.png)
 
 ## Features
 
@@ -44,7 +44,7 @@ Download the latest installer from the [Releases](https://github.com/anomalyco/m
 ### Prerequisites
 
 - Windows x64
-- Node.js >= 18 (for development)
+- Node.js &gt;= 18 (for development)
 
 ## Development
 

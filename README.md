@@ -4,7 +4,7 @@
 
 [English](./README.en.md)
 
-![](./.assets/116977613281.png)
+![](./.assets/029728659273.png)
 
 ## 功能
 
@@ -44,7 +44,7 @@
 ### 环境要求
 
 - Windows x64
-- Node.js >= 18（开发环境）
+- Node.js &gt;= 18（开发环境）
 
 ## 开发
 
