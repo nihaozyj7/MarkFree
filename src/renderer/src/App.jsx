@@ -297,6 +297,19 @@ function App() {
         spellcheck: spellcheck ? 'true' : 'false'
       },
       handleKeyDown: (view, event) => {
+        if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+          event.preventDefault()
+          const { state, dispatch } = view
+          const { selection, schema } = state
+          const { $from } = selection
+          const pos = $from.after($from.depth)
+          const paragraph = schema.nodes.paragraph.create()
+          const tr = state.tr.insert(pos, paragraph)
+          tr.setSelection(TextSelection.create(tr.doc, pos + 1))
+          dispatch(tr)
+          return true
+        }
+
         if (event.key === 'Enter' && !event.shiftKey && !event.ctrlKey && !event.metaKey) {
           const { state } = view
           const { selection } = state
