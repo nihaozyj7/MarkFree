@@ -324,13 +324,13 @@
 }
 /* ===== Editor Content ===== */
 .editor-content {
-  padding: 32px 48px;
   min-height: 100%;
   outline: none;
 }
 .editor-content .ProseMirror {
+  padding: 32px 48px;
   outline: none;
-  min-height: calc(100vh - 120px);
+  min-height: calc(100vh - 56px);
   font-size: 16px;
   line-height: 1.8;
   color: var(--text-primary);
@@ -905,9 +905,11 @@
 }
 /* ===== Compact Mode ===== */
 .compact .editor-content {
-  padding: 16px 24px;
+  padding: 0;
 }
 .compact .editor-content .ProseMirror {
+  padding: 16px 24px;
+  min-height: calc(100vh - 88px);
   font-size: 14px;
   line-height: 1.6;
 }
