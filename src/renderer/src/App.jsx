@@ -215,9 +215,20 @@ function App() {
       handleClick: (view, pos, event) => {
         const { doc, schema } = view.state
         const docEnd = doc.content.size
+        if (pos <= 1) {
+          const firstChild = doc.firstChild
+          if (firstChild && !firstChild.isTextblock) {
+            const tr = view.state.tr
+            const paragraph = schema.nodes.paragraph.create()
+            tr.insert(0, paragraph)
+            tr.setSelection(TextSelection.create(tr.doc, 1))
+            view.dispatch(tr)
+            return true
+          }
+        }
         if (pos >= docEnd - 1) {
           const lastChild = doc.lastChild
-          if (lastChild && lastChild.type.name === 'table') {
+          if (lastChild && !lastChild.isTextblock) {
             const tr = view.state.tr
             const paragraph = schema.nodes.paragraph.create()
             tr.insert(docEnd, paragraph)
