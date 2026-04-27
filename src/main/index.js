@@ -108,8 +108,8 @@ function createWindow() {
   const windowMode = appSettings.windowMode || 'center'
   const defaultBounds = { width: 1200, height: 800 }
   let windowOptions = {
-    minWidth: 850,
-    minHeight: 600,
+    minWidth: 680,
+    minHeight: 480,
     title: 'MarkdownPad',
     frame: false,
     show: false,

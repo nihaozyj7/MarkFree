@@ -264,7 +264,7 @@ const SettingsDialog = memo(function SettingsDialog({ onClose, currentTheme, onT
                   <input
                     className="settings-input settings-input-inline"
                     type="number"
-                    min={850}
+                    min={680}
                     value={windowBounds?.width ?? 1200}
                     onChange={e => onWindowBoundsChange({ ...windowBounds, width: Number(e.target.value) })}
                   />
@@ -274,7 +274,7 @@ const SettingsDialog = memo(function SettingsDialog({ onClose, currentTheme, onT
                   <input
                     className="settings-input settings-input-inline"
                     type="number"
-                    min={600}
+                    min={480}
                     value={windowBounds?.height ?? 800}
                     onChange={e => onWindowBoundsChange({ ...windowBounds, height: Number(e.target.value) })}
                   />
