@@ -83,13 +83,21 @@
   color: #fff;
 }
 /* ===== Title Bar Tabs ===== */
+.title-bar-tabs-wrapper {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+}
 .title-bar-tabs {
   display: flex;
   align-items: center;
   height: 100%;
   overflow-x: auto;
   overflow-y: hidden;
-  flex: 0 1 auto;
+  flex: 1 1 auto;
   min-width: 0;
   padding-left: 8px;
   -webkit-app-region: no-drag;
@@ -113,7 +121,7 @@
   border-radius: 4px;
   background: transparent;
   transition: background 0.1s ease, border-color 0.1s ease, color 0.1s ease;
-  min-width: 56px;
+  min-width: 72px;
   flex-shrink: 1;
   position: relative;
 }
