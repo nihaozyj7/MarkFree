@@ -26,7 +26,7 @@ const SHORTCUT_LABELS = {
   sidebarToggle: '侧边栏'
 }
 
-const SettingsDialog = memo(function SettingsDialog({ onClose, currentTheme, onThemeChange, onSaveSettings, hwAccel, onHwAccelChange, defaultOpenPath, onDefaultOpenPathChange, windowMode, windowBounds, onWindowModeChange, onWindowBoundsChange }) {
+const SettingsDialog = memo(function SettingsDialog({ onClose, currentTheme, onThemeChange, onSaveSettings, hwAccel, onHwAccelChange, defaultOpenPath, onDefaultOpenPathChange, windowMode, windowBounds, onWindowModeChange, onWindowBoundsChange, folderSortMode, onFolderSortModeChange }) {
   const [settings, setSettings] = useState(() => {
     try {
       const saved = localStorage.getItem('editorSettings')
@@ -144,6 +144,33 @@ const SettingsDialog = memo(function SettingsDialog({ onClose, currentTheme, onT
               <input type="checkbox" checked={settings.showOpenFilesModule !== false} onChange={e => updateSettings({showOpenFilesModule: e.target.checked})} />
               <span>打开文件夹时显示已打开的文件</span>
             </label>
+          </div>
+          <div className="settings-divider" />
+          <div className="settings-section">
+            <h3 className="settings-section-title">文件夹排序</h3>
+            <div className="settings-row">
+              <label className="settings-row-label">文件夹位置</label>
+              <select
+                className="settings-select settings-select-inline"
+                value={folderSortMode?.split('-')[0] || 'foldersFirst'}
+                onChange={e => onFolderSortModeChange(e.target.value + '-' + (folderSortMode?.split('-')[1] || 'createTime'))}
+              >
+                <option value="foldersFirst">文件夹在上</option>
+                <option value="filesFirst">文件夹在下</option>
+              </select>
+            </div>
+            <div className="settings-row">
+              <label className="settings-row-label">排序依据</label>
+              <select
+                className="settings-select settings-select-inline"
+                value={folderSortMode?.split('-')[1] || 'createTime'}
+                onChange={e => onFolderSortModeChange((folderSortMode?.split('-')[0] || 'foldersFirst') + '-' + e.target.value)}
+              >
+                <option value="createTime">创建时间</option>
+                <option value="modifyTime">修改时间</option>
+                <option value="wordCount">字数</option>
+              </select>
+            </div>
           </div>
           <div className="settings-divider" />
           <div className="settings-section">

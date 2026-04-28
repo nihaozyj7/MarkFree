@@ -137,7 +137,29 @@ function collectAllDirectoryPaths(tree) {
   return paths
 }
 
-function FileTree({ tree, onOpenFile, activeFilePath, onRefreshTree }) {
+function compareNodes(a, b, sortMode) {
+  if (!sortMode) return a.name.localeCompare(b.name)
+  const [position, sortBy] = sortMode.split('-')
+  const foldersFirst = position === 'foldersFirst'
+
+  if (a.type !== b.type) {
+    if (foldersFirst) return a.type === 'directory' ? -1 : 1
+    return a.type === 'directory' ? 1 : -1
+  }
+
+  if (sortBy === 'createTime') return (a.birthtime || 0) - (b.birthtime || 0)
+  if (sortBy === 'modifyTime') return (a.mtime || 0) - (b.mtime || 0)
+  if (sortBy === 'wordCount') return (a.wordCount || 0) - (b.wordCount || 0)
+
+  return a.name.localeCompare(b.name)
+}
+
+function sortChildren(children, sortMode) {
+  if (!children) return children
+  return [...children].sort((a, b) => compareNodes(a, b, sortMode))
+}
+
+function FileTree({ tree, onOpenFile, activeFilePath, onRefreshTree, sortMode }) {
   const [collapsedPaths, setCollapsedPaths] = useState(() => {
     return new Set(collectAllDirectoryPaths(tree))
   })
@@ -149,6 +171,9 @@ function FileTree({ tree, onOpenFile, activeFilePath, onRefreshTree }) {
   collapsedRef.current = collapsedPaths
   loadedRef.current = loadedChildren
   loadingRef.current = loadingPaths
+
+  const sortModeRef = useRef(sortMode)
+  sortModeRef.current = sortMode
 
   const [contextMenu, setContextMenu] = useState(null)
   const [renamingPath, setRenamingPath] = useState(null)
@@ -170,7 +195,8 @@ function FileTree({ tree, onOpenFile, activeFilePath, onRefreshTree }) {
         try {
           const subtree = await window.electronAPI.getFolderChildren(path)
           if (subtree) {
-            setLoadedChildren(prev => { const next = new Map(prev); next.set(path, subtree); return next })
+            const sorted = { ...subtree, children: sortChildren(subtree.children, sortModeRef.current) }
+            setLoadedChildren(prev => { const next = new Map(prev); next.set(path, sorted); return next })
             const childDirs = collectAllDirectoryPaths(subtree)
             if (childDirs.length > 0) {
               setCollapsedPaths(prev => {

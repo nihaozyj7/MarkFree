@@ -1,7 +1,7 @@
 import { app, shell, BrowserWindow, ipcMain, dialog, screen } from 'electron'
 import { join, resolve, extname, basename, dirname } from 'path'
 import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, statSync, renameSync, unlinkSync, rmdirSync } from 'fs'
-import { readdir } from 'fs/promises'
+import { readdir, stat as statAsync } from 'fs/promises'
 
 import { execFile } from 'child_process'
 import { THEMES, DARK_THEME } from './themes/defaults.js'
@@ -386,6 +386,8 @@ async function buildDirectoryChildren(dirPath) {
     return null
   }
   const children = []
+  const MAX_WORD_COUNT_SIZE = 5 * 1024 * 1024
+
   for (const entry of entries) {
     if (entry.name.startsWith('.')) continue
     const fullPath = join(dirPath, entry.name)
@@ -397,10 +399,23 @@ async function buildDirectoryChildren(dirPath) {
         children: null
       })
     } else if (entry.isFile() && /\.md$|\.markdown$/i.test(entry.name)) {
+      let birthtime = 0, mtime = 0, wordCount = 0
+      try {
+        const stat = await statAsync(fullPath)
+        birthtime = stat.birthtimeMs
+        mtime = stat.mtimeMs
+        if (stat.size > 0 && stat.size <= MAX_WORD_COUNT_SIZE) {
+          const content = readFileSync(fullPath, 'utf-8')
+          wordCount = content.trim() ? content.trim().split(/\s+/).length : 0
+        }
+      } catch {}
       children.push({
         name: entry.name,
         path: fullPath,
-        type: 'file'
+        type: 'file',
+        birthtime,
+        mtime,
+        wordCount
       })
     }
   }

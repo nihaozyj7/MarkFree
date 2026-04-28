@@ -19,6 +19,7 @@ import Toolbar from './components/Toolbar'
 import TitleBar from './components/TitleBar'
 import StatusBar from './components/StatusBar'
 import Sidebar from './components/Sidebar'
+import ErrorBoundary from './components/ErrorBoundary'
 
 const SettingsDialog = lazy(() => import('./components/SettingsDialog'))
 const AboutDialog = lazy(() => import('./components/AboutDialog'))
@@ -144,7 +145,8 @@ const DEFAULT_SETTINGS = {
     save: 'Ctrl+S',
     saveAs: 'Ctrl+Shift+S',
     sidebarToggle: 'Ctrl+B'
-  }
+  },
+  folderSortMode: 'foldersFirst-createTime'
 }
 
 function getSettings() {
@@ -256,6 +258,7 @@ function App() {
   const [showAbout, setShowAbout] = useState(false)
   const [compactMode, setCompactMode] = useState(() => getSettings().compactMode === true)
   const [sidebarWidth, setSidebarWidth] = useState(() => getSettings().sidebarWidth || 220)
+  const [folderSortMode, setFolderSortMode] = useState(() => getSettings().folderSortMode || 'foldersFirst-createTime')
   const settingsRef = useRef(getSettings())
   const contentRef = useRef('')
   const filePathRef = useRef('')
@@ -598,11 +601,15 @@ function App() {
       addTabRef.current(data)
     })
     window.electronAPI.onFolderOpened(async (data) => {
-      const { folderPath } = data
-      setCurrentFolderPath(folderPath)
-      const tree = await window.electronAPI.getFolderTree(folderPath)
-      setFolderTree(tree)
-      setSidebarVisible(true)
+      try {
+        const { folderPath } = data
+        setCurrentFolderPath(folderPath)
+        const tree = await window.electronAPI.getFolderTree(folderPath)
+        setFolderTree(tree)
+        setSidebarVisible(true)
+      } catch (err) {
+        console.error('打开文件夹失败:', err)
+      }
     })
     return () => {
       window.electronAPI.removeFileOpenedListener()
@@ -680,12 +687,16 @@ function App() {
   }, [addTab])
 
   const handleOpenFolder = useCallback(async () => {
-    const folderPath = await window.electronAPI.openFolder()
-    if (!folderPath) return
-    setCurrentFolderPath(folderPath)
-    const tree = await window.electronAPI.getFolderTree(folderPath)
-    setFolderTree(tree)
-    setSidebarVisible(true)
+    try {
+      const folderPath = await window.electronAPI.openFolder()
+      if (!folderPath) return
+      setCurrentFolderPath(folderPath)
+      const tree = await window.electronAPI.getFolderTree(folderPath)
+      setFolderTree(tree)
+      setSidebarVisible(true)
+    } catch (err) {
+      console.error('打开文件夹失败:', err)
+    }
   }, [])
 
   const handleSaveFile = useCallback(async () => {
@@ -886,12 +897,16 @@ function App() {
   }, [])
 
   const handleSelectFolder = useCallback(async () => {
-    const folderPath = await window.electronAPI.selectFolder()
-    if (!folderPath) return
-    setCurrentFolderPath(folderPath)
-    const tree = await window.electronAPI.getFolderTree(folderPath)
-    setFolderTree(tree)
-    setSidebarVisible(true)
+    try {
+      const folderPath = await window.electronAPI.selectFolder()
+      if (!folderPath) return
+      setCurrentFolderPath(folderPath)
+      const tree = await window.electronAPI.getFolderTree(folderPath)
+      setFolderTree(tree)
+      setSidebarVisible(true)
+    } catch (err) {
+      console.error('选择文件夹失败:', err)
+    }
   }, [])
 
   const refreshFolderTree = useCallback(async () => {
@@ -900,6 +915,35 @@ function App() {
       setFolderTree(tree)
     }
   }, [currentFolderPath])
+
+  const handleCreateFileInFolder = useCallback(async () => {
+    if (!currentFolderPath) return
+    const result = await window.electronAPI.createFile(currentFolderPath)
+    if (result.success) {
+      await refreshFolderTree()
+    } else {
+      alert('创建文件失败: ' + result.error)
+    }
+  }, [currentFolderPath, refreshFolderTree])
+
+  const handleCreateFolderInFolder = useCallback(async () => {
+    if (!currentFolderPath) return
+    const result = await window.electronAPI.createFolder(currentFolderPath)
+    if (result.success) {
+      await refreshFolderTree()
+    } else {
+      alert('创建文件夹失败: ' + result.error)
+    }
+  }, [currentFolderPath, refreshFolderTree])
+
+  const handleFolderSortModeChange = useCallback((mode) => {
+    setFolderSortMode(mode)
+    try {
+      const settings = JSON.parse(localStorage.getItem('editorSettings') || '{}')
+      settings.folderSortMode = mode
+      localStorage.setItem('editorSettings', JSON.stringify(settings))
+    } catch {}
+  }, [])
 
   const handleOpenFolderFile = useCallback(async (filePath) => {
     const result = await window.electronAPI.openFileByPath(filePath)
@@ -928,7 +972,8 @@ function App() {
       compactMode: settings.compactMode ?? settingsRef.current.compactMode,
       sidebarWidth: settings.sidebarWidth ?? settingsRef.current.sidebarWidth,
       startupBehavior: settings.startupBehavior ?? settingsRef.current.startupBehavior,
-      shortcuts: settings.shortcuts ?? settingsRef.current.shortcuts
+      shortcuts: settings.shortcuts ?? settingsRef.current.shortcuts,
+      folderSortMode: settings.folderSortMode ?? settingsRef.current.folderSortMode
     }
     applyFontSettings(settings)
   }, [])
@@ -1051,6 +1096,7 @@ function App() {
   if (!editor) return null
 
   return (
+    <ErrorBoundary>
     <Suspense fallback={null}>
     <div className={`app-container${dragOver ? ' drag-over' : ''}${compactMode ? ' compact' : ''}`}>
       <TitleBar
@@ -1080,13 +1126,15 @@ function App() {
             onSwitchTab={switchTab}
             folderTree={folderTree}
             folderPath={currentFolderPath}
-            onOpenFolder={handleSelectFolder}
             onOpenFolderFile={handleOpenFolderFile}
             onRefreshFolderTree={refreshFolderTree}
             showOpenFilesModule={showOpenFilesModule}
             activeFilePath={filePath}
             width={sidebarWidth}
             onWidthChange={handleSidebarWidthChange}
+            onCreateFile={handleCreateFileInFolder}
+            onCreateFolder={handleCreateFolderInFolder}
+            sortMode={folderSortMode}
           />
         )}
         {tabs.length > 0 ? (
@@ -1157,7 +1205,7 @@ function App() {
         )}
       </div>
       {dragOver && <div className="drag-overlay"><span>释放以打开 .md 文件</span></div>}
-      {showSettings && <SettingsDialog onClose={() => setShowSettings(false)} currentTheme={currentTheme} onThemeChange={handleThemeChange} onSaveSettings={handleSaveSettings} hwAccel={hwAccel} onHwAccelChange={handleHwAccelChange} defaultOpenPath={defaultOpenPath} onDefaultOpenPathChange={handleDefaultOpenPathChange} windowMode={windowMode} windowBounds={windowBounds} onWindowModeChange={handleWindowModeChange} onWindowBoundsChange={handleWindowBoundsChange} />}
+      {showSettings && <SettingsDialog onClose={() => setShowSettings(false)} currentTheme={currentTheme} onThemeChange={handleThemeChange} onSaveSettings={handleSaveSettings} hwAccel={hwAccel} onHwAccelChange={handleHwAccelChange} defaultOpenPath={defaultOpenPath} onDefaultOpenPathChange={handleDefaultOpenPathChange} windowMode={windowMode} windowBounds={windowBounds} onWindowModeChange={handleWindowModeChange} onWindowBoundsChange={handleWindowBoundsChange} folderSortMode={folderSortMode} onFolderSortModeChange={handleFolderSortModeChange} />}
       {showAbout && <AboutDialog onClose={() => setShowAbout(false)} />}
       <ContextMenu
         editor={editor}
@@ -1177,6 +1225,7 @@ function App() {
       />
     </div>
     </Suspense>
+    </ErrorBoundary>
   )
 }
 
