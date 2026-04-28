@@ -30,7 +30,11 @@ const SettingsDialog = memo(function SettingsDialog({ onClose, currentTheme, onT
   const [settings, setSettings] = useState(() => {
     try {
       const saved = localStorage.getItem('editorSettings')
-      return saved ? { ...DEFAULT_SETTINGS, ...JSON.parse(saved) } : DEFAULT_SETTINGS
+      const parsed = saved ? { ...DEFAULT_SETTINGS, ...JSON.parse(saved) } : DEFAULT_SETTINGS
+      if (parsed.closeLastTabAction === 'newTab') {
+        parsed.closeLastTabAction = 'showWelcome'
+      }
+      return parsed
     } catch {
       return DEFAULT_SETTINGS
     }
@@ -205,13 +209,14 @@ const SettingsDialog = memo(function SettingsDialog({ onClose, currentTheme, onT
           <div className="settings-divider" />
           <div className="settings-section">
             <h3 className="settings-section-title">标签页</h3>
+            <p className="settings-section-desc">打开文件夹时关闭最后一个标签页始终显示起始页</p>
             <select
               className="settings-select"
               value={settings.closeLastTabAction}
                 onChange={e => updateSettings({closeLastTabAction: e.target.value})}
             >
+              <option value="showWelcome">关闭最后一个标签页时显示起始页</option>
               <option value="closeApp">关闭最后一个标签页时关闭软件</option>
-              <option value="newTab">关闭最后一个标签页时创建新标签页</option>
             </select>
           </div>
           <div className="settings-divider" />

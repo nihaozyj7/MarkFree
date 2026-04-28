@@ -150,7 +150,12 @@ const DEFAULT_SETTINGS = {
 function getSettings() {
   try {
     const saved = localStorage.getItem('editorSettings')
-    return saved ? { ...DEFAULT_SETTINGS, ...JSON.parse(saved) } : DEFAULT_SETTINGS
+    const settings = saved ? { ...DEFAULT_SETTINGS, ...JSON.parse(saved) } : DEFAULT_SETTINGS
+    // 旧版 'newTab' 迁移到 'showWelcome'
+    if (settings.closeLastTabAction === 'newTab') {
+      settings.closeLastTabAction = 'showWelcome'
+    }
+    return settings
   } catch {
     return DEFAULT_SETTINGS
   }
@@ -514,16 +519,22 @@ function App() {
     const wouldBeEmpty = allTabs.length === 1
 
     if (wouldBeEmpty) {
+      // 打开文件夹时关闭最后一个标签页始终显示起始页
+      if (currentFolderPath) {
+        setTabs([])
+        activeTabIdRef.current = ''
+        setActiveTabId('')
+        return
+      }
       const settings = settingsRef.current
       if (settings.closeLastTabAction === 'closeApp') {
         window.electronAPI.closeWindow()
         return
       }
-      const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 8)
-      const newTab = { id, fileName: '未命名', filePath: '', content: '', modified: false, savedContent: '' }
-      setTabs([newTab])
-      activeTabIdRef.current = id
-      setActiveTabId(id)
+      // showWelcome — 显示起始页
+      setTabs([])
+      activeTabIdRef.current = ''
+      setActiveTabId('')
       return
     }
 
@@ -535,7 +546,7 @@ function App() {
       activeTabIdRef.current = newTabs[nextIdx].id
       setActiveTabId(newTabs[nextIdx].id)
     }
-  }, [tabs])
+  }, [tabs, currentFolderPath])
 
   const addTabRef = useRef()
   const addTab = useCallback((fileData) => {
