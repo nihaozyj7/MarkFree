@@ -883,6 +883,13 @@ function App() {
     setSidebarVisible(true)
   }, [])
 
+  const refreshFolderTree = useCallback(async () => {
+    if (currentFolderPath) {
+      const tree = await window.electronAPI.getFolderTree(currentFolderPath)
+      setFolderTree(tree)
+    }
+  }, [currentFolderPath])
+
   const handleOpenFolderFile = useCallback(async (filePath) => {
     const result = await window.electronAPI.openFileByPath(filePath)
     if (result) addTab(result)
@@ -1064,6 +1071,7 @@ function App() {
             folderPath={currentFolderPath}
             onOpenFolder={handleSelectFolder}
             onOpenFolderFile={handleOpenFolderFile}
+            onRefreshFolderTree={refreshFolderTree}
             showOpenFilesModule={showOpenFilesModule}
             activeFilePath={filePath}
             width={sidebarWidth}

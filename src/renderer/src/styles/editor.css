@@ -1195,6 +1195,68 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+/* ===== File Tree Rename Input ===== */
+.file-tree-rename-input {
+  flex: 1;
+  min-width: 0;
+  height: 20px;
+  padding: 0 4px;
+  border: 1px solid var(--color-accent);
+  border-radius: 3px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
+}
+/* ===== File Tree Context Menu ===== */
+.file-tree-context-menu-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10001;
+}
+.file-tree-context-menu {
+  position: fixed;
+  min-width: 150px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  padding: 4px;
+  z-index: 10002;
+}
+.file-tree-context-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text-primary);
+  transition: background 0.1s ease;
+  user-select: none;
+  white-space: nowrap;
+}
+.file-tree-context-item:hover {
+  background: var(--hover-bg);
+}
+.file-tree-context-item.danger {
+  color: var(--color-danger, #e81123);
+}
+.file-tree-context-item.danger:hover {
+  background: var(--danger-hover-bg, rgba(232, 17, 35, 0.1));
+}
+.file-tree-context-icon {
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+.file-tree-context-divider {
+  height: 1px;
+  background: var(--border-color);
+  margin: 4px 8px;
+}
 /* ===== Context Menu ===== */
 .context-menu-overlay {
   position: fixed;

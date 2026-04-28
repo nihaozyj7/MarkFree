@@ -51,6 +51,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getFolderTree: (folderPath) => ipcRenderer.invoke('folder:getTree', folderPath),
   listMdFiles: (folderPath) => ipcRenderer.invoke('folder:listMdFiles', folderPath),
 
+  createFile: (dirPath) => ipcRenderer.invoke('folder:createFile', dirPath),
+  createFolder: (dirPath) => ipcRenderer.invoke('folder:createFolder', dirPath),
+  deleteEntry: (entryPath) => ipcRenderer.invoke('folder:deleteEntry', entryPath),
+  renameEntry: (oldPath, newName) => ipcRenderer.invoke('folder:renameEntry', { oldPath, newName }),
+
   getThemes: () => ipcRenderer.invoke('theme:list'),
   loadTheme: (name) => ipcRenderer.invoke('theme:load', name),
   openThemeFolder: () => ipcRenderer.invoke('theme:openFolder'),

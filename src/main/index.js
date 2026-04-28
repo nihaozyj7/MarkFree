@@ -1,6 +1,6 @@
 import { app, shell, BrowserWindow, ipcMain, dialog, screen } from 'electron'
-import { join, resolve, extname, basename } from 'path'
-import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, statSync } from 'fs'
+import { join, resolve, extname, basename, dirname } from 'path'
+import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, statSync, renameSync, unlinkSync, rmdirSync } from 'fs'
 import { readdir } from 'fs/promises'
 
 import { execFile } from 'child_process'
@@ -436,6 +436,67 @@ ipcMain.handle('folder:listMdFiles', async (_event, folderPath) => {
     return files
   } catch (err) {
     return []
+  }
+})
+
+ipcMain.handle('folder:createFile', async (_event, dirPath) => {
+  try {
+    let name = '新建文件.md'
+    let counter = 1
+    while (existsSync(join(dirPath, name))) {
+      counter++
+      name = `新建文件 ${counter}.md`
+    }
+    const filePath = join(dirPath, name)
+    writeFileSync(filePath, '', 'utf-8')
+    return { success: true, path: filePath, name }
+  } catch (err) {
+    return { success: false, error: err.message }
+  }
+})
+
+ipcMain.handle('folder:createFolder', async (_event, dirPath) => {
+  try {
+    let name = '新建文件夹'
+    let counter = 1
+    while (existsSync(join(dirPath, name))) {
+      counter++
+      name = `新建文件夹 ${counter}`
+    }
+    const folderPath = join(dirPath, name)
+    mkdirSync(folderPath, { recursive: true })
+    return { success: true, path: folderPath, name }
+  } catch (err) {
+    return { success: false, error: err.message }
+  }
+})
+
+ipcMain.handle('folder:deleteEntry', async (_event, entryPath) => {
+  try {
+    const stat = statSync(entryPath)
+    if (stat.isDirectory()) {
+      const contents = readdirSync(entryPath)
+      if (contents.length > 0) {
+        return { success: false, error: '文件夹不为空，无法删除' }
+      }
+      rmdirSync(entryPath)
+    } else {
+      unlinkSync(entryPath)
+    }
+    return { success: true }
+  } catch (err) {
+    return { success: false, error: err.message }
+  }
+})
+
+ipcMain.handle('folder:renameEntry', async (_event, { oldPath, newName }) => {
+  try {
+    const dir = dirname(oldPath)
+    const newPath = join(dir, newName)
+    renameSync(oldPath, newPath)
+    return { success: true, path: newPath }
+  } catch (err) {
+    return { success: false, error: err.message }
   }
 })
 
