@@ -4,7 +4,7 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, statSy
 import { readFile } from 'fs/promises'
 
 import { execFile } from 'child_process'
-import { DARK_THEME, LIGHT_THEME } from './themes/defaults.js'
+import { THEMES, DARK_THEME } from './themes/defaults.js'
 
 let mainWindow
 
@@ -211,21 +211,16 @@ function ensureThemesDir() {
 
 function writeDefaultThemes() {
   const dir = ensureThemesDir()
-  const darkPath = join(dir, 'dark.css')
-  const lightPath = join(dir, 'light.css')
-  if (!existsSync(darkPath)) {
-    writeFileSync(darkPath, DARK_THEME, 'utf-8')
-  }
-  if (!existsSync(lightPath)) {
-    writeFileSync(lightPath, LIGHT_THEME, 'utf-8')
+  for (const theme of THEMES) {
+    const filePath = join(dir, `${theme.name}.css`)
+    if (!existsSync(filePath)) {
+      writeFileSync(filePath, theme.css, 'utf-8')
+    }
   }
 }
 
 ipcMain.handle('theme:list', async () => {
-  const themes = [
-    { name: 'dark', label: '深色主题', builtin: true },
-    { name: 'light', label: '浅色主题', builtin: true }
-  ]
+  const themes = THEMES.map(t => ({ name: t.name, label: t.label, builtin: t.builtin }))
   const dir = getThemesDir()
   if (existsSync(dir)) {
     const files = readdirSync(dir)
@@ -250,7 +245,8 @@ ipcMain.handle('theme:load', async (_event, name) => {
       return { name, css }
     } catch (_) { }
   }
-  if (name === 'light') return { name, css: LIGHT_THEME }
+  const builtin = THEMES.find(t => t.name === name)
+  if (builtin) return { name, css: builtin.css }
   return { name, css: DARK_THEME }
 })
 
