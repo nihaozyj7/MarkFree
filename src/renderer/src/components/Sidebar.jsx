@@ -1,4 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect, memo } from 'react'
+import FileTree from './FileTree'
 
 const SidebarTabItem = memo(function SidebarTabItem({ tab, isActive, onSwitchTab }) {
   const handleClick = useCallback(() => onSwitchTab(tab.id), [onSwitchTab, tab.id])
@@ -18,24 +19,7 @@ const SidebarTabItem = memo(function SidebarTabItem({ tab, isActive, onSwitchTab
   )
 })
 
-const FolderFileItem = memo(function FolderFileItem({ file, idx, onOpenFolderFile }) {
-  const handleClick = useCallback(() => onOpenFolderFile(file.filePath), [onOpenFolderFile, file.filePath])
-  return (
-    <div
-      className="sidebar-item"
-      onClick={handleClick}
-      title={file.filePath}
-    >
-      <svg className="sidebar-item-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2">
-        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-        <polyline points="14 2 14 8 20 8" />
-      </svg>
-      <span className="sidebar-item-name">{file.name}</span>
-    </div>
-  )
-})
-
-const Sidebar = memo(function Sidebar({ tabs, activeTabId, onSwitchTab, folderFiles, folderPath, onOpenFolder, onOpenFolderFile, showOpenFilesModule, width, onWidthChange }) {
+const Sidebar = memo(function Sidebar({ tabs, activeTabId, onSwitchTab, folderTree, folderPath, onOpenFolder, onOpenFolderFile, showOpenFilesModule, activeFilePath, width, onWidthChange }) {
   const folderName = folderPath ? folderPath.split(/[/\\]/).filter(Boolean).pop() : ''
   const [openFilesCollapsed, setOpenFilesCollapsed] = useState(false)
   const sidebarRef = useRef(null)
@@ -88,7 +72,7 @@ const Sidebar = memo(function Sidebar({ tabs, activeTabId, onSwitchTab, folderFi
     <div ref={sidebarRef} className="sidebar" style={{ width, minWidth: width }}>
       <div className="sidebar-resize-handle" onMouseDown={handleMouseDown} />
       <div className="sidebar-content">
-        {(folderFiles.length === 0 || showOpenFilesModule !== false) && (
+        {(showOpenFilesModule !== false) && (
           <div className="sidebar-list">
             <div className="sidebar-list-title sidebar-list-collapsible" onClick={() => setOpenFilesCollapsed(v => !v)}>
               <span className="sidebar-list-title-label">
@@ -115,7 +99,7 @@ const Sidebar = memo(function Sidebar({ tabs, activeTabId, onSwitchTab, folderFi
             )}
           </div>
         )}
-        {folderFiles.length > 0 && (
+        {folderTree && (
           <div className="sidebar-list">
             <div className="sidebar-list-title">
               <span>{folderName}</span>
@@ -125,9 +109,11 @@ const Sidebar = memo(function Sidebar({ tabs, activeTabId, onSwitchTab, folderFi
                 </svg>
               </button>
             </div>
-            {folderFiles.map((file, idx) => (
-              <FolderFileItem key={file.filePath || idx} file={file} idx={idx} onOpenFolderFile={onOpenFolderFile} />
-            ))}
+            <FileTree
+              tree={folderTree}
+              onOpenFile={onOpenFolderFile}
+              activeFilePath={activeFilePath}
+            />
           </div>
         )}
       </div>

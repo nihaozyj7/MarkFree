@@ -245,7 +245,7 @@ function App() {
   const [showToolbar, setShowToolbar] = useState(() => getSettings().showToolbar !== false)
   const [showOpenFilesModule, setShowOpenFilesModule] = useState(() => getSettings().showOpenFilesModule !== false)
   const [sidebarVisible, setSidebarVisible] = useState(false)
-  const [folderFiles, setFolderFiles] = useState([])
+  const [folderTree, setFolderTree] = useState(null)
   const [currentFolderPath, setCurrentFolderPath] = useState('')
   const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0 })
   const [showAbout, setShowAbout] = useState(false)
@@ -586,10 +586,11 @@ function App() {
     window.electronAPI.onFileOpened((data) => {
       addTabRef.current(data)
     })
-    window.electronAPI.onFolderOpened((data) => {
-      const { folderPath, files } = data
+    window.electronAPI.onFolderOpened(async (data) => {
+      const { folderPath } = data
       setCurrentFolderPath(folderPath)
-      setFolderFiles(files)
+      const tree = await window.electronAPI.getFolderTree(folderPath)
+      setFolderTree(tree)
       setSidebarVisible(true)
     })
     return () => {
@@ -668,11 +669,13 @@ function App() {
   }, [addTab])
 
   const handleOpenFolder = useCallback(async () => {
-    const results = await window.electronAPI.openFolder()
-    if (results && results.length > 0) {
-      for (const r of results) addTab(r)
-    }
-  }, [addTab])
+    const folderPath = await window.electronAPI.openFolder()
+    if (!folderPath) return
+    setCurrentFolderPath(folderPath)
+    const tree = await window.electronAPI.getFolderTree(folderPath)
+    setFolderTree(tree)
+    setSidebarVisible(true)
+  }, [])
 
   const handleSaveFile = useCallback(async () => {
     if (!editor) return
@@ -875,8 +878,8 @@ function App() {
     const folderPath = await window.electronAPI.selectFolder()
     if (!folderPath) return
     setCurrentFolderPath(folderPath)
-    const files = await window.electronAPI.listMdFiles(folderPath)
-    setFolderFiles(files)
+    const tree = await window.electronAPI.getFolderTree(folderPath)
+    setFolderTree(tree)
     setSidebarVisible(true)
   }, [])
 
@@ -1059,11 +1062,12 @@ function App() {
                 tabs={tabs}
                 activeTabId={activeTabId}
                 onSwitchTab={switchTab}
-                folderFiles={folderFiles}
+                folderTree={folderTree}
                 folderPath={currentFolderPath}
                 onOpenFolder={handleSelectFolder}
                 onOpenFolderFile={handleOpenFolderFile}
                 showOpenFilesModule={showOpenFilesModule}
+                activeFilePath={filePath}
                 width={sidebarWidth}
                 onWidthChange={handleSidebarWidthChange}
               />

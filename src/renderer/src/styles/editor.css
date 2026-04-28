@@ -1147,6 +1147,54 @@
   color: var(--text-muted);
   line-height: 1;
 }
+/* ===== File Tree ===== */
+.file-tree {
+  padding: 0;
+}
+.file-tree-node {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 12px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.1s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  user-select: none;
+}
+.file-tree-node:hover {
+  background: var(--hover-bg);
+  color: var(--text-primary);
+}
+.file-tree-file.active {
+  background: var(--active-bg);
+  color: var(--text-primary);
+}
+.file-tree-chevron {
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+  color: var(--text-muted);
+}
+.file-tree-chevron.expanded {
+  transform: rotate(90deg);
+}
+.file-tree-icon {
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+.file-tree-folder > .file-tree-icon {
+  color: var(--color-accent);
+  opacity: 0.7;
+}
+.file-tree-file.active .file-tree-icon {
+  color: var(--color-accent);
+}
+.file-tree-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 /* ===== Context Menu ===== */
 .context-menu-overlay {
   position: fixed;

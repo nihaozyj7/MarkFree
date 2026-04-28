@@ -1,7 +1,7 @@
 import { app, shell, BrowserWindow, ipcMain, dialog, screen } from 'electron'
-import { join, resolve, extname } from 'path'
+import { join, resolve, extname, basename } from 'path'
 import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, statSync } from 'fs'
-import { readFile } from 'fs/promises'
+import { readdir } from 'fs/promises'
 
 import { execFile } from 'child_process'
 import { THEMES, DARK_THEME } from './themes/defaults.js'
@@ -69,18 +69,9 @@ function openFileAndSend(filePath) {
 }
 
 function openFolderAndSend(folderPath) {
-  try {
-    const entries = readdirSync(folderPath)
-    const files = entries
-      .filter(f => /\.md$|\.markdown$/i.test(f))
-      .map(f => ({
-        name: f,
-        filePath: join(folderPath, f)
-      }))
-    if (mainWindow) {
-      mainWindow.webContents.send('folder:opened', { folderPath, files })
-    }
-  } catch { }
+  if (mainWindow) {
+    mainWindow.webContents.send('folder:opened', { folderPath })
+  }
 }
 
 function ensureWindowVisible(bounds) {
@@ -292,15 +283,7 @@ ipcMain.handle('dialog:openFolder', async () => {
     properties: ['openDirectory']
   })
   if (result.canceled || result.filePaths.length === 0) return null
-  const folderPath = result.filePaths[0]
-  const entries = readdirSync(folderPath)
-  const mdFiles = entries.filter(f => /\.md$|\.markdown$/i.test(f))
-  const files = await Promise.all(mdFiles.map(async (file) => {
-    const filePath = join(folderPath, file)
-    const content = await readFile(filePath, 'utf-8')
-    return { content, filePath, fileName: file }
-  }))
-  return files
+  return result.filePaths[0]
 })
 
 ipcMain.handle('dialog:saveFile', async (_event, { content, filePath }) => {
@@ -393,6 +376,52 @@ ipcMain.handle('dialog:selectFolder', async () => {
   })
   if (result.canceled || result.filePaths.length === 0) return null
   return result.filePaths[0]
+})
+
+async function buildMarkdownTree(dirPath, depth = 0) {
+  if (depth > 10) return null
+  let entries
+  try {
+    entries = await readdir(dirPath, { withFileTypes: true })
+  } catch {
+    return null
+  }
+  const children = []
+  for (const entry of entries) {
+    if (entry.name.startsWith('.')) continue
+    const fullPath = join(dirPath, entry.name)
+    if (entry.isDirectory()) {
+      const subtree = await buildMarkdownTree(fullPath, depth + 1)
+      if (subtree && subtree.children.length > 0) {
+        children.push(subtree)
+      }
+    } else if (entry.isFile() && /\.md$|\.markdown$/i.test(entry.name)) {
+      children.push({
+        name: entry.name,
+        path: fullPath,
+        type: 'file'
+      })
+    }
+  }
+  if (children.length === 0) return null
+  children.sort((a, b) => {
+    if (a.type !== b.type) return a.type === 'directory' ? -1 : 1
+    return a.name.localeCompare(b.name)
+  })
+  return {
+    name: basename(dirPath),
+    path: dirPath,
+    type: 'directory',
+    children
+  }
+}
+
+ipcMain.handle('folder:getTree', async (_event, folderPath) => {
+  try {
+    return await buildMarkdownTree(folderPath)
+  } catch {
+    return null
+  }
 })
 
 ipcMain.handle('folder:listMdFiles', async (_event, folderPath) => {
