@@ -378,8 +378,7 @@ ipcMain.handle('dialog:selectFolder', async () => {
   return result.filePaths[0]
 })
 
-async function buildMarkdownTree(dirPath, depth = 0) {
-  if (depth > 10) return null
+async function buildDirectoryChildren(dirPath) {
   let entries
   try {
     entries = await readdir(dirPath, { withFileTypes: true })
@@ -391,10 +390,12 @@ async function buildMarkdownTree(dirPath, depth = 0) {
     if (entry.name.startsWith('.')) continue
     const fullPath = join(dirPath, entry.name)
     if (entry.isDirectory()) {
-      const subtree = await buildMarkdownTree(fullPath, depth + 1)
-      if (subtree && subtree.children.length > 0) {
-        children.push(subtree)
-      }
+      children.push({
+        name: entry.name,
+        path: fullPath,
+        type: 'directory',
+        children: null
+      })
     } else if (entry.isFile() && /\.md$|\.markdown$/i.test(entry.name)) {
       children.push({
         name: entry.name,
@@ -418,7 +419,15 @@ async function buildMarkdownTree(dirPath, depth = 0) {
 
 ipcMain.handle('folder:getTree', async (_event, folderPath) => {
   try {
-    return await buildMarkdownTree(folderPath)
+    return await buildDirectoryChildren(folderPath)
+  } catch {
+    return null
+  }
+})
+
+ipcMain.handle('folder:getChildren', async (_event, dirPath) => {
+  try {
+    return await buildDirectoryChildren(dirPath)
   } catch {
     return null
   }

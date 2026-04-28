@@ -114,7 +114,6 @@ const Sidebar = memo(function Sidebar({ tabs, activeTabId, onSwitchTab, folderTr
               onOpenFile={onOpenFolderFile}
               activeFilePath={activeFilePath}
               onRefreshTree={onRefreshFolderTree}
-              folderPath={folderPath}
             />
           </div>
         )}

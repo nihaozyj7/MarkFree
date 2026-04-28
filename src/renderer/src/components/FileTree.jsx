@@ -2,13 +2,19 @@ import React, { useState, useCallback, useRef, useEffect, memo } from 'react'
 
 const FileTreeItem = memo(function FileTreeItem({
   node, depth, onOpenFile, activeFilePath, collapsedPaths, onToggleCollapse,
-  onContextMenu, renamingPath, renameValue, onRenameChange, onRenameSubmit, onRenameCancel
+  onContextMenu, renamingPath, renameValue, onRenameChange, onRenameSubmit, onRenameCancel,
+  loadedChildren, loadingPaths
 }) {
   const inputRef = useRef(null)
   const isDirectory = node.type === 'directory'
   const isCollapsed = collapsedPaths.has(node.path)
   const isActive = !isDirectory && node.path === activeFilePath
   const isRenaming = renamingPath === node.path
+  const isLoading = loadingPaths.has(node.path)
+
+  const displayChildren = isDirectory
+    ? (node.children ?? loadedChildren.get(node.path)?.children ?? null)
+    : null
 
   useEffect(() => {
     if (isRenaming && inputRef.current) {
@@ -20,11 +26,11 @@ const FileTreeItem = memo(function FileTreeItem({
   const handleClick = useCallback((e) => {
     if (isRenaming) return
     if (isDirectory) {
-      onToggleCollapse(node.path)
+      onToggleCollapse(node.path, node.children)
     } else {
       onOpenFile(node.path)
     }
-  }, [isRenaming, isDirectory, node.path, onOpenFile, onToggleCollapse])
+  }, [isRenaming, isDirectory, node.path, node.children, onOpenFile, onToggleCollapse])
 
   const handleContextMenu = useCallback((e) => {
     e.preventDefault()
@@ -69,12 +75,18 @@ const FileTreeItem = memo(function FileTreeItem({
           <svg className={`file-tree-chevron${!isCollapsed ? ' expanded' : ''}`} viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2">
             <polyline points="9 18 15 12 9 6" />
           </svg>
-          <svg className="file-tree-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
-          </svg>
+          {isLoading ? (
+            <svg className="file-tree-icon file-tree-loading-spinner" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="10" strokeDasharray="31.4 31.4" strokeLinecap="round" />
+            </svg>
+          ) : (
+            <svg className="file-tree-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+            </svg>
+          )}
           {nameContent}
         </div>
-        {!isCollapsed && node.children.map(child => (
+        {!isCollapsed && displayChildren && displayChildren.map(child => (
           <FileTreeItem
             key={child.path}
             node={child}
@@ -89,6 +101,8 @@ const FileTreeItem = memo(function FileTreeItem({
             onRenameChange={onRenameChange}
             onRenameSubmit={onRenameSubmit}
             onRenameCancel={onRenameCancel}
+            loadedChildren={loadedChildren}
+            loadingPaths={loadingPaths}
           />
         ))}
       </div>
@@ -106,19 +120,46 @@ const FileTreeItem = memo(function FileTreeItem({
   )
 })
 
-function FileTree({ tree, onOpenFile, activeFilePath, onRefreshTree, folderPath }) {
+function FileTree({ tree, onOpenFile, activeFilePath, onRefreshTree }) {
   const [collapsedPaths, setCollapsedPaths] = useState(() => new Set())
+  const [loadedChildren, setLoadedChildren] = useState(() => new Map())
+  const [loadingPaths, setLoadingPaths] = useState(() => new Set())
+  const collapsedRef = useRef(collapsedPaths)
+  const loadedRef = useRef(loadedChildren)
+  const loadingRef = useRef(loadingPaths)
+  collapsedRef.current = collapsedPaths
+  loadedRef.current = loadedChildren
+  loadingRef.current = loadingPaths
+
   const [contextMenu, setContextMenu] = useState(null)
   const [renamingPath, setRenamingPath] = useState(null)
   const [renameValue, setRenameValue] = useState('')
 
-  const handleToggleCollapse = useCallback((path) => {
-    setCollapsedPaths(prev => {
-      const next = new Set(prev)
-      if (next.has(path)) next.delete(path)
-      else next.add(path)
-      return next
-    })
+  useEffect(() => {
+    setLoadedChildren(new Map())
+    setLoadingPaths(new Set())
+  }, [tree])
+
+  const handleToggleCollapse = useCallback(async (path, nodeChildren) => {
+    const wasCollapsed = collapsedRef.current.has(path)
+
+    if (wasCollapsed) {
+      if (loadingRef.current.has(path)) return
+      if (nodeChildren === null && !loadedRef.current.has(path)) {
+        setLoadingPaths(prev => { const next = new Set(prev); next.add(path); return next })
+        try {
+          const subtree = await window.electronAPI.getFolderChildren(path)
+          if (subtree) {
+            setLoadedChildren(prev => { const next = new Map(prev); next.set(path, subtree); return next })
+          }
+        } finally {
+          setLoadingPaths(prev => { const next = new Set(prev); next.delete(path); return next })
+        }
+      }
+      setCollapsedPaths(prev => { const next = new Set(prev); next.delete(path); return next })
+    } else {
+      setCollapsedPaths(prev => { const next = new Set(prev); next.add(path); return next })
+    }
   }, [])
 
   const closeContextMenu = useCallback(() => {
@@ -228,6 +269,8 @@ function FileTree({ tree, onOpenFile, activeFilePath, onRefreshTree, folderPath 
           onRenameChange={handleRenameChange}
           onRenameSubmit={handleRenameSubmit}
           onRenameCancel={handleRenameCancel}
+          loadedChildren={loadedChildren}
+          loadingPaths={loadingPaths}
         />
       ))}
       {contextMenu && (
