@@ -120,8 +120,27 @@ const FileTreeItem = memo(function FileTreeItem({
   )
 })
 
+function collectDirectoryPaths(node, paths = []) {
+  if (node.type === 'directory') {
+    paths.push(node.path)
+    if (node.children) {
+      node.children.forEach(child => collectDirectoryPaths(child, paths))
+    }
+  }
+  return paths
+}
+
+function collectAllDirectoryPaths(tree) {
+  if (!tree || !tree.children) return []
+  const paths = []
+  tree.children.forEach(child => collectDirectoryPaths(child, paths))
+  return paths
+}
+
 function FileTree({ tree, onOpenFile, activeFilePath, onRefreshTree }) {
-  const [collapsedPaths, setCollapsedPaths] = useState(() => new Set())
+  const [collapsedPaths, setCollapsedPaths] = useState(() => {
+    return new Set(collectAllDirectoryPaths(tree))
+  })
   const [loadedChildren, setLoadedChildren] = useState(() => new Map())
   const [loadingPaths, setLoadingPaths] = useState(() => new Set())
   const collapsedRef = useRef(collapsedPaths)
@@ -136,6 +155,7 @@ function FileTree({ tree, onOpenFile, activeFilePath, onRefreshTree }) {
   const [renameValue, setRenameValue] = useState('')
 
   useEffect(() => {
+    setCollapsedPaths(new Set(collectAllDirectoryPaths(tree)))
     setLoadedChildren(new Map())
     setLoadingPaths(new Set())
   }, [tree])
@@ -151,6 +171,14 @@ function FileTree({ tree, onOpenFile, activeFilePath, onRefreshTree }) {
           const subtree = await window.electronAPI.getFolderChildren(path)
           if (subtree) {
             setLoadedChildren(prev => { const next = new Map(prev); next.set(path, subtree); return next })
+            const childDirs = collectAllDirectoryPaths(subtree)
+            if (childDirs.length > 0) {
+              setCollapsedPaths(prev => {
+                const next = new Set(prev)
+                childDirs.forEach(p => next.add(p))
+                return next
+              })
+            }
           }
         } finally {
           setLoadingPaths(prev => { const next = new Set(prev); next.delete(path); return next })
