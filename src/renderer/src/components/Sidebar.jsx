@@ -45,7 +45,7 @@ const SidebarTabItem = memo(function SidebarTabItem({ tab, isActive, onSwitchTab
   )
 })
 
-const Sidebar = memo(function Sidebar({ tabs, activeTabId, onSwitchTab, folderTree, folderPath, onOpenFolderFile, onRefreshFolderTree, showOpenFilesModule, activeFilePath, width, onWidthChange, onCreateFile, onCreateFolder, sortMode }) {
+const Sidebar = memo(function Sidebar({ tabs, activeTabId, onSwitchTab, folderTree, folderPath, onOpenFolderFile, onRefreshFolderTree, showOpenFilesModule, activeFilePath, width, onWidthChange, onCreateFile, onCreateFolder, renameTargetPath, renameTargetValue, onClearRenameTarget, sortMode }) {
   const folderName = folderPath ? folderPath.split(/[/\\]/).filter(Boolean).pop() : ''
   const [openFilesCollapsed, setOpenFilesCollapsed] = useState(false)
   const sidebarRef = useRef(null)
@@ -162,6 +162,9 @@ const Sidebar = memo(function Sidebar({ tabs, activeTabId, onSwitchTab, folderTr
               onOpenFile={onOpenFolderFile}
               activeFilePath={activeFilePath}
               onRefreshTree={onRefreshFolderTree}
+              externalRenamePath={renameTargetPath}
+              externalRenameValue={renameTargetValue}
+              onExternalRenamePathChange={onClearRenameTarget}
               sortMode={sortMode}
             />
           </div>

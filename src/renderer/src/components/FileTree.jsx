@@ -159,7 +159,7 @@ function sortChildren(children, sortMode) {
   return [...children].sort((a, b) => compareNodes(a, b, sortMode))
 }
 
-function FileTree({ tree, onOpenFile, activeFilePath, onRefreshTree, sortMode }) {
+function FileTree({ tree, onOpenFile, activeFilePath, onRefreshTree, externalRenamePath, externalRenameValue, onExternalRenamePathChange, sortMode }) {
   const [collapsedPaths, setCollapsedPaths] = useState(() => {
     return new Set(collectAllDirectoryPaths(tree))
   })
@@ -178,6 +178,13 @@ function FileTree({ tree, onOpenFile, activeFilePath, onRefreshTree, sortMode })
   const [contextMenu, setContextMenu] = useState(null)
   const [renamingPath, setRenamingPath] = useState(null)
   const [renameValue, setRenameValue] = useState('')
+
+  useEffect(() => {
+    if (externalRenamePath) {
+      setRenamingPath(externalRenamePath)
+      setRenameValue(externalRenameValue)
+    }
+  }, [externalRenamePath, externalRenameValue])
 
   useEffect(() => {
     setCollapsedPaths(new Set(collectAllDirectoryPaths(tree)))
@@ -245,26 +252,30 @@ function FileTree({ tree, onOpenFile, activeFilePath, onRefreshTree, sortMode })
     const trimmed = renameValue.trim()
     if (!trimmed) {
       setRenamingPath(null)
+      if (onExternalRenamePathChange) onExternalRenamePathChange(null)
       return
     }
     const nodeName = oldPath.split(/[/\\]/).pop()
     if (trimmed === nodeName) {
       setRenamingPath(null)
+      if (onExternalRenamePathChange) onExternalRenamePathChange(null)
       return
     }
     const result = await window.electronAPI.renameEntry(oldPath, trimmed)
     if (result.success) {
       setRenamingPath(null)
+      if (onExternalRenamePathChange) onExternalRenamePathChange(null)
       onRefreshTree()
     } else {
       alert('重命名失败: ' + result.error)
     }
-  }, [renameValue, onRefreshTree])
+  }, [renameValue, onRefreshTree, onExternalRenamePathChange])
 
   const handleRenameCancel = useCallback(() => {
     setRenamingPath(null)
     setRenameValue('')
-  }, [])
+    if (onExternalRenamePathChange) onExternalRenamePathChange(null)
+  }, [onExternalRenamePathChange])
 
   const handleCreateFile = useCallback(async (dirPath) => {
     closeContextMenu()

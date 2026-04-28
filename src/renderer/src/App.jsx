@@ -259,6 +259,8 @@ function App() {
   const [compactMode, setCompactMode] = useState(() => getSettings().compactMode === true)
   const [sidebarWidth, setSidebarWidth] = useState(() => getSettings().sidebarWidth || 220)
   const [folderSortMode, setFolderSortMode] = useState(() => getSettings().folderSortMode || 'foldersFirst-createTime')
+  const [renameTargetPath, setRenameTargetPath] = useState(null)
+  const [renameTargetValue, setRenameTargetValue] = useState('')
   const settingsRef = useRef(getSettings())
   const contentRef = useRef('')
   const filePathRef = useRef('')
@@ -921,6 +923,8 @@ function App() {
     const result = await window.electronAPI.createFile(currentFolderPath)
     if (result.success) {
       await refreshFolderTree()
+      setRenameTargetPath(result.path)
+      setRenameTargetValue(result.name)
     } else {
       alert('创建文件失败: ' + result.error)
     }
@@ -931,6 +935,8 @@ function App() {
     const result = await window.electronAPI.createFolder(currentFolderPath)
     if (result.success) {
       await refreshFolderTree()
+      setRenameTargetPath(result.path)
+      setRenameTargetValue(result.name)
     } else {
       alert('创建文件夹失败: ' + result.error)
     }
@@ -1134,6 +1140,9 @@ function App() {
             onWidthChange={handleSidebarWidthChange}
             onCreateFile={handleCreateFileInFolder}
             onCreateFolder={handleCreateFolderInFolder}
+            renameTargetPath={renameTargetPath}
+            renameTargetValue={renameTargetValue}
+            onClearRenameTarget={() => setRenameTargetPath(null)}
             sortMode={folderSortMode}
           />
         )}
