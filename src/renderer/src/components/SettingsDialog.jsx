@@ -1,22 +1,5 @@
-import React, { useState, useEffect, memo } from 'react'
-
-const DEFAULT_SETTINGS = {
-  imageInsertMode: 'base64',
-  imageFolder: '.assets',
-  spellcheck: true,
-  closeLastTabAction: 'closeApp',
-  showToolbar: true,
-  showOpenFilesModule: true,
-  fontFamily: 'default',
-  fontSize: 16,
-  shortcuts: {
-    newFile: 'Ctrl+N',
-    open: 'Ctrl+O',
-    save: 'Ctrl+S',
-    saveAs: 'Ctrl+Shift+S',
-    sidebarToggle: 'Ctrl+B'
-  }
-}
+import React, { useState, useEffect, useRef, memo } from 'react'
+import { DEFAULT_SETTINGS, saveSettings } from '../settings'
 
 const SHORTCUT_LABELS = {
   newFile: '新建文件',
@@ -43,6 +26,8 @@ const SettingsDialog = memo(function SettingsDialog({ onClose, currentTheme, onT
   const [closing, setClosing] = useState(false)
   const [open, setOpen] = useState(false)
   const [editingShortcut, setEditingShortcut] = useState(null)
+  const settingsRef = useRef(settings)
+  settingsRef.current = settings
 
   useEffect(() => {
     requestAnimationFrame(() => setOpen(true))
@@ -64,7 +49,7 @@ const SettingsDialog = memo(function SettingsDialog({ onClose, currentTheme, onT
       keys.push(displayKey)
       const shortcut = keys.join('+')
       updateSettings({
-        shortcuts: { ...settings.shortcuts, [editingShortcut]: shortcut }
+        shortcuts: { ...settingsRef.current.shortcuts, [editingShortcut]: shortcut }
       })
       setEditingShortcut(null)
     }
@@ -75,7 +60,7 @@ const SettingsDialog = memo(function SettingsDialog({ onClose, currentTheme, onT
   const updateSettings = (partial) => {
     const newSettings = { ...settings, ...partial }
     setSettings(newSettings)
-    localStorage.setItem('editorSettings', JSON.stringify(newSettings))
+    saveSettings(partial)
     onSaveSettings?.(newSettings)
   }
 

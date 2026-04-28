@@ -139,7 +139,7 @@ function collectAllDirectoryPaths(tree) {
 
 function compareNodes(a, b, sortMode) {
   if (!sortMode) return a.name.localeCompare(b.name)
-  const [position, sortBy] = sortMode.split('-')
+  const [position, sortBy] = (sortMode || 'foldersFirst-createTime').split('-')
   const foldersFirst = position === 'foldersFirst'
 
   if (a.type !== b.type) {

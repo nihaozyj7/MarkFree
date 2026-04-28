@@ -2,7 +2,7 @@ import React, { useState, useRef, useCallback, useEffect, useMemo, memo } from '
 import FileTree from './FileTree'
 
 function compareNodes(a, b, sortMode) {
-  const [position, sortBy] = sortMode.split('-')
+  const [position, sortBy] = (sortMode || 'foldersFirst-createTime').split('-')
   const foldersFirst = position === 'foldersFirst'
 
   if (a.type !== b.type) {

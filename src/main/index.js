@@ -1,7 +1,7 @@
 import { app, shell, BrowserWindow, ipcMain, dialog, screen } from 'electron'
 import { join, resolve, extname, basename, dirname } from 'path'
 import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, statSync, renameSync, unlinkSync, rmdirSync } from 'fs'
-import { readdir, stat as statAsync } from 'fs/promises'
+import { readdir, stat as statAsync, readFile } from 'fs/promises'
 
 import { execFile } from 'child_process'
 import { THEMES, DARK_THEME } from './themes/defaults.js'
@@ -387,6 +387,7 @@ async function buildDirectoryChildren(dirPath) {
   }
   const children = []
   const MAX_WORD_COUNT_SIZE = 5 * 1024 * 1024
+  const filePromises = []
 
   for (const entry of entries) {
     if (entry.name.startsWith('.')) continue
@@ -399,26 +400,30 @@ async function buildDirectoryChildren(dirPath) {
         children: null
       })
     } else if (entry.isFile() && /\.md$|\.markdown$/i.test(entry.name)) {
-      let birthtime = 0, mtime = 0, wordCount = 0
-      try {
-        const stat = await statAsync(fullPath)
-        birthtime = stat.birthtimeMs
-        mtime = stat.mtimeMs
-        if (stat.size > 0 && stat.size <= MAX_WORD_COUNT_SIZE) {
-          const content = readFileSync(fullPath, 'utf-8')
-          wordCount = content.trim() ? content.trim().split(/\s+/).length : 0
+      filePromises.push((async () => {
+        let birthtime = 0, mtime = 0, wordCount = 0
+        try {
+          const stat = await statAsync(fullPath)
+          birthtime = stat.birthtimeMs
+          mtime = stat.mtimeMs
+          if (stat.size > 0 && stat.size <= MAX_WORD_COUNT_SIZE) {
+            const content = await readFile(fullPath, 'utf-8')
+            wordCount = content.trim() ? content.trim().split(/\s+/).length : 0
+          }
+        } catch {}
+        return {
+          name: entry.name,
+          path: fullPath,
+          type: 'file',
+          birthtime,
+          mtime,
+          wordCount
         }
-      } catch {}
-      children.push({
-        name: entry.name,
-        path: fullPath,
-        type: 'file',
-        birthtime,
-        mtime,
-        wordCount
-      })
+      })())
     }
   }
+  const fileResults = await Promise.all(filePromises)
+  children.push(...fileResults)
   if (children.length === 0) return null
   children.sort((a, b) => {
     if (a.type !== b.type) return a.type === 'directory' ? -1 : 1
@@ -529,10 +534,11 @@ ipcMain.handle('file:registerAssociation', async () => {
     return { success: false, message: '仅支持 Windows 系统' }
   }
   const exePath = app.getPath('exe')
+  const safeExePath = JSON.stringify(exePath)
   return new Promise(resolve => {
     execFile('reg', ['add', 'HKCU\\Software\\Classes\\.md', '/ve', '/d', 'MarkdownPad.md', '/f'], () => {
       execFile('reg', ['add', 'HKCU\\Software\\Classes\\MarkdownPad.md', '/ve', '/d', 'Markdown File', '/f'], () => {
-        execFile('reg', ['add', 'HKCU\\Software\\Classes\\MarkdownPad.md\\shell\\open\\command', '/ve', '/d', `"${exePath}" "%1"`, '/f'], (err) => {
+        execFile('reg', ['add', 'HKCU\\Software\\Classes\\MarkdownPad.md\\shell\\open\\command', '/ve', '/d', `${safeExePath} "%1"`, '/f'], (err) => {
           resolve({ success: !err, message: err ? err.message : '.md 文件关联注册成功' })
         })
       })

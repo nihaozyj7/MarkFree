@@ -20,6 +20,11 @@ import TitleBar from './components/TitleBar'
 import StatusBar from './components/StatusBar'
 import Sidebar from './components/Sidebar'
 import ErrorBoundary from './components/ErrorBoundary'
+import { DEFAULT_SETTINGS, getSettings, saveSettings, applyFontSettings } from './settings'
+import { dirname, convertToRelativePaths, MIME_MAP_EXT } from './utils'
+import { useTabManager } from './hooks/useTabManager'
+import { useDragDrop } from './hooks/useDragDrop'
+import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
 
 const SettingsDialog = lazy(() => import('./components/SettingsDialog'))
 const AboutDialog = lazy(() => import('./components/AboutDialog'))
@@ -75,108 +80,6 @@ function initLanguages() {
 
 initLanguages()
 
-function dirname(path) {
-  const parts = path.replace(/\\/g, '/').replace(/\/+$/, '').split('/')
-  parts.pop()
-  return parts.join('/')
-}
-
-function escapeRegex(str) {
-  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-}
-
-const regexCache = {}
-
-function getCachedRegex(pattern, key) {
-  const entry = regexCache[key]
-  if (entry && entry.pattern === pattern) return entry.regex
-  const regex = new RegExp(pattern, 'g')
-  regexCache[key] = { pattern, regex }
-  return regex
-}
-
-function convertToRelativePaths(md, filePath, imageFolder) {
-  const fileDir = dirname(filePath)
-  const folder = imageFolder.replace(/\\/g, '/').replace(/^\.\//, '')
-  const resolvedDir = fileDir + '/' + folder
-  const platform = window.electronAPI.platform
-  const prefix = platform === 'win32' ? 'file:///' : 'file://'
-  const fullPrefix = prefix + resolvedDir
-  const escaped = escapeRegex(fullPrefix)
-  const cacheKey = `rel:${escaped}`
-
-  return md.replace(
-    getCachedRegex('\\]\\(' + escaped + '/([^)]+)\\)', cacheKey),
-    (match, filename) => `](./${folder}/${filename})`
-  )
-}
-
-function convertToAbsolutePaths(md, filePath, imageFolder) {
-  const fileDir = dirname(filePath)
-  const folder = imageFolder.replace(/\\/g, '/').replace(/^\.\//, '')
-  const resolvedDir = fileDir + '/' + folder
-  const platform = window.electronAPI.platform
-  const prefix = platform === 'win32' ? 'file:///' : 'file://'
-  const fullPrefix = prefix + resolvedDir
-  const escaped = escapeRegex(folder)
-  const cacheKey = `abs:${escaped}`
-
-  return md.replace(
-    getCachedRegex('\\]\\((\\./)?' + escaped + '/([^)]+)\\)', cacheKey),
-    (match, dotSlash, filename) => `](${fullPrefix}/${filename})`
-  )
-}
-
-const DEFAULT_SETTINGS = {
-  imageInsertMode: 'base64',
-  imageFolder: '.assets',
-  spellcheck: true,
-  closeLastTabAction: 'closeApp',
-  showToolbar: true,
-  showOpenFilesModule: true,
-  fontFamily: 'default',
-  fontSize: 16,
-  compactMode: false,
-  sidebarWidth: 220,
-  startupBehavior: 'newFile',
-  shortcuts: {
-    newFile: 'Ctrl+N',
-    open: 'Ctrl+O',
-    save: 'Ctrl+S',
-    saveAs: 'Ctrl+Shift+S',
-    sidebarToggle: 'Ctrl+B'
-  },
-  folderSortMode: 'foldersFirst-createTime'
-}
-
-function getSettings() {
-  try {
-    const saved = localStorage.getItem('editorSettings')
-    const settings = saved ? { ...DEFAULT_SETTINGS, ...JSON.parse(saved) } : DEFAULT_SETTINGS
-    // 旧版 'newTab' 迁移到 'showWelcome'
-    if (settings.closeLastTabAction === 'newTab') {
-      settings.closeLastTabAction = 'showWelcome'
-    }
-    return settings
-  } catch {
-    return DEFAULT_SETTINGS
-  }
-}
-
-function applyFontSettings(settings) {
-  const fontFamily = settings.fontFamily && settings.fontFamily !== 'default'
-    ? settings.fontFamily
-    : 'inherit'
-  const fontSize = settings.fontSize || 16
-  let el = document.getElementById('editor-font')
-  if (!el) {
-    el = document.createElement('style')
-    el.id = 'editor-font'
-    document.head.appendChild(el)
-  }
-  el.textContent = `.ProseMirror { font-family: ${fontFamily} !important; font-size: ${fontSize}px !important; }`
-}
-
 const extensions = [
   StarterKit.configure({
     codeBlock: false,
@@ -200,48 +103,9 @@ const extensions = [
   })
 ]
 
-function parseShortcut(shortcut) {
-  const parts = shortcut.split('+')
-  return {
-    ctrl: parts.includes('Ctrl'),
-    shift: parts.includes('Shift'),
-    alt: parts.includes('Alt'),
-    key: parts[parts.length - 1]?.toLowerCase()
-  }
-}
-
-function matchesShortcut(e, shortcut) {
-  const s = parseShortcut(shortcut)
-  return (e.ctrlKey || e.metaKey) === s.ctrl
-    && e.shiftKey === s.shift
-    && e.altKey === s.alt
-    && e.key.toLowerCase() === s.key
-}
-
 function App() {
-  const defaultTabId = Date.now().toString(36) + Math.random().toString(36).slice(2, 8)
-
-  const [tabs, setTabs] = useState(() => {
-    const settings = getSettings()
-    if (settings.startupBehavior === 'welcome') return []
-    return [{
-      id: defaultTabId,
-      fileName: '未命名',
-      filePath: '',
-      content: '',
-      modified: false,
-      savedContent: ''
-    }]
-  })
-  const [activeTabId, setActiveTabId] = useState(() => {
-    const settings = getSettings()
-    return settings.startupBehavior === 'welcome' ? '' : defaultTabId
-  })
-  const activeTabIdRef = useRef(activeTabId)
-
   const [showPreview, setShowPreview] = useState(false)
   const [markdownContent, setMarkdownContent] = useState('')
-  const [dragOver, setDragOver] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [currentTheme, setCurrentTheme] = useState(() => localStorage.getItem('appTheme') || 'dark')
   const [hwAccel, setHwAccel] = useState('auto')
@@ -268,13 +132,13 @@ function App() {
   const editorRef = useRef(null)
   const debounceRef = useRef(null)
 
-  const activeTab = useMemo(
-    () => tabs.find(t => t.id === activeTabId),
-    [tabs, activeTabId]
-  )
-  const fileName = activeTab?.fileName ?? ''
-  const filePath = activeTab?.filePath ?? ''
-  const modified = activeTab?.modified ?? false
+  const {
+    tabs, setTabs,
+    activeTabId, setActiveTabId,
+    activeTabIdRef, tabsRef,
+    activeTab, fileName, filePath, modified,
+    addTab, addTabRef, closeTab, switchTab
+  } = useTabManager(settingsRef, contentRef, editorRef, currentFolderPath)
 
   useEffect(() => {
     filePathRef.current = filePath
@@ -409,12 +273,6 @@ function App() {
           reader.onload = async (e) => {
             const result = e.target.result
             const base64Data = result.split(',')[1]
-
-            const MIME_MAP_EXT = {
-              'image/png': '.png', 'image/jpeg': '.jpg',
-              'image/gif': '.gif', 'image/webp': '.webp',
-              'image/bmp': '.bmp', 'image/svg+xml': '.svg'
-            }
             const ext = MIME_MAP_EXT[file.type] || '.png'
 
             const settings = settingsRef.current
@@ -468,6 +326,8 @@ function App() {
 
   editorRef.current = editor
 
+  const dragOver = useDragDrop(editor, addTabRef)
+
   const syncRef = useCallback(() => {
     if (editor) {
       const md = editor.storage.markdown.getMarkdown()
@@ -488,7 +348,8 @@ function App() {
 
   useEffect(() => {
     if (!editor) return
-    const tab = tabs.find(t => t.id === activeTabId)
+    const currentTabs = tabsRef.current
+    const tab = currentTabs.find(t => t.id === activeTabId)
     if (!tab) {
       contentRef.current = ''
       setMarkdownContent('')
@@ -501,101 +362,6 @@ function App() {
     editor.commands.setContent(md || '')
     editor.commands.focus()
   }, [activeTabId, editor])
-
-  const switchTab = useCallback((tabId) => {
-    if (tabId === activeTabIdRef.current) return
-
-    const prevId = activeTabIdRef.current
-    if (prevId && editor) {
-      const currentMd = contentRef.current
-      setTabs(prev => prev.map(t =>
-        t.id === prevId ? { ...t, content: currentMd } : t
-      ))
-    }
-
-    activeTabIdRef.current = tabId
-    setActiveTabId(tabId)
-  }, [editor])
-
-  const closeTab = useCallback((tabId) => {
-    const allTabs = tabs
-    const idx = allTabs.findIndex(t => t.id === tabId)
-    if (idx === -1) return
-    const wouldBeEmpty = allTabs.length === 1
-
-    if (wouldBeEmpty) {
-      // 打开文件夹时关闭最后一个标签页始终显示起始页
-      if (currentFolderPath) {
-        setTabs([])
-        activeTabIdRef.current = ''
-        setActiveTabId('')
-        return
-      }
-      const settings = settingsRef.current
-      if (settings.closeLastTabAction === 'closeApp') {
-        window.electronAPI.closeWindow()
-        return
-      }
-      // showWelcome — 显示起始页
-      setTabs([])
-      activeTabIdRef.current = ''
-      setActiveTabId('')
-      return
-    }
-
-    const newTabs = allTabs.filter(t => t.id !== tabId)
-    setTabs(newTabs)
-
-    if (tabId === activeTabIdRef.current) {
-      const nextIdx = Math.min(idx, newTabs.length - 1)
-      activeTabIdRef.current = newTabs[nextIdx].id
-      setActiveTabId(newTabs[nextIdx].id)
-    }
-  }, [tabs, currentFolderPath])
-
-  const addTabRef = useRef()
-  const addTab = useCallback((fileData) => {
-    if (!fileData) return null
-
-    const { content, filePath: fp, fileName: fn } = fileData
-
-    if (fp) {
-      const existing = tabs.find(t => t.filePath === fp)
-      if (existing) {
-        switchTab(existing.id)
-        return existing.id
-      }
-    }
-
-    let processedContent = content || ''
-    const settings = settingsRef.current
-    if (settings.imageInsertMode === 'relative' && fp) {
-      processedContent = convertToAbsolutePaths(processedContent, fp, settings.imageFolder)
-    }
-
-    const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 8)
-    const newTab = {
-      id,
-      fileName: fn || '未命名',
-      filePath: fp || '',
-      content: processedContent,
-      modified: false,
-      savedContent: processedContent
-    }
-
-    setTabs(prev => {
-      const onlyTab = prev.length === 1 ? prev[0] : null
-      if (onlyTab && !onlyTab.filePath && !onlyTab.content && !onlyTab.modified) {
-        return [newTab]
-      }
-      return [...prev, newTab]
-    })
-    activeTabIdRef.current = id
-    setActiveTabId(id)
-    return id
-  }, [tabs, switchTab])
-
-  addTabRef.current = addTab
 
   useEffect(() => {
     if (!editor) return
@@ -616,62 +382,6 @@ function App() {
     return () => {
       window.electronAPI.removeFileOpenedListener()
       window.electronAPI.removeFolderOpenedListener()
-    }
-  }, [editor])
-
-  useEffect(() => {
-    if (!editor) return
-
-    let dragCounter = 0
-
-    const handleDragEnter = (e) => {
-      e.preventDefault()
-      e.stopPropagation()
-      dragCounter++
-      if (dragCounter === 1) setDragOver(true)
-    }
-
-    const handleDragOver = (e) => {
-      e.preventDefault()
-      e.stopPropagation()
-      e.dataTransfer.dropEffect = 'copy'
-    }
-
-    const handleDragLeave = (e) => {
-      e.preventDefault()
-      e.stopPropagation()
-      dragCounter--
-      if (dragCounter === 0) setDragOver(false)
-    }
-
-    const handleDrop = async (e) => {
-      e.preventDefault()
-      e.stopPropagation()
-      dragCounter = 0
-      setDragOver(false)
-
-      const file = e.dataTransfer.files[0]
-      if (!file || !/\.md$|\.markdown$/i.test(file.name)) return
-
-      const droppedPath = window.electronAPI.getPendingDropPath() || file.path || ''
-
-      const reader = new FileReader()
-      reader.onload = (event) => {
-        addTabRef.current({ content: event.target.result, filePath: droppedPath, fileName: file.name })
-      }
-      reader.readAsText(file)
-    }
-
-    document.addEventListener('dragenter', handleDragEnter)
-    document.addEventListener('dragover', handleDragOver)
-    document.addEventListener('dragleave', handleDragLeave)
-    document.addEventListener('drop', handleDrop)
-
-    return () => {
-      document.removeEventListener('dragenter', handleDragEnter)
-      document.removeEventListener('dragover', handleDragOver)
-      document.removeEventListener('dragleave', handleDragLeave)
-      document.removeEventListener('drop', handleDrop)
     }
   }, [editor])
 
@@ -704,7 +414,7 @@ function App() {
   const handleSaveFile = useCallback(async () => {
     if (!editor) return
     const tabId = activeTabIdRef.current
-    const tab = tabs.find(t => t.id === tabId)
+    const tab = tabsRef.current.find(t => t.id === tabId)
     if (!tab) return
 
     try {
@@ -726,12 +436,12 @@ function App() {
     } catch (err) {
       alert('保存失败: ' + (err.message || err))
     }
-  }, [editor, tabs])
+  }, [editor])
 
   const handleSaveAsFile = useCallback(async () => {
     if (!editor) return
     const tabId = activeTabIdRef.current
-    const tab = tabs.find(t => t.id === tabId)
+    const tab = tabsRef.current.find(t => t.id === tabId)
     if (!tab) return
 
     try {
@@ -750,7 +460,7 @@ function App() {
     } catch (err) {
       alert('另存失败: ' + (err.message || err))
     }
-  }, [editor, tabs])
+  }, [editor])
 
   saveAsFileRef.current = handleSaveAsFile
 
@@ -846,7 +556,7 @@ function App() {
   const handlePasteMarkdown = useCallback(async () => {
     if (editor) {
       const text = await navigator.clipboard.readText()
-      editor.commands.setContent(text)
+      if (text) editor.chain().focus().insertContent(text).run()
     }
   }, [editor])
 
@@ -1043,39 +753,7 @@ function App() {
     applyFontSettings(settings)
   }, [])
 
-  const keyHandlersRef = useRef({})
-  keyHandlersRef.current = {
-    newFile: handleNewFile,
-    open: handleOpenFile,
-    save: handleSaveFile,
-    saveAs: handleSaveAsFile
-  }
-
-  useEffect(() => {
-    const settings = getSettings()
-    const shortcuts = settings.shortcuts || DEFAULT_SETTINGS.shortcuts
-
-    function handleKeyDown(e) {
-      if (matchesShortcut(e, shortcuts.newFile)) {
-        e.preventDefault()
-        keyHandlersRef.current.newFile()
-      } else if (matchesShortcut(e, shortcuts.open)) {
-        e.preventDefault()
-        keyHandlersRef.current.open()
-      } else if (matchesShortcut(e, shortcuts.save)) {
-        e.preventDefault()
-        keyHandlersRef.current.save()
-      } else if (matchesShortcut(e, shortcuts.saveAs)) {
-        e.preventDefault()
-        keyHandlersRef.current.saveAs()
-      } else if (matchesShortcut(e, shortcuts.sidebarToggle || 'Ctrl+B')) {
-        e.preventDefault()
-        setSidebarVisible(v => !v)
-      }
-    }
-    document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [])
+  useKeyboardShortcuts({ handleNewFile, handleOpenFile, handleSaveFile, handleSaveAsFile, setSidebarVisible })
 
   const handleContextMenu = useCallback((e) => {
     e.preventDefault()
