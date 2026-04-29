@@ -101,7 +101,7 @@ function createWindow() {
   let windowOptions = {
     minWidth: 580,
     minHeight: 400,
-    title: 'MarkdownPad',
+    title: 'MarkFree',
     frame: false,
     show: false,
     backgroundColor: '#1a1a2e',
@@ -536,9 +536,9 @@ ipcMain.handle('file:registerAssociation', async () => {
   const exePath = app.getPath('exe')
   const safeExePath = JSON.stringify(exePath)
   return new Promise(resolve => {
-    execFile('reg', ['add', 'HKCU\\Software\\Classes\\.md', '/ve', '/d', 'MarkdownPad.md', '/f'], () => {
-      execFile('reg', ['add', 'HKCU\\Software\\Classes\\MarkdownPad.md', '/ve', '/d', 'Markdown File', '/f'], () => {
-        execFile('reg', ['add', 'HKCU\\Software\\Classes\\MarkdownPad.md\\shell\\open\\command', '/ve', '/d', `${safeExePath} "%1"`, '/f'], (err) => {
+    execFile('reg', ['add', 'HKCU\\Software\\Classes\\.md', '/ve', '/d', 'MarkFree.md', '/f'], () => {
+      execFile('reg', ['add', 'HKCU\\Software\\Classes\\MarkFree.md', '/ve', '/d', 'Markdown File', '/f'], () => {
+        execFile('reg', ['add', 'HKCU\\Software\\Classes\\MarkFree.md\\shell\\open\\command', '/ve', '/d', `${safeExePath} "%1"`, '/f'], (err) => {
           resolve({ success: !err, message: err ? err.message : '.md 文件关联注册成功' })
         })
       })
@@ -551,7 +551,7 @@ ipcMain.handle('file:unregisterAssociation', async () => {
     return { success: false, message: '仅支持 Windows 系统' }
   }
   return new Promise(resolve => {
-    execFile('reg', ['delete', 'HKCU\\Software\\Classes\\MarkdownPad.md', '/f'], (err) => {
+    execFile('reg', ['delete', 'HKCU\\Software\\Classes\\MarkFree.md', '/f'], (err) => {
       resolve({ success: !err, message: err ? err.message : '已取消 .md 文件关联' })
     })
   })
@@ -562,7 +562,7 @@ ipcMain.handle('file:getAssociationStatus', async () => {
   return new Promise(resolve => {
     execFile('reg', ['query', 'HKCU\\Software\\Classes\\.md', '/ve'], (err, stdout) => {
       if (err) return resolve({ registered: false })
-      resolve({ registered: stdout.includes('MarkdownPad.md') })
+      resolve({ registered: stdout.includes('MarkFree.md') })
     })
   })
 })

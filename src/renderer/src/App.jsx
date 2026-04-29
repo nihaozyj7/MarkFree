@@ -342,7 +342,7 @@ function App() {
 
   useEffect(() => {
     window.electronAPI.setTitle(
-      `${modified ? '* ' : ''}${fileName || tabs[0]?.fileName || 'MarkdownPad'}  - MarkdownPad`
+      `${modified ? '* ' : ''}${fileName || tabs[0]?.fileName || 'MarkFree'}  - MarkFree`
     )
   }, [fileName, modified])
 
@@ -859,7 +859,7 @@ function App() {
                   <polyline points="10 9 9 9 8 9"/>
                 </svg>
               </div>
-              <h1 className="welcome-title">MarkdownPad</h1>
+              <h1 className="welcome-title">MarkFree</h1>
               <p className="welcome-subtitle">简洁的 Markdown 编辑器</p>
               <div className="welcome-actions">
                 <button className="welcome-action-btn" onClick={handleNewFile}>

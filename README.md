@@ -1,4 +1,4 @@
-# MarkdownPad
+# MarkFree
 
 > 基于 Electron + React + TipTap 的所见即所得 Markdown 编辑器
 
@@ -22,7 +22,7 @@
 - **文件管理** — 打开、保存、另存为；支持多文件选择和打开文件夹
 - **导出 HTML** — 一键导出编辑器内容
 - **拖拽打开** — 拖拽 .md / .markdown 文件到窗口即可打开
-- **命令行打开** — `MarkdownPad.exe example.md`
+- **命令行打开** — `MarkFree.exe example.md`
 - **文件关联** — 注册/取消 .md 文件关联（Windows）
 - **自定义标题栏** — 无边框窗口，自定义标题栏与标签页栏
 - **主题系统** — 内置深色和浅色主题，支持自定义 CSS 主题
@@ -39,7 +39,7 @@
 
 ## 安装
 
-从 [Releases](https://github.com/anomalyco/markdownpad/releases) 下载最新安装程序。
+从 [Releases](https://github.com/anomalyco/markfree/releases) 下载最新安装程序。
 
 ### 环境要求
 

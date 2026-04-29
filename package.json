@@ -1,5 +1,5 @@
 {
-  "name": "markdownpad",
+  "name": "markfree",
   "version": "1.2.0",
   "private": true,
   "description": "A WYSIWYG Markdown editor built with Electron, React, and TipTap.",
@@ -16,8 +16,8 @@
     "pack:dir": "npm run generate-icon && npm run build && electron-builder --win --x64 --dir"
   },
   "build": {
-    "appId": "com.markdownpad.app",
-    "productName": "MarkdownPad",
+    "appId": "com.markfree.app",
+    "productName": "MarkFree",
     "compression": "maximum",
     "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
     "directories": {
@@ -58,7 +58,7 @@
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
-      "shortcutName": "MarkdownPad",
+      "shortcutName": "MarkFree",
       "artifactName": "${productName}-${version}-${os}-${arch}-Setup.${ext}"
     },
     "mac": {

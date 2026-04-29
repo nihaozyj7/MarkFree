@@ -1,4 +1,4 @@
-# MarkdownPad
+# MarkFree
 
 > A WYSIWYG Markdown editor built with Electron, React, and TipTap
 
@@ -22,7 +22,7 @@
 - **File Management** — open, save, save as; multi-file selection, folder opening
 - **Export HTML** — one-click export to HTML
 - **Drag & Drop** — drag .md/.markdown files onto the window to open
-- **Command-line Opening** — `MarkdownPad.exe example.md`
+- **Command-line Opening** — `MarkFree.exe example.md`
 - **File Association** — register/unregister .md association (Windows)
 - **Custom Title Bar** — frameless window with custom title bar and tab bar
 - **Theme System** — dark (default) and light themes built in, custom CSS theme support
@@ -39,7 +39,7 @@
 
 ## Install
 
-Download the latest installer from the [Releases](https://github.com/anomalyco/markdownpad/releases) page.
+Download the latest installer from the [Releases](https://github.com/anomalyco/markfree/releases) page.
 
 ### Prerequisites
 
