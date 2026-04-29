@@ -3,7 +3,8 @@ import { useEditor, EditorContent } from '@tiptap/react'
 import { TextSelection } from '@tiptap/pm/state'
 import StarterKit from '@tiptap/starter-kit'
 import Underline from '@tiptap/extension-underline'
-import Image from '@tiptap/extension-image'
+import { CustomImage } from './extensions/CustomImage'
+import { setImageFileDir } from './extensions/CustomImage'
 import Link from '@tiptap/extension-link'
 import Placeholder from '@tiptap/extension-placeholder'
 import TaskList from '@tiptap/extension-task-list'
@@ -21,7 +22,7 @@ import StatusBar from './components/StatusBar'
 import Sidebar from './components/Sidebar'
 import ErrorBoundary from './components/ErrorBoundary'
 import { DEFAULT_SETTINGS, getSettings, saveSettings, applyFontSettings } from './settings'
-import { dirname, convertToRelativePaths, MIME_MAP_EXT } from './utils'
+import { dirname, MIME_MAP_EXT } from './utils'
 import { useTabManager } from './hooks/useTabManager'
 import { useDragDrop } from './hooks/useDragDrop'
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
@@ -86,7 +87,7 @@ const extensions = [
     heading: { levels: [1, 2, 3, 4, 5, 6] }
   }),
   Underline,
-  Image.configure({ inline: true, allowBase64: true }),
+  CustomImage.configure({ inline: true, allowBase64: true }),
   Link.configure({ openOnClick: false }),
   Placeholder.configure({ placeholder: '开始写作...' }),
   TaskList,
@@ -142,6 +143,7 @@ function App() {
 
   useEffect(() => {
     filePathRef.current = filePath
+    setImageFileDir(filePath ? dirname(filePath) : '')
   }, [filePath])
 
   const onUpdate = useCallback(({ editor }) => {
@@ -149,11 +151,6 @@ function App() {
     if (!tabId) return
 
     let md = editor.storage.markdown.getMarkdown()
-    const settings = settingsRef.current
-    const fp = filePathRef.current
-    if (settings.imageInsertMode === 'relative' && fp) {
-      md = convertToRelativePaths(md, fp, settings.imageFolder)
-    }
     contentRef.current = md
 
     if (debounceRef.current) clearTimeout(debounceRef.current)
@@ -298,10 +295,7 @@ function App() {
               })
               if (!saveResult || saveResult.error) return
 
-              const platform = window.electronAPI.platform
-              const prefix = platform === 'win32' ? 'file:///' : 'file://'
-              const src = prefix + saveResult.absolutePath.replace(/\\/g, '/')
-              ed.chain().focus().setImage({ src }).run()
+              ed.chain().focus().setImage({ src: saveResult.relativePath }).run()
               return
             }
 
@@ -310,10 +304,60 @@ function App() {
               base64Data, ext, folderPath: imageFolder, fileDir: fp ? dirname(fp) : ''
             })
             if (!saveResult || saveResult.error) return
-            const platform = window.electronAPI.platform
-            const prefix = platform === 'win32' ? 'file:///' : 'file://'
-            const src = prefix + saveResult.absolutePath.replace(/\\/g, '/')
-            ed.chain().focus().setImage({ src }).run()
+            ed.chain().focus().setImage({ src: saveResult.absolutePath }).run()
+          }
+          reader.readAsDataURL(file)
+          return true
+        }
+        return false
+      },
+      handleDrop: (view, event) => {
+        const files = event.dataTransfer?.files
+        if (!files || files.length === 0) return false
+
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i]
+          if (!file.type.startsWith('image/')) continue
+
+          event.preventDefault()
+          const reader = new FileReader()
+          reader.onload = async (e) => {
+            const result = e.target.result
+            const base64Data = result.split(',')[1]
+            const ext = MIME_MAP_EXT[file.type] || '.png'
+
+            const settings = settingsRef.current
+            const { imageInsertMode, imageFolder } = settings
+
+            const ed = editorRef.current
+            if (!ed) return
+
+            if (imageInsertMode === 'base64') {
+              const src = `data:${file.type};base64,${base64Data}`
+              ed.chain().focus().setImage({ src }).run()
+              return
+            }
+
+            if (imageInsertMode === 'relative') {
+              const fp = filePathRef.current
+              if (!fp) {
+                alert('请先保存文件再插入相对路径图片')
+                return
+              }
+              const saveResult = await window.electronAPI.saveImageToDisk({
+                base64Data, ext, folderPath: imageFolder, fileDir: dirname(fp)
+              })
+              if (!saveResult || saveResult.error) return
+              ed.chain().focus().setImage({ src: saveResult.relativePath }).run()
+              return
+            }
+
+            const fp = filePathRef.current
+            const saveResult = await window.electronAPI.saveImageToDisk({
+              base64Data, ext, folderPath: imageFolder, fileDir: fp ? dirname(fp) : ''
+            })
+            if (!saveResult || saveResult.error) return
+            ed.chain().focus().setImage({ src: saveResult.absolutePath }).run()
           }
           reader.readAsDataURL(file)
           return true
@@ -422,11 +466,7 @@ function App() {
       if (!currentPath) {
         return saveAsFileRef.current?.()
       }
-      let md = contentRef.current
-      const settings = settingsRef.current
-      if (settings.imageInsertMode === 'relative' && currentPath) {
-        md = convertToRelativePaths(md, currentPath, settings.imageFolder)
-      }
+      const md = contentRef.current
       const result = await window.electronAPI.saveFile(md, currentPath)
       if (result) {
         setTabs(prev => prev.map(t =>
@@ -445,12 +485,7 @@ function App() {
     if (!tab) return
 
     try {
-      let md = contentRef.current
-      const currentPath = tab.filePath
-      const settings = settingsRef.current
-      if (settings.imageInsertMode === 'relative' && currentPath) {
-        md = convertToRelativePaths(md, currentPath, settings.imageFolder)
-      }
+      const md = contentRef.current
       const result = await window.electronAPI.saveAsFile(md)
       if (result) {
         setTabs(prev => prev.map(t =>
@@ -500,17 +535,23 @@ function App() {
           alert('保存图片失败: ' + saveResult.error)
           return
         }
-        const platform = window.electronAPI.platform
-        const prefix = platform === 'win32' ? 'file:///' : 'file://'
-        const src = prefix + saveResult.absolutePath.replace(/\\/g, '/')
-        editor.chain().focus().setImage({ src }).run()
+        editor.chain().focus().setImage({ src: saveResult.relativePath }).run()
         return
       }
 
-      const platform = window.electronAPI.platform
-      const prefix = platform === 'win32' ? 'file:///' : 'file://'
-      const src = prefix + result.filePath.replace(/\\/g, '/')
-      editor.chain().focus().setImage({ src }).run()
+      const fp = filePathRef.current
+      const saveResult = await window.electronAPI.saveImageToDisk({
+        base64Data: result.base64,
+        ext: result.ext,
+        folderPath: imageFolder,
+        fileDir: fp ? dirname(fp) : ''
+      })
+      if (!saveResult) return
+      if (saveResult.error) {
+        alert('保存图片失败: ' + saveResult.error)
+        return
+      }
+      editor.chain().focus().setImage({ src: saveResult.absolutePath }).run()
     } catch (err) {
       alert('插入图片失败: ' + (err.message || err))
     }

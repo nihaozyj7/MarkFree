@@ -1,6 +1,5 @@
 import { useState, useCallback, useRef, useMemo } from 'react'
 import { getSettings } from '../settings'
-import { convertToAbsolutePaths } from '../utils'
 
 export function useTabManager(settingsRef, contentRef, editorRef, currentFolderPath) {
   const defaultTabId = Date.now().toString(36) + Math.random().toString(36).slice(2, 8)
@@ -106,10 +105,6 @@ export function useTabManager(settingsRef, contentRef, editorRef, currentFolderP
     }
 
     let processedContent = content || ''
-    const settings = settingsRef.current
-    if (settings.imageInsertMode === 'relative' && fp) {
-      processedContent = convertToAbsolutePaths(processedContent, fp, settings.imageFolder)
-    }
 
     const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 8)
     const newTab = {

@@ -215,10 +215,10 @@ const SettingsDialog = memo(function SettingsDialog({ onClose, currentTheme, onT
                     <option value="absolute">绝对路径</option>
                   </select>
                 </div>
-                { settings.imageInsertMode === 'relative' && (
+                { settings.imageInsertMode !== 'base64' && (
                   <div className="settings-section">
-                    <h3 className="settings-section-title">图片存储文件夹</h3>
-                    <input className="settings-input" type="text" value={ settings.imageFolder } onChange={ e => updateSettings({ imageFolder: e.target.value }) } placeholder=".assets" />
+                    <h3 className="settings-section-title">{ settings.imageInsertMode === 'absolute' ? '图片存储绝对路径' : '图片存储文件夹' }</h3>
+                    <input className="settings-input" type="text" value={ settings.imageFolder } onChange={ e => updateSettings({ imageFolder: e.target.value }) } placeholder={ settings.imageInsertMode === 'absolute' ? 'C:\\Users\\xxx\\images' : '.assets' } />
                   </div>
                 ) }
               </div>

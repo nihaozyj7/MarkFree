@@ -1,4 +1,5 @@
-import { app, shell, BrowserWindow, ipcMain, dialog, screen } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, dialog, screen, protocol, net } from 'electron'
+import url from 'url'
 import { join, resolve, extname, basename, dirname } from 'path'
 import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, statSync, renameSync, unlinkSync, rmdirSync } from 'fs'
 import { readdir, stat as statAsync, readFile } from 'fs/promises'
@@ -581,6 +582,15 @@ ipcMain.on('window:maximize', () => {
 ipcMain.on('window:close', () => mainWindow?.close())
 
 app.whenReady().then(() => {
+  protocol.handle('local-file', (request) => {
+    let filePath = decodeURIComponent(request.url.slice('local-file://'.length))
+    filePath = filePath.replace(/^\/+/, '/')
+    if (process.platform === 'win32' && /^\/[a-zA-Z]:/.test(filePath)) {
+      filePath = filePath.slice(1)
+    }
+    return net.fetch(url.pathToFileURL(filePath).toString())
+  })
+
   writeDefaultThemes()
   createWindow()
 

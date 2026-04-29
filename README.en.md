@@ -4,7 +4,7 @@
 
 [中文文档](./README.md)
 
-![](./.assets/029563517761.png)
+![](./.assets/029563517761.png)![](./.assets/318267053025.png)
 
 ## Features
 

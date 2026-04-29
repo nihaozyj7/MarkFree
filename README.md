@@ -4,7 +4,7 @@
 
 [English](./README.en.md)
 
-![](./.assets/029728659273.png)
+![](./.assets/318174707808.png)
 
 ## 功能
 
