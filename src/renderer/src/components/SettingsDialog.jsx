@@ -23,6 +23,7 @@ const SettingsDialog = memo(function SettingsDialog({ onClose, currentTheme, onT
     }
   })
   const [themes, setThemes] = useState([])
+  const [associationStatus, setAssociationStatus] = useState(null)
   const [closing, setClosing] = useState(false)
   const [open, setOpen] = useState(false)
   const [editingShortcut, setEditingShortcut] = useState(null)
@@ -32,7 +33,20 @@ const SettingsDialog = memo(function SettingsDialog({ onClose, currentTheme, onT
   useEffect(() => {
     requestAnimationFrame(() => setOpen(true))
     window.electronAPI.getThemes().then(setThemes).catch(() => { })
+    window.electronAPI.getAssociationStatus().then(setAssociationStatus).catch(() => { })
   }, [])
+
+  const handleRegisterAssociation = async () => {
+    const result = await window.electronAPI.registerAssociation()
+    alert(result.message)
+    if (result.success) setAssociationStatus(true)
+  }
+
+  const handleUnregisterAssociation = async () => {
+    const result = await window.electronAPI.unregisterAssociation()
+    alert(result.message)
+    if (result.success) setAssociationStatus(false)
+  }
 
   useEffect(() => {
     if (!editingShortcut) return
@@ -113,6 +127,20 @@ const SettingsDialog = memo(function SettingsDialog({ onClose, currentTheme, onT
               <option value="always">始终启用</option>
               <option value="never">禁用</option>
             </select>
+          </div>
+          <div className="settings-divider" />
+          <div className="settings-section">
+            <h3 className="settings-section-title">文件关联</h3>
+            <p className="settings-section-desc">将 .md 文件默认用 MarkFree 打开</p>
+            <div className="settings-association-status">
+              状态：
+              <span className={ `settings-association-dot${associationStatus === null ? ' loading' : ''}${associationStatus === true ? ' active' : ''}${associationStatus === false ? ' inactive' : ''}` } />
+              { associationStatus === null ? '检测中...' : (associationStatus ? '已关联' : '未关联') }
+            </div>
+            <div className="settings-section-actions">
+              <button className="settings-btn settings-btn-primary" onClick={ handleRegisterAssociation }>注册 .md 文件关联</button>
+              <button className="settings-btn settings-btn-danger" onClick={ handleUnregisterAssociation }>取消关联</button>
+            </div>
           </div>
           <div className="settings-divider" />
           <div className="settings-section">

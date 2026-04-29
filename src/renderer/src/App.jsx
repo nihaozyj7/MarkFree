@@ -528,16 +528,6 @@ function App() {
     }
   }, [editor])
 
-  const handleRegisterAssociation = useCallback(async () => {
-    const result = await window.electronAPI.registerAssociation()
-    alert(result.message)
-  }, [])
-
-  const handleUnregisterAssociation = useCallback(async () => {
-    const result = await window.electronAPI.unregisterAssociation()
-    alert(result.message)
-  }, [])
-
   const handleOpenSettings = useCallback(() => {
     setShowSettings(true)
   }, [])
@@ -564,7 +554,7 @@ function App() {
   menuActionRefs.current = {
     handleNewFile, handleOpenFile, handleOpenFolder, handleSaveFile, handleSaveAsFile,
     handleExportHtml, handleCopyMarkdown, handlePasteMarkdown,
-    handleRegisterAssociation, handleUnregisterAssociation, handleOpenSettings
+    handleOpenSettings
   }
   const handleMenuAction = useCallback((action) => {
     switch (action) {
@@ -576,8 +566,6 @@ function App() {
       case 'exportHtml': menuActionRefs.current.handleExportHtml(); break
       case 'copyMarkdown': menuActionRefs.current.handleCopyMarkdown(); break
       case 'pasteMarkdown': menuActionRefs.current.handlePasteMarkdown(); break
-      case 'registerAssociation': menuActionRefs.current.handleRegisterAssociation(); break
-      case 'unregisterAssociation': menuActionRefs.current.handleUnregisterAssociation(); break
       case 'settings': menuActionRefs.current.handleOpenSettings(); break
       case 'about': setShowAbout(true); break
     }

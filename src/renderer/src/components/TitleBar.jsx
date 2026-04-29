@@ -31,13 +31,6 @@ const menuGroups = [
     ]
   },
   {
-    label: '文件关联',
-    items: [
-      { id: 'registerAssociation', label: '注册 .md 文件关联' },
-      { id: 'unregisterAssociation', label: '取消 .md 文件关联' }
-    ]
-  },
-  {
     label: '帮助',
     items: [
       { id: 'about', label: '关于 MarkFree' }
