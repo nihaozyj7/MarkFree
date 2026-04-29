@@ -244,6 +244,17 @@ const SettingsDialog = memo(function SettingsDialog({ onClose, currentTheme, onT
                   </select>
                 </div>
                 <div className="settings-section">
+                  <h3 className="settings-section-title">关闭确认</h3>
+                  <label className="settings-radio">
+                    <input type="checkbox" checked={ settings.confirmBeforeCloseTab !== false } onChange={ e => updateSettings({ confirmBeforeCloseTab: e.target.checked }) } />
+                    <span>关闭未保存的标签页时提示</span>
+                  </label>
+                  <label className="settings-radio">
+                    <input type="checkbox" checked={ settings.confirmBeforeCloseApp !== false } onChange={ e => updateSettings({ confirmBeforeCloseApp: e.target.checked }) } />
+                    <span>关闭含未保存标签页的应用时提示</span>
+                  </label>
+                </div>
+                <div className="settings-section">
                   <h3 className="settings-section-title">启动行为</h3>
                   <label className="settings-radio">
                     <input type="radio" name="startupBehavior" checked={ settings.startupBehavior !== 'welcome' } onChange={ () => updateSettings({ startupBehavior: 'newFile' }) } />

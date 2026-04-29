@@ -8,6 +8,7 @@ import { execFile } from 'child_process'
 import { THEMES, DARK_THEME } from './themes/defaults.js'
 
 let mainWindow
+let closeConfirmed = false
 
 function getSettingsPath() {
   return join(app.getPath('userData'), 'settings.json')
@@ -172,7 +173,12 @@ function createWindow() {
     mainWindow.show()
   })
 
-  mainWindow.on('close', () => {
+  mainWindow.on('close', (e) => {
+    if (!closeConfirmed) {
+      e.preventDefault()
+      mainWindow.webContents.send('app:beforeClose')
+      return
+    }
     const currentSettings = loadSettings()
     if (currentSettings.windowMode === 'auto') {
       const bounds = mainWindow.getBounds()
@@ -580,6 +586,15 @@ ipcMain.on('window:maximize', () => {
 })
 
 ipcMain.on('window:close', () => mainWindow?.close())
+
+ipcMain.on('app:confirmClose', () => {
+  closeConfirmed = true
+  mainWindow?.close()
+})
+
+ipcMain.on('app:cancelClose', () => {
+  closeConfirmed = false
+})
 
 app.whenReady().then(() => {
   protocol.handle('local-file', (request) => {

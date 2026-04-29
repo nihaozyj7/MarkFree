@@ -62,5 +62,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   openThemeFolder: () => ipcRenderer.invoke('theme:openFolder'),
 
   getAppSettings: () => ipcRenderer.invoke('settings:get'),
-  saveAppSettings: (settings) => ipcRenderer.invoke('settings:save', settings)
+  saveAppSettings: (settings) => ipcRenderer.invoke('settings:save', settings),
+
+  onBeforeAppClose: (callback) => {
+    ipcRenderer.on('app:beforeClose', () => callback())
+  },
+  confirmAppClose: () => ipcRenderer.send('app:confirmClose'),
+  cancelAppClose: () => ipcRenderer.send('app:cancelClose')
 })

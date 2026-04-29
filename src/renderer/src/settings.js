@@ -17,7 +17,9 @@ const DEFAULT_SETTINGS = {
     saveAs: 'Ctrl+Shift+S',
     sidebarToggle: 'Ctrl+B'
   },
-  folderSortMode: 'foldersFirst-createTime'
+  folderSortMode: 'foldersFirst-createTime',
+  confirmBeforeCloseTab: true,
+  confirmBeforeCloseApp: true
 }
 
 function getSettings() {

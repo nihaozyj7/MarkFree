@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useMemo } from 'react'
 import { getSettings } from '../settings'
 
-export function useTabManager(settingsRef, contentRef, editorRef, currentFolderPath) {
+export function useTabManager(settingsRef, contentRef, editorRef, currentFolderPath, skipAppCloseConfirmRef) {
   const defaultTabId = Date.now().toString(36) + Math.random().toString(36).slice(2, 8)
 
   const [tabs, setTabs] = useState(() => {
@@ -54,31 +54,34 @@ export function useTabManager(settingsRef, contentRef, editorRef, currentFolderP
     const closingTab = allTabs[idx]
     const wouldBeEmpty = allTabs.length === 1
 
+    const settings = settingsRef.current
+    const shouldConfirm = settings.confirmBeforeCloseTab !== false
+
     const tabsWithUnsaved = allTabs.filter(t => t.modified)
     const hasUnsaved = closingTab.modified || (wouldBeEmpty && tabsWithUnsaved.length > 1)
 
     if (wouldBeEmpty) {
       if (currentFolderPath) {
-        if (hasUnsaved && !confirm('有未保存的更改，确定关闭吗？')) return
+        if (hasUnsaved && shouldConfirm && !confirm('有未保存的更改，确定关闭吗？')) return
         setTabs([])
         activeTabIdRef.current = ''
         setActiveTabId('')
         return
       }
-      const settings = settingsRef.current
       if (settings.closeLastTabAction === 'closeApp') {
-        if (closingTab.modified && !confirm('有未保存的更改，确定关闭应用吗？')) return
+        if (closingTab.modified && shouldConfirm && !confirm('有未保存的更改，确定关闭应用吗？')) return
+        if (skipAppCloseConfirmRef) skipAppCloseConfirmRef.current = true
         window.electronAPI.closeWindow()
         return
       }
-      if (closingTab.modified && !confirm('有未保存的更改，确定关闭标签页吗？')) return
+      if (closingTab.modified && shouldConfirm && !confirm('有未保存的更改，确定关闭标签页吗？')) return
       setTabs([])
       activeTabIdRef.current = ''
       setActiveTabId('')
       return
     }
 
-    if (closingTab.modified && !confirm('有未保存的更改，确定关闭标签页吗？')) return
+    if (closingTab.modified && shouldConfirm && !confirm('有未保存的更改，确定关闭标签页吗？')) return
 
     const newTabs = allTabs.filter(t => t.id !== tabId)
     setTabs(newTabs)
@@ -88,7 +91,7 @@ export function useTabManager(settingsRef, contentRef, editorRef, currentFolderP
       activeTabIdRef.current = newTabs[nextIdx].id
       setActiveTabId(newTabs[nextIdx].id)
     }
-  }, [settingsRef, currentFolderPath])
+  }, [settingsRef, currentFolderPath, skipAppCloseConfirmRef])
 
   const addTabRef = useRef()
   const addTab = useCallback((fileData) => {

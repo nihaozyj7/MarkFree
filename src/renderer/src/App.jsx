@@ -52,6 +52,7 @@ function App() {
   const saveAsFileRef = useRef()
   const editorRef = useRef(null)
   const debounceRef = useRef(null)
+  const skipAppCloseConfirmRef = useRef(false)
 
   const {
     tabs, setTabs,
@@ -59,7 +60,7 @@ function App() {
     activeTabIdRef, tabsRef,
     activeTab, fileName, filePath, modified,
     addTab, addTabRef, closeTab, switchTab
-  } = useTabManager(settingsRef, contentRef, editorRef, currentFolderPath)
+  } = useTabManager(settingsRef, contentRef, editorRef, currentFolderPath, skipAppCloseConfirmRef)
 
   useEffect(() => {
     filePathRef.current = filePath
@@ -286,6 +287,39 @@ function App() {
     }
   }, [editor])
 
+  useEffect(() => {
+    window.electronAPI.onBeforeAppClose(() => {
+      if (skipAppCloseConfirmRef.current) {
+        skipAppCloseConfirmRef.current = false
+        window.electronAPI.confirmAppClose()
+        return
+      }
+
+      const allTabs = tabsRef.current
+      const unsavedTabs = allTabs.filter(t => t.modified)
+
+      if (unsavedTabs.length === 0) {
+        window.electronAPI.confirmAppClose()
+        return
+      }
+
+      const currentSettings = settingsRef.current
+      if (currentSettings.confirmBeforeCloseApp !== false) {
+        if (confirm('有未保存的更改，确定关闭应用吗？')) {
+          window.electronAPI.confirmAppClose()
+        } else {
+          window.electronAPI.cancelAppClose()
+        }
+        return
+      }
+
+      try {
+        localStorage.setItem('cachedTabs', JSON.stringify(unsavedTabs))
+      } catch {}
+      window.electronAPI.confirmAppClose()
+    })
+  }, [])
+
   const handleOpenFile = useCallback(async () => {
     if (!editor) return
     const result = await window.electronAPI.openFile()
@@ -499,7 +533,9 @@ function App() {
       sidebarWidth: settings.sidebarWidth ?? settingsRef.current.sidebarWidth,
       startupBehavior: settings.startupBehavior ?? settingsRef.current.startupBehavior,
       shortcuts: settings.shortcuts ?? settingsRef.current.shortcuts,
-      folderSortMode: settings.folderSortMode ?? settingsRef.current.folderSortMode
+      folderSortMode: settings.folderSortMode ?? settingsRef.current.folderSortMode,
+      confirmBeforeCloseTab: settings.confirmBeforeCloseTab ?? settingsRef.current.confirmBeforeCloseTab,
+      confirmBeforeCloseApp: settings.confirmBeforeCloseApp ?? settingsRef.current.confirmBeforeCloseApp
     }
     applyFontSettings(settings)
   }, [])
@@ -564,6 +600,29 @@ function App() {
   }, [])
 
   useKeyboardShortcuts({ handleNewFile, handleOpenFile, handleSaveFile, handleSaveAsFile, setSidebarVisible })
+
+  useEffect(() => {
+    try {
+      const cached = localStorage.getItem('cachedTabs')
+      if (cached) {
+        const parsed = JSON.parse(cached)
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setTabs(prev => {
+            if (prev.length === 1 && !prev[0].filePath && !prev[0].content && !prev[0].modified) {
+              return parsed
+            }
+            return [...prev, ...parsed]
+          })
+          const lastTab = parsed[parsed.length - 1]
+          if (lastTab) {
+            activeTabIdRef.current = lastTab.id
+            setActiveTabId(lastTab.id)
+          }
+        }
+        localStorage.removeItem('cachedTabs')
+      }
+    } catch {}
+  }, [])
 
   const handleContextMenu = useCallback((e) => {
     e.preventDefault()
