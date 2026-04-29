@@ -1,8 +1,8 @@
 {
   "name": "markfree",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "private": true,
-  "description": "A WYSIWYG Markdown editor built with Electron, React, and TipTap.",
+  "description": "A MarkFree editor built with Electron, React, and TipTap.",
   "main": "./out/main/index.js",
   "scripts": {
     "dev": "electron-vite dev",

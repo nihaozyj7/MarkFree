@@ -1,6 +1,6 @@
 # MarkFree
 
-> A WYSIWYG Markdown editor built with Electron, React, and TipTap
+> A MarkFree editor built with Electron, React, and TipTap
 
 [中文文档](./README.md)
 

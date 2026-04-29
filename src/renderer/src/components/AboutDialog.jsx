@@ -34,7 +34,7 @@ const AboutDialog = memo(function AboutDialog({ onClose }) {
             </svg>
           </div>
           <h2 className="about-app-name">MarkFree</h2>
-          <p className="about-version">版本 1.2.0</p>
+          <p className="about-version">版本 1.3.0</p>
           <p className="about-desc">
             一个基于 Electron、React 和 TipTap 的<br />所见即所得 Markdown 编辑器。
           </p>
