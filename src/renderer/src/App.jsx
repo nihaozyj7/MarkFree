@@ -318,6 +318,9 @@ function App() {
       } catch {}
       window.electronAPI.confirmAppClose()
     })
+    return () => {
+      window.electronAPI.removeBeforeAppCloseListener()
+    }
   }, [])
 
   const handleOpenFile = useCallback(async () => {

@@ -65,7 +65,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   saveAppSettings: (settings) => ipcRenderer.invoke('settings:save', settings),
 
   onBeforeAppClose: (callback) => {
+    ipcRenderer.removeAllListeners('app:beforeClose')
     ipcRenderer.on('app:beforeClose', () => callback())
+  },
+  removeBeforeAppCloseListener: () => {
+    ipcRenderer.removeAllListeners('app:beforeClose')
   },
   confirmAppClose: () => ipcRenderer.send('app:confirmClose'),
   cancelAppClose: () => ipcRenderer.send('app:cancelClose')
