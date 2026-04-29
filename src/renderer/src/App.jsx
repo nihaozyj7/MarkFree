@@ -1,108 +1,28 @@
 import React, { useState, useCallback, useEffect, useRef, useMemo, lazy, Suspense } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import { TextSelection } from '@tiptap/pm/state'
-import StarterKit from '@tiptap/starter-kit'
-import Underline from '@tiptap/extension-underline'
-import { CustomImage } from './extensions/CustomImage'
 import { setImageFileDir } from './extensions/CustomImage'
-import Link from '@tiptap/extension-link'
-import Placeholder from '@tiptap/extension-placeholder'
-import TaskList from '@tiptap/extension-task-list'
-import TaskItem from '@tiptap/extension-task-item'
-import Table from '@tiptap/extension-table'
-import TableRow from '@tiptap/extension-table-row'
-import TableCell from '@tiptap/extension-table-cell'
-import TableHeader from '@tiptap/extension-table-header'
-import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
-import { createLowlight } from 'lowlight'
-import { Markdown } from 'tiptap-markdown'
+import { extensions } from './config/editor'
 import Toolbar from './components/Toolbar'
 import TitleBar from './components/TitleBar'
 import StatusBar from './components/StatusBar'
 import Sidebar from './components/Sidebar'
+import WelcomePage from './components/WelcomePage'
+import MarkdownPreview from './components/MarkdownPreview'
 import ErrorBoundary from './components/ErrorBoundary'
 import { DEFAULT_SETTINGS, getSettings, saveSettings, applyFontSettings } from './settings'
-import { dirname, MIME_MAP_EXT } from './utils'
+import { dirname } from './utils'
+import { readImageFromFile, insertImageToEditor } from './utils/imageHandler'
 import { useTabManager } from './hooks/useTabManager'
 import { useDragDrop } from './hooks/useDragDrop'
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
+import { useFolderActions } from './hooks/useFolderActions'
 
 const SettingsDialog = lazy(() => import('./components/SettingsDialog'))
 const AboutDialog = lazy(() => import('./components/AboutDialog'))
 const ContextMenu = lazy(() => import('./components/ContextMenu'))
 
 import './styles/editor.css'
-
-const lowlight = createLowlight()
-
-const LANGUAGE_LOADERS = {
-  javascript: () => import('highlight.js/lib/languages/javascript'),
-  typescript: () => import('highlight.js/lib/languages/typescript'),
-  python: () => import('highlight.js/lib/languages/python'),
-  xml: () => import('highlight.js/lib/languages/xml'),
-  css: () => import('highlight.js/lib/languages/css'),
-  json: () => import('highlight.js/lib/languages/json'),
-  bash: () => import('highlight.js/lib/languages/bash'),
-  markdown: () => import('highlight.js/lib/languages/markdown'),
-  sql: () => import('highlight.js/lib/languages/sql'),
-  yaml: () => import('highlight.js/lib/languages/yaml'),
-  rust: () => import('highlight.js/lib/languages/rust'),
-  go: () => import('highlight.js/lib/languages/go'),
-  java: () => import('highlight.js/lib/languages/java')
-}
-
-const languageCache = {}
-let languageInitDone = false
-
-async function ensureLanguage(name) {
-  if (languageCache[name]) return
-  const loader = LANGUAGE_LOADERS[name]
-  if (!loader) return
-  try {
-    const mod = await loader()
-    languageCache[name] = true
-    lowlight.register(name, mod.default)
-  } catch {}
-}
-
-function initLanguages() {
-  if (languageInitDone) return
-  languageInitDone = true
-  ensureLanguage('javascript')
-  ensureLanguage('typescript')
-  ensureLanguage('python')
-  ensureLanguage('css')
-  ensureLanguage('json')
-  ensureLanguage('bash')
-  ensureLanguage('xml')
-  ensureLanguage('markdown')
-  ensureLanguage('sql')
-}
-
-initLanguages()
-
-const extensions = [
-  StarterKit.configure({
-    codeBlock: false,
-    heading: { levels: [1, 2, 3, 4, 5, 6] }
-  }),
-  Underline,
-  CustomImage.configure({ inline: true, allowBase64: true }),
-  Link.configure({ openOnClick: false }),
-  Placeholder.configure({ placeholder: '开始写作...' }),
-  TaskList,
-  TaskItem.configure({ nested: true }),
-  Table.configure({ resizable: true }),
-  TableRow,
-  TableCell,
-  TableHeader,
-  CodeBlockLowlight.configure({ lowlight }),
-  Markdown.configure({
-    html: true,
-    transformPastedText: true,
-    transformCopiedText: true
-  })
-]
 
 function App() {
   const [showPreview, setShowPreview] = useState(false)
@@ -266,47 +186,15 @@ function App() {
           const file = item.getAsFile()
           if (!file) return true
 
-          const reader = new FileReader()
-          reader.onload = async (e) => {
-            const result = e.target.result
-            const base64Data = result.split(',')[1]
-            const ext = MIME_MAP_EXT[file.type] || '.png'
-
-            const settings = settingsRef.current
-            const { imageInsertMode, imageFolder } = settings
-
+          readImageFromFile(file).then(({ base64Data, mime, ext }) => {
             const ed = editorRef.current
             if (!ed) return
-
-            if (imageInsertMode === 'base64') {
-              const src = `data:${file.type};base64,${base64Data}`
-              ed.chain().focus().setImage({ src }).run()
-              return
-            }
-
-            if (imageInsertMode === 'relative') {
-              const fp = filePathRef.current
-              if (!fp) {
-                alert('请先保存文件再插入相对路径图片')
-                return
-              }
-              const saveResult = await window.electronAPI.saveImageToDisk({
-                base64Data, ext, folderPath: imageFolder, fileDir: dirname(fp)
-              })
-              if (!saveResult || saveResult.error) return
-
-              ed.chain().focus().setImage({ src: saveResult.relativePath }).run()
-              return
-            }
-
-            const fp = filePathRef.current
-            const saveResult = await window.electronAPI.saveImageToDisk({
-              base64Data, ext, folderPath: imageFolder, fileDir: fp ? dirname(fp) : ''
+            insertImageToEditor(ed, {
+              base64Data, mime, ext,
+              settings: settingsRef.current,
+              filePath: filePathRef.current
             })
-            if (!saveResult || saveResult.error) return
-            ed.chain().focus().setImage({ src: saveResult.absolutePath }).run()
-          }
-          reader.readAsDataURL(file)
+          })
           return true
         }
         return false
@@ -320,46 +208,15 @@ function App() {
           if (!file.type.startsWith('image/')) continue
 
           event.preventDefault()
-          const reader = new FileReader()
-          reader.onload = async (e) => {
-            const result = e.target.result
-            const base64Data = result.split(',')[1]
-            const ext = MIME_MAP_EXT[file.type] || '.png'
-
-            const settings = settingsRef.current
-            const { imageInsertMode, imageFolder } = settings
-
+          readImageFromFile(file).then(({ base64Data, mime, ext }) => {
             const ed = editorRef.current
             if (!ed) return
-
-            if (imageInsertMode === 'base64') {
-              const src = `data:${file.type};base64,${base64Data}`
-              ed.chain().focus().setImage({ src }).run()
-              return
-            }
-
-            if (imageInsertMode === 'relative') {
-              const fp = filePathRef.current
-              if (!fp) {
-                alert('请先保存文件再插入相对路径图片')
-                return
-              }
-              const saveResult = await window.electronAPI.saveImageToDisk({
-                base64Data, ext, folderPath: imageFolder, fileDir: dirname(fp)
-              })
-              if (!saveResult || saveResult.error) return
-              ed.chain().focus().setImage({ src: saveResult.relativePath }).run()
-              return
-            }
-
-            const fp = filePathRef.current
-            const saveResult = await window.electronAPI.saveImageToDisk({
-              base64Data, ext, folderPath: imageFolder, fileDir: fp ? dirname(fp) : ''
+            insertImageToEditor(ed, {
+              base64Data, mime, ext,
+              settings: settingsRef.current,
+              filePath: filePathRef.current
             })
-            if (!saveResult || saveResult.error) return
-            ed.chain().focus().setImage({ src: saveResult.absolutePath }).run()
-          }
-          reader.readAsDataURL(file)
+          })
           return true
         }
         return false
@@ -509,49 +366,13 @@ function App() {
         return
       }
 
-      const settings = settingsRef.current
-      const { imageInsertMode, imageFolder } = settings
-
-      if (imageInsertMode === 'base64') {
-        const src = `data:${result.mime};base64,${result.base64}`
-        editor.chain().focus().setImage({ src }).run()
-        return
-      }
-
-      if (imageInsertMode === 'relative') {
-        const fp = filePathRef.current
-        if (!fp) {
-          alert('请先保存文件再插入相对路径图片')
-          return
-        }
-        const saveResult = await window.electronAPI.saveImageToDisk({
-          base64Data: result.base64,
-          ext: result.ext,
-          folderPath: imageFolder,
-          fileDir: dirname(fp)
-        })
-        if (!saveResult) return
-        if (saveResult.error) {
-          alert('保存图片失败: ' + saveResult.error)
-          return
-        }
-        editor.chain().focus().setImage({ src: saveResult.relativePath }).run()
-        return
-      }
-
-      const fp = filePathRef.current
-      const saveResult = await window.electronAPI.saveImageToDisk({
+      await insertImageToEditor(editor, {
         base64Data: result.base64,
+        mime: result.mime,
         ext: result.ext,
-        folderPath: imageFolder,
-        fileDir: fp ? dirname(fp) : ''
+        settings: settingsRef.current,
+        filePath: filePathRef.current
       })
-      if (!saveResult) return
-      if (saveResult.error) {
-        alert('保存图片失败: ' + saveResult.error)
-        return
-      }
-      editor.chain().focus().setImage({ src: saveResult.absolutePath }).run()
     } catch (err) {
       alert('插入图片失败: ' + (err.message || err))
     }
@@ -637,63 +458,23 @@ function App() {
     } catch {}
   }, [])
 
-  const handleSelectFolder = useCallback(async () => {
-    try {
-      const folderPath = await window.electronAPI.selectFolder()
-      if (!folderPath) return
-      setCurrentFolderPath(folderPath)
-      const tree = await window.electronAPI.getFolderTree(folderPath)
-      setFolderTree(tree)
-      setSidebarVisible(true)
-    } catch (err) {
-      console.error('选择文件夹失败:', err)
-    }
-  }, [])
-
-  const refreshFolderTree = useCallback(async () => {
-    if (currentFolderPath) {
-      const tree = await window.electronAPI.getFolderTree(currentFolderPath)
-      setFolderTree(tree)
-    }
-  }, [currentFolderPath])
-
-  const handleCreateFileInFolder = useCallback(async () => {
-    if (!currentFolderPath) return
-    const result = await window.electronAPI.createFile(currentFolderPath)
-    if (result.success) {
-      await refreshFolderTree()
-      setRenameTargetPath(result.path)
-      setRenameTargetValue(result.name)
-    } else {
-      alert('创建文件失败: ' + result.error)
-    }
-  }, [currentFolderPath, refreshFolderTree])
-
-  const handleCreateFolderInFolder = useCallback(async () => {
-    if (!currentFolderPath) return
-    const result = await window.electronAPI.createFolder(currentFolderPath)
-    if (result.success) {
-      await refreshFolderTree()
-      setRenameTargetPath(result.path)
-      setRenameTargetValue(result.name)
-    } else {
-      alert('创建文件夹失败: ' + result.error)
-    }
-  }, [currentFolderPath, refreshFolderTree])
-
-  const handleFolderSortModeChange = useCallback((mode) => {
-    setFolderSortMode(mode)
-    try {
-      const settings = JSON.parse(localStorage.getItem('editorSettings') || '{}')
-      settings.folderSortMode = mode
-      localStorage.setItem('editorSettings', JSON.stringify(settings))
-    } catch {}
-  }, [])
-
-  const handleOpenFolderFile = useCallback(async (filePath) => {
-    const result = await window.electronAPI.openFileByPath(filePath)
-    if (result) addTab(result)
-  }, [addTab])
+  const {
+    handleSelectFolder,
+    refreshFolderTree,
+    handleCreateFileInFolder,
+    handleCreateFolderInFolder,
+    handleFolderSortModeChange,
+    handleOpenFolderFile
+  } = useFolderActions({
+    currentFolderPath,
+    setCurrentFolderPath,
+    setFolderTree,
+    setSidebarVisible,
+    setRenameTargetPath,
+    setRenameTargetValue,
+    setFolderSortMode,
+    addTab
+  })
 
   const handleThemeChange = useCallback((themeName) => {
     setCurrentTheme(themeName)
@@ -859,65 +640,16 @@ function App() {
               <EditorContent editor={editor} className="editor-content" />
             </div>
             {showPreview && (
-              <div className="preview-area">
-                <div className="preview-header">
-                  <span>Markdown 源码</span>
-                  <button
-                    className="preview-copy-btn"
-                    onClick={handleCopyPreview}
-                    title="复制 Markdown"
-                  >
-                    📋
-                  </button>
-                </div>
-                <pre className="preview-content">
-                  <code>{markdownContent}</code>
-                </pre>
-              </div>
+              <MarkdownPreview content={markdownContent} onCopy={handleCopyPreview} />
             )}
           </>
         ) : (
-          <div className="welcome-page" onContextMenu={handleContextMenu}>
-            <div className="welcome-content">
-              <div className="welcome-logo">
-                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                  <polyline points="14 2 14 8 20 8"/>
-                  <line x1="16" y1="13" x2="8" y2="13"/>
-                  <line x1="16" y1="17" x2="8" y2="17"/>
-                  <polyline points="10 9 9 9 8 9"/>
-                </svg>
-              </div>
-              <h1 className="welcome-title">MarkFree</h1>
-              <p className="welcome-subtitle">简洁的 Markdown 编辑器</p>
-              <div className="welcome-actions">
-                <button className="welcome-action-btn" onClick={handleNewFile}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                    <polyline points="14 2 14 8 20 8"/>
-                    <line x1="12" y1="18" x2="12" y2="12"/>
-                    <line x1="9" y1="15" x2="15" y2="15"/>
-                  </svg>
-                  新建文件
-                </button>
-                <button className="welcome-action-btn" onClick={handleOpenFile}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
-                  </svg>
-                  打开文件
-                </button>
-                <button className="welcome-action-btn" onClick={handleOpenFolder}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
-                    <line x1="12" y1="11" x2="12" y2="17"/>
-                    <line x1="9" y1="14" x2="15" y2="14"/>
-                  </svg>
-                  打开文件夹
-                </button>
-              </div>
-              <p className="welcome-hint">使用 Ctrl+O 打开文件，Ctrl+N 新建文件</p>
-            </div>
-          </div>
+          <WelcomePage
+            onNewFile={handleNewFile}
+            onOpenFile={handleOpenFile}
+            onOpenFolder={handleOpenFolder}
+            onContextMenu={handleContextMenu}
+          />
         )}
       </div>
       {dragOver && <div className="drag-overlay"><span>释放以打开 .md 文件</span></div>}
