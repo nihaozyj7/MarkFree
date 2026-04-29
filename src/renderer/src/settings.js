@@ -8,6 +8,7 @@ const DEFAULT_SETTINGS = {
   fontFamily: 'default',
   fontSize: 16,
   compactMode: false,
+  fileTreeMode: 'loose',
   sidebarWidth: 220,
   startupBehavior: 'newFile',
   shortcuts: {

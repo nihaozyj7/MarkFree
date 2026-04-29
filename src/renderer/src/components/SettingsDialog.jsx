@@ -136,6 +136,13 @@ const SettingsDialog = memo(function SettingsDialog({ onClose, currentTheme, onT
                       <option value={24}>24px</option>
                     </select>
                   </div>
+                  <div className="settings-row">
+                    <label className="settings-row-label">文件树</label>
+                    <select className="settings-select settings-select-inline" value={ settings.fileTreeMode || 'loose' } onChange={ e => updateSettings({ fileTreeMode: e.target.value }) }>
+                      <option value="loose">宽松模式</option>
+                      <option value="compact">紧凑模式</option>
+                    </select>
+                  </div>
                 </div>
               </div>
             </div>

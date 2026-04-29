@@ -1241,8 +1241,8 @@
 .file-tree-node {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 3px 12px;
+  gap: 6px;
+  padding: 6px 12px;
   font-size: 13px;
   color: var(--text-secondary);
   cursor: pointer;
@@ -1250,6 +1250,11 @@
   white-space: nowrap;
   overflow: hidden;
   user-select: none;
+}
+/* ===== File Tree Compact Mode ===== */
+.file-tree-compact .file-tree-node {
+  gap: 4px;
+  padding: 3px 12px;
 }
 .file-tree-node:hover {
   background: var(--hover-bg);

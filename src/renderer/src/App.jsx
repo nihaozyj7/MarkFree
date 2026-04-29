@@ -43,6 +43,7 @@ function App() {
   const [showAbout, setShowAbout] = useState(false)
   const [compactMode, setCompactMode] = useState(() => getSettings().compactMode === true)
   const [sidebarWidth, setSidebarWidth] = useState(() => getSettings().sidebarWidth || 220)
+  const [fileTreeMode, setFileTreeMode] = useState(() => getSettings().fileTreeMode || 'loose')
   const [folderSortMode, setFolderSortMode] = useState(() => getSettings().folderSortMode || 'foldersFirst-createTime')
   const [renameTargetPath, setRenameTargetPath] = useState(null)
   const [renameTargetValue, setRenameTargetValue] = useState('')
@@ -522,6 +523,7 @@ function App() {
     setSpellcheck(settings.spellcheck !== false)
     setShowToolbar(settings.showToolbar !== false)
     setShowOpenFilesModule(settings.showOpenFilesModule !== false)
+    setFileTreeMode(settings.fileTreeMode || 'loose')
     settingsRef.current = {
       ...settingsRef.current,
       spellcheck: settings.spellcheck,
@@ -533,6 +535,7 @@ function App() {
       fontFamily: settings.fontFamily ?? settingsRef.current.fontFamily,
       fontSize: settings.fontSize ?? settingsRef.current.fontSize,
       compactMode: settings.compactMode ?? settingsRef.current.compactMode,
+      fileTreeMode: settings.fileTreeMode ?? settingsRef.current.fileTreeMode,
       sidebarWidth: settings.sidebarWidth ?? settingsRef.current.sidebarWidth,
       startupBehavior: settings.startupBehavior ?? settingsRef.current.startupBehavior,
       shortcuts: settings.shortcuts ?? settingsRef.current.shortcuts,
@@ -694,7 +697,8 @@ function App() {
             renameTargetValue={renameTargetValue}
             onClearRenameTarget={() => setRenameTargetPath(null)}
             sortMode={folderSortMode}
-          />
+            fileTreeMode={fileTreeMode}
+          /> 
         )}
         {tabs.length > 0 ? (
           <>

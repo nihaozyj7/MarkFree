@@ -159,7 +159,7 @@ function sortChildren(children, sortMode) {
   return [...children].sort((a, b) => compareNodes(a, b, sortMode))
 }
 
-function FileTree({ tree, onOpenFile, activeFilePath, onRefreshTree, externalRenamePath, externalRenameValue, onExternalRenamePathChange, sortMode }) {
+function FileTree({ tree, onOpenFile, activeFilePath, onRefreshTree, externalRenamePath, externalRenameValue, onExternalRenamePathChange, sortMode, fileTreeMode }) {
   const [collapsedPaths, setCollapsedPaths] = useState(() => {
     return new Set(collectAllDirectoryPaths(tree))
   })
@@ -318,7 +318,7 @@ function FileTree({ tree, onOpenFile, activeFilePath, onRefreshTree, externalRen
   const contextNode = contextMenu?.node
 
   return (
-    <div className="file-tree">
+    <div className={`file-tree${fileTreeMode === 'compact' ? ' file-tree-compact' : ''}`}>
       {tree.children.map(child => (
         <FileTreeItem
           key={child.path}
