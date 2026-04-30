@@ -1,6 +1,8 @@
 import StarterKit from '@tiptap/starter-kit'
 import Underline from '@tiptap/extension-underline'
 import { CustomImage } from '../extensions/CustomImage'
+import { MathInline } from '../extensions/MathInline'
+import { MathDisplay } from '../extensions/MathDisplay'
 import Link from '@tiptap/extension-link'
 import Placeholder from '@tiptap/extension-placeholder'
 import TaskList from '@tiptap/extension-task-list'
@@ -67,6 +69,8 @@ export const extensions = [
     heading: { levels: [1, 2, 3, 4, 5, 6] }
   }),
   Underline,
+  MathInline,
+  MathDisplay,
   CustomImage.configure({ inline: true, allowBase64: true }),
   Link.configure({ openOnClick: false }),
   Placeholder.configure({ placeholder: '开始写作...' }),

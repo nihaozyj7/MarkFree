@@ -23,6 +23,7 @@ const AboutDialog = lazy(() => import('./components/AboutDialog'))
 const ContextMenu = lazy(() => import('./components/ContextMenu'))
 const AICommandInput = lazy(() => import('./components/AICommandInput'))
 
+import 'katex/dist/katex.min.css'
 import './styles/editor.css'
 
 function App() {

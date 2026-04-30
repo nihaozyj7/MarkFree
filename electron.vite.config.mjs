@@ -18,7 +18,7 @@ export default defineConfig({
             if (id.includes('node_modules')) {
               if (id.includes('react') || id.includes('scheduler')) return 'vendor-react'
               if (id.includes('@tiptap') || id.includes('prosemirror') || id.includes('tiptap-markdown')) return 'vendor-tiptap'
-              if (id.includes('highlight.js') || id.includes('lowlight') || id.includes('devlop')) return 'vendor-highlight'
+              if (id.includes('highlight.js') || id.includes('lowlight') || id.includes('devlop') || id.includes('katex')) return 'vendor-highlight'
               return 'vendor'
             }
           }

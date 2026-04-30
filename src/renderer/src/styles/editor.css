@@ -1053,6 +1053,48 @@
   padding: 16px;
   font-size: 12px;
 }
+/* ===== Math Formulas ===== */
+.math-inline {
+  display: inline-block;
+  vertical-align: middle;
+  padding: 0 2px;
+  cursor: default;
+}
+.math-inline .katex {
+  font-size: 1.05em;
+}
+.math-display {
+  display: block;
+  text-align: center;
+  padding: 12px 0;
+  margin: 0.8em 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  cursor: default;
+  user-select: none;
+}
+.math-display .katex-display {
+  margin: 0;
+}
+.math-inline.math-error,
+.math-display.math-error {
+  color: var(--color-danger, #e74c3c);
+  background: rgba(231, 76, 60, 0.08);
+  border-radius: 3px;
+  padding: 0 4px;
+  font-family: 'Fira Code', 'Cascadia Code', 'JetBrains Mono', monospace;
+  font-size: 0.9em;
+}
+.ProseMirror .math-inline,
+.ProseMirror .math-display {
+  pointer-events: none;
+}
+.ProseMirror .math-inline.ProseMirror-selectednode,
+.ProseMirror .math-display.ProseMirror-selectednode {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
 /* ===== Sidebar ===== */
 .sidebar {
   width: 220px;
