@@ -8,6 +8,7 @@ import { execFile } from 'child_process'
 import { THEMES, DARK_THEME } from './themes/defaults.js'
 import { buildMessages } from './ai/prompts.js'
 import { createProvider, cleanResponse } from './ai/provider.js'
+import { encrypt, decrypt } from './encrypt.js'
 
 let mainWindow
 let closeConfirmed = false
@@ -270,6 +271,7 @@ ipcMain.handle('ai:chat', async (_event, { prompt, selectedText }) => {
   try {
     const settings = loadSettings()
     const aiSettings = settings.ai || {}
+    aiSettings.apiKey = decrypt(aiSettings.apiKey)
     if (!aiSettings.apiKey) {
       return { error: '请先在设置中配置 API Key' }
     }
@@ -290,6 +292,7 @@ ipcMain.handle('ai:testConnection', async () => {
   try {
     const settings = loadSettings()
     const aiSettings = settings.ai || {}
+    aiSettings.apiKey = decrypt(aiSettings.apiKey)
     if (!aiSettings.apiKey) {
       return { success: false, message: '请先配置 API Key' }
     }
@@ -315,7 +318,9 @@ ipcMain.handle('ai:getSettings', async () => {
 
 ipcMain.handle('ai:saveSettings', async (_event, aiSettings) => {
   const settings = loadSettings()
-  if (!aiSettings.apiKey) {
+  if (aiSettings.apiKey) {
+    aiSettings.apiKey = encrypt(aiSettings.apiKey)
+  } else {
     aiSettings.apiKey = settings.ai?.apiKey || ''
   }
   settings.ai = { ...settings.ai, ...aiSettings }
