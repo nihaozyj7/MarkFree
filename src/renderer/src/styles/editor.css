@@ -1085,8 +1085,9 @@
   font-family: 'Fira Code', 'Cascadia Code', 'JetBrains Mono', monospace;
   font-size: 0.9em;
 }
-.ProseMirror .math-inline,
-.ProseMirror .math-display {
+.ProseMirror .math-inline .katex,
+.ProseMirror .math-display .katex,
+.ProseMirror .math-display .katex-display {
   pointer-events: none;
 }
 .ProseMirror .math-inline.ProseMirror-selectednode,
