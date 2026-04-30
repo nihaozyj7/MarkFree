@@ -779,7 +779,9 @@ app.whenReady().then(() => {
     if (process.platform === 'win32' && /^\/[a-zA-Z]:/.test(filePath)) {
       filePath = filePath.slice(1)
     }
-    return net.fetch(url.pathToFileURL(filePath).toString())
+    return net.fetch(url.pathToFileURL(filePath).toString()).catch(() => {
+      return new Response('', { status: 404 })
+    })
   })
 
   writeDefaultThemes()
