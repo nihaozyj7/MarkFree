@@ -1096,6 +1096,10 @@
   outline-offset: 2px;
   border-radius: 4px;
 }
+/* Gap cursor — shown between block nodes / at atom boundaries */
+.ProseMirror-gapcursor::after {
+  border-top: 1px solid var(--color-accent) !important;
+}
 /* ===== Sidebar ===== */
 .sidebar {
   width: 220px;
