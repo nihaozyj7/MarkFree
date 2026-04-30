@@ -27,6 +27,18 @@ const SettingsDialog = memo(function SettingsDialog({ onClose, currentTheme, onT
   const [closing, setClosing] = useState(false)
   const [open, setOpen] = useState(false)
   const [editingShortcut, setEditingShortcut] = useState(null)
+  const [aiSettings, setAISettings] = useState({
+    endpoint: 'https://api.deepseek.com',
+    model: 'deepseek-chat',
+    apiKey: '',
+    temperature: 0.7,
+    maxTokens: 2048,
+    systemPrompt: '',
+    hasKey: false
+  })
+  const [aiTesting, setAiTesting] = useState(false)
+  const [aiTestMsg, setAiTestMsg] = useState(null)
+  const [aiTestOk, setAiTestOk] = useState(false)
   const settingsRef = useRef(settings)
   settingsRef.current = settings
 
@@ -34,6 +46,9 @@ const SettingsDialog = memo(function SettingsDialog({ onClose, currentTheme, onT
     requestAnimationFrame(() => setOpen(true))
     window.electronAPI.getThemes().then(setThemes).catch(() => { })
     window.electronAPI.getAssociationStatus().then(setAssociationStatus).catch(() => { })
+    window.electronAPI.aiGetSettings().then(s => {
+      if (s) setAISettings(prev => ({ ...prev, ...s }))
+    }).catch(() => { })
   }, [])
 
   const handleRegisterAssociation = async () => {
@@ -46,6 +61,29 @@ const SettingsDialog = memo(function SettingsDialog({ onClose, currentTheme, onT
     const result = await window.electronAPI.unregisterAssociation()
     alert(result.message)
     if (result.success) setAssociationStatus(false)
+  }
+
+  const handleAISettingChange = (key, value) => {
+    setAISettings(prev => {
+      const next = { ...prev, [key]: value }
+      window.electronAPI.aiSaveSettings(next).catch(() => { })
+      return next
+    })
+  }
+
+  const handleAITestConnection = async () => {
+    setAiTesting(true)
+    setAiTestMsg(null)
+    try {
+      const result = await window.electronAPI.aiTestConnection()
+      setAiTestOk(result.success)
+      setAiTestMsg(result.message)
+    } catch (err) {
+      setAiTestOk(false)
+      setAiTestMsg(err.message)
+    } finally {
+      setAiTesting(false)
+    }
   }
 
   useEffect(() => {
@@ -177,6 +215,53 @@ const SettingsDialog = memo(function SettingsDialog({ onClose, currentTheme, onT
                       ) }
                     </div>
                   )) }
+                </div>
+              </div>
+            </div>
+            <div className="settings-group">
+              <h4 className="settings-group-title">AI 助手</h4>
+              <div className="settings-group-body">
+                <div className="settings-section">
+                  <h3 className="settings-section-title">API 配置</h3>
+                  <div className="settings-row">
+                    <label className="settings-row-label">端点</label>
+                    <input className="settings-input settings-input-inline" type="text" value={aiSettings.endpoint} onChange={e => handleAISettingChange('endpoint', e.target.value)} placeholder="https://api.deepseek.com" />
+                  </div>
+                  <div className="settings-row">
+                    <label className="settings-row-label">Key</label>
+                    <input className="settings-input settings-input-inline" type="password" value={aiSettings.apiKey} onChange={e => handleAISettingChange('apiKey', e.target.value)} placeholder={aiSettings.hasKey ? '已设置 (留空保持不变)' : '请输入 API Key'} />
+                  </div>
+                  <div className="settings-row">
+                    <label className="settings-row-label">模型</label>
+                    <input className="settings-input settings-input-inline" type="text" value={aiSettings.model} onChange={e => handleAISettingChange('model', e.target.value)} placeholder="deepseek-chat" />
+                  </div>
+                </div>
+                <div className="settings-section">
+                  <h3 className="settings-section-title">参数</h3>
+                  <div className="settings-row" style={{gap:'12px',alignItems:'center'}}>
+                    <label className="settings-row-label" style={{minWidth:'auto'}}>Temperature: {aiSettings.temperature}</label>
+                    <input type="range" min="0" max="2" step="0.1" value={aiSettings.temperature} onChange={e => handleAISettingChange('temperature', Number(e.target.value))} style={{flex:1,accentColor:'var(--color-accent)'}} />
+                  </div>
+                  <div className="settings-row">
+                    <label className="settings-row-label">Max Tokens</label>
+                    <input className="settings-input settings-input-inline" type="number" min="1" max="32768" value={aiSettings.maxTokens} onChange={e => handleAISettingChange('maxTokens', Number(e.target.value))} />
+                  </div>
+                </div>
+                <div className="settings-section">
+                  <h3 className="settings-section-title">系统提示词</h3>
+                  <textarea className="settings-input" rows={3} style={{resize:'vertical',minHeight:'48px'}} value={aiSettings.systemPrompt} onChange={e => handleAISettingChange('systemPrompt', e.target.value)} placeholder="自定义系统提示词 (留空使用默认)" />
+                </div>
+                <div className="settings-section">
+                  <div className="settings-section-actions" style={{display:'flex',alignItems:'center',gap:'10px'}}>
+                    <button className="settings-btn settings-btn-primary" onClick={handleAITestConnection} disabled={aiTesting}>
+                      {aiTesting ? '测试中...' : '测试连接'}
+                    </button>
+                    {aiTestMsg && (
+                      <span style={{fontSize:'12px',color:aiTestOk ? '#27ae60' : '#e74c3c'}}>
+                        {aiTestOk ? '✓ ' : '✗ '}{aiTestMsg}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

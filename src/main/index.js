@@ -6,6 +6,8 @@ import { readdir, stat as statAsync, readFile } from 'fs/promises'
 
 import { execFile } from 'child_process'
 import { THEMES, DARK_THEME } from './themes/defaults.js'
+import { buildMessages } from './ai/prompts.js'
+import { createProvider, cleanResponse } from './ai/provider.js'
 
 let mainWindow
 let closeConfirmed = false
@@ -260,6 +262,65 @@ ipcMain.handle('settings:save', async (_event, settings) => {
   const merged = { ...current, ...settings }
   saveSettingsFile(merged)
   return merged
+})
+
+// ===== AI =====
+
+ipcMain.handle('ai:chat', async (_event, { prompt, selectedText }) => {
+  try {
+    const settings = loadSettings()
+    const aiSettings = settings.ai || {}
+    if (!aiSettings.apiKey) {
+      return { error: '请先在设置中配置 API Key' }
+    }
+    const provider = createProvider(aiSettings)
+    const messages = buildMessages({
+      prompt,
+      selectedText: selectedText || '',
+      systemPrompt: aiSettings.systemPrompt
+    })
+    const result = await provider.chat(messages)
+    return { content: cleanResponse(result) }
+  } catch (err) {
+    return { error: err.message }
+  }
+})
+
+ipcMain.handle('ai:testConnection', async () => {
+  try {
+    const settings = loadSettings()
+    const aiSettings = settings.ai || {}
+    if (!aiSettings.apiKey) {
+      return { success: false, message: '请先配置 API Key' }
+    }
+    const provider = createProvider(aiSettings)
+    return await provider.testConnection()
+  } catch (err) {
+    return { success: false, message: err.message }
+  }
+})
+
+ipcMain.handle('ai:getSettings', async () => {
+  const settings = loadSettings()
+  const ai = settings.ai || {}
+  return {
+    endpoint: ai.endpoint || 'https://api.deepseek.com',
+    model: ai.model || 'deepseek-chat',
+    temperature: ai.temperature ?? 0.7,
+    maxTokens: ai.maxTokens ?? 2048,
+    systemPrompt: ai.systemPrompt || '',
+    hasKey: !!ai.apiKey
+  }
+})
+
+ipcMain.handle('ai:saveSettings', async (_event, aiSettings) => {
+  const settings = loadSettings()
+  if (!aiSettings.apiKey) {
+    aiSettings.apiKey = settings.ai?.apiKey || ''
+  }
+  settings.ai = { ...settings.ai, ...aiSettings }
+  saveSettingsFile(settings)
+  return { success: true }
 })
 
 ipcMain.handle('dialog:openFile', async () => {

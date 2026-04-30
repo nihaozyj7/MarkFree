@@ -72,5 +72,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.removeAllListeners('app:beforeClose')
   },
   confirmAppClose: () => ipcRenderer.send('app:confirmClose'),
-  cancelAppClose: () => ipcRenderer.send('app:cancelClose')
+  cancelAppClose: () => ipcRenderer.send('app:cancelClose'),
+
+  aiChat: (payload) => ipcRenderer.invoke('ai:chat', payload),
+  aiTestConnection: () => ipcRenderer.invoke('ai:testConnection'),
+  aiGetSettings: () => ipcRenderer.invoke('ai:getSettings'),
+  aiSaveSettings: (settings) => ipcRenderer.invoke('ai:saveSettings', settings)
 })

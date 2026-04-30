@@ -1799,3 +1799,108 @@
   gap: 8px;
   margin-top: 12px;
 }
+
+/* ===== AI Command Input ===== */
+.ai-command-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+.ai-command-card {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 20px 24px;
+  min-width: 420px;
+  max-width: 92vw;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+}
+.ai-command-selection-info {
+  font-size: 12px;
+  color: var(--color-accent);
+  margin-bottom: 10px;
+  user-select: none;
+}
+.ai-command-selection-info--muted {
+  color: var(--text-muted);
+}
+.ai-command-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 15px;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.ai-command-input:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+.ai-command-hint {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 8px;
+  user-select: none;
+}
+.ai-command-loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-secondary);
+  font-size: 14px;
+  padding: 8px 0;
+}
+.ai-command-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--border-color);
+  border-top-color: var(--color-accent);
+  border-radius: 50%;
+  animation: ai-spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes ai-spin {
+  to { transform: rotate(360deg); }
+}
+.ai-command-error {
+  color: #e74c3c;
+  font-size: 13px;
+  padding: 4px 0;
+}
+.ai-command-error-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+}
+.ai-command-btn {
+  padding: 6px 18px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.ai-command-btn:hover {
+  border-color: var(--color-accent);
+  color: var(--text-primary);
+}
+.ai-command-btn-primary {
+  background: var(--color-accent);
+  color: #fff;
+  border-color: var(--color-accent);
+}
+.ai-command-btn-primary:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}

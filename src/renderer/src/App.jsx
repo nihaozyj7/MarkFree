@@ -21,6 +21,7 @@ import { useFolderActions } from './hooks/useFolderActions'
 const SettingsDialog = lazy(() => import('./components/SettingsDialog'))
 const AboutDialog = lazy(() => import('./components/AboutDialog'))
 const ContextMenu = lazy(() => import('./components/ContextMenu'))
+const AICommandInput = lazy(() => import('./components/AICommandInput'))
 
 import './styles/editor.css'
 
@@ -47,6 +48,11 @@ function App() {
   const [folderSortMode, setFolderSortMode] = useState(() => getSettings().folderSortMode || 'foldersFirst-createTime')
   const [renameTargetPath, setRenameTargetPath] = useState(null)
   const [renameTargetValue, setRenameTargetValue] = useState('')
+  const [aiInputVisible, setAIInputVisible] = useState(false)
+  const [aiSelectedText, setAISelectedText] = useState('')
+  const [aiInsertPos, setAIInsertPos] = useState(null)
+  const [aiLoading, setAILoading] = useState(false)
+  const [aiError, setAIError] = useState(null)
   const settingsRef = useRef(getSettings())
   const contentRef = useRef('')
   const filePathRef = useRef('')
@@ -137,6 +143,18 @@ function App() {
           if (key === 'o' && !event.shiftKey) return true
           if (key === 's') return true
           if (key === 'b' && !event.shiftKey) return true
+          if (key === 'k' && !event.shiftKey) {
+            event.preventDefault()
+            const { state } = view
+            const { selection } = state
+            const { from, to } = selection
+            const text = selection.empty ? '' : state.doc.textBetween(from, to)
+            setAISelectedText(text)
+            setAIInsertPos(selection.empty ? from : { from, to })
+            setAIInputVisible(true)
+            setAIError(null)
+            return true
+          }
           return false
         }
         return false
@@ -643,6 +661,44 @@ function App() {
     setShowPreview(prev => !prev)
   }, [])
 
+  const handleAIClose = useCallback(() => {
+    if (aiLoading) return
+    setAIInputVisible(false)
+    setAIError(null)
+  }, [aiLoading])
+
+  const handleAISubmit = useCallback(async (prompt) => {
+    if (!editorRef.current) return
+    const editor = editorRef.current
+    setAILoading(true)
+    setAIError(null)
+    try {
+      const result = await window.electronAPI.aiChat({
+        prompt,
+        selectedText: aiSelectedText || undefined
+      })
+      if (result.error) {
+        setAIError(result.error)
+        return
+      }
+      const content = result.content
+      if (!content) {
+        setAIError('AI 未返回内容')
+        return
+      }
+      editor.chain().focus().insertContentAt(
+        aiInsertPos || editor.state.selection.from,
+        content
+      ).run()
+      setAIInputVisible(false)
+      setAIError(null)
+    } catch (err) {
+      setAIError(err.message || 'AI 请求失败')
+    } finally {
+      setAILoading(false)
+    }
+  }, [aiSelectedText, aiInsertPos])
+
   const handleCopyPreview = useCallback(() => {
     navigator.clipboard.writeText(markdownContent)
   }, [markdownContent])
@@ -721,6 +777,16 @@ function App() {
       {dragOver && <div className="drag-overlay"><span>释放以打开 .md 文件</span></div>}
       {showSettings && <SettingsDialog onClose={() => setShowSettings(false)} currentTheme={currentTheme} onThemeChange={handleThemeChange} onSaveSettings={handleSaveSettings} hwAccel={hwAccel} onHwAccelChange={handleHwAccelChange} defaultOpenPath={defaultOpenPath} onDefaultOpenPathChange={handleDefaultOpenPathChange} windowMode={windowMode} windowBounds={windowBounds} onWindowModeChange={handleWindowModeChange} onWindowBoundsChange={handleWindowBoundsChange} folderSortMode={folderSortMode} onFolderSortModeChange={handleFolderSortModeChange} />}
       {showAbout && <AboutDialog onClose={() => setShowAbout(false)} />}
+      {aiInputVisible && (
+        <AICommandInput
+          visible={aiInputVisible}
+          selectedText={aiSelectedText}
+          loading={aiLoading}
+          error={aiError}
+          onClose={handleAIClose}
+          onSubmit={handleAISubmit}
+        />
+      )}
       <ContextMenu
         editor={editor}
         visible={contextMenu.visible}
