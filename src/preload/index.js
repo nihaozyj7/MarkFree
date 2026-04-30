@@ -77,5 +77,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   aiChat: (payload) => ipcRenderer.invoke('ai:chat', payload),
   aiTestConnection: () => ipcRenderer.invoke('ai:testConnection'),
   aiGetSettings: () => ipcRenderer.invoke('ai:getSettings'),
-  aiSaveSettings: (settings) => ipcRenderer.invoke('ai:saveSettings', settings)
+  aiSaveSettings: (settings) => ipcRenderer.invoke('ai:saveSettings', settings),
+
+  openLink: (url, linkOpenMode, baseDir) => ipcRenderer.invoke('link:open', { url, linkOpenMode, baseDir }),
+  isExecutable: (filePath) => ipcRenderer.invoke('shell:isExecutable', filePath)
 })

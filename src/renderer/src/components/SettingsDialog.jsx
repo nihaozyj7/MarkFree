@@ -201,6 +201,14 @@ const SettingsDialog = memo(function SettingsDialog({ onClose, currentTheme, onT
                     <input type="checkbox" checked={ settings.showOpenFilesModule !== false } onChange={ e => updateSettings({ showOpenFilesModule: e.target.checked }) } />
                     <span>打开文件夹时显示已打开的文件</span>
                   </label>
+                  <div className="settings-row" style={{ marginTop: '16px' }}>
+                    <label className="settings-row-label">链接打开方式</label>
+                    <select className="settings-select settings-select-inline" value={ settings.linkOpenMode || 'defaultBrowser' } onChange={ e => updateSettings({ linkOpenMode: e.target.value }) }>
+                      <option value="defaultBrowser">默认浏览器</option>
+                      <option value="builtinBrowser">内置浏览器</option>
+                    </select>
+                  </div>
+                  <p className="settings-section-desc">Ctrl+点击链接时打开网络链接的方式</p>
                 </div>
                 <div className="settings-section">
                   <h3 className="settings-section-title">快捷键</h3>

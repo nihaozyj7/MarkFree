@@ -640,6 +640,116 @@ ipcMain.handle('file:getAssociationStatus', async () => {
   })
 })
 
+const EXECUTABLE_EXTENSIONS = new Set([
+  '.exe', '.bat', '.cmd', '.com', '.scr', '.msi', '.ps1', '.vbs', '.vbe',
+  '.js', '.jse', '.wsf', '.wsh', '.msc', '.cpl', '.hta', '.reg', '.pif'
+])
+
+function isExecutablePath(filePath) {
+  const ext = extname(filePath).toLowerCase()
+  return EXECUTABLE_EXTENSIONS.has(ext)
+}
+
+ipcMain.handle('shell:isExecutable', async (_event, filePath) => {
+  return isExecutablePath(filePath)
+})
+
+ipcMain.handle('shell:openPath', async (_event, filePath) => {
+  try {
+    const ext = extname(filePath).toLowerCase()
+    if (isExecutablePath(filePath)) {
+      const choice = dialog.showMessageBoxSync(mainWindow, {
+        type: 'warning',
+        buttons: ['取消', '仍然打开'],
+        defaultId: 0,
+        cancelId: 0,
+        title: '安全警告',
+        message: `"${basename(filePath)}" 是可执行文件`,
+        detail: '打开可执行文件可能存在安全风险。\n\n确定要继续吗？'
+      })
+      if (choice === 1) {
+        return shell.openPath(filePath)
+      }
+      return 'cancelled'
+    }
+    return shell.openPath(filePath)
+  } catch (err) {
+    return err.message
+  }
+})
+
+ipcMain.handle('link:open', async (_event, { url, linkOpenMode, baseDir }) => {
+  try {
+
+    if (/^https?:\/\//i.test(url)) {
+      if (linkOpenMode === 'builtinBrowser') {
+        const bw = new BrowserWindow({
+          width: 1024,
+          height: 768,
+          title: url,
+          webPreferences: { sandbox: true, contextIsolation: true }
+        })
+        bw.loadURL(url)
+        return 'opened'
+      }
+      shell.openExternal(url)
+      return 'opened'
+    }
+
+    if (/^mailto:/i.test(url)) {
+      shell.openExternal(url)
+      return 'opened'
+    }
+
+    let filePath = url
+    if (url.startsWith('file://')) {
+      filePath = decodeURIComponent(url.slice(7))
+      if (process.platform === 'win32') {
+        filePath = filePath.replace(/^\//, '')
+      }
+    }
+
+    if (baseDir) {
+      filePath = resolve(baseDir, filePath)
+    }
+
+    if (/\.md$|\.markdown$/i.test(filePath)) {
+      try {
+        if (existsSync(filePath)) {
+          const content = readFileSync(filePath, 'utf-8')
+          const fileName = filePath.split(/[/\\]/).pop()
+          mainWindow.webContents.send('file:opened', { content, filePath, fileName })
+          return 'opened'
+        }
+      } catch { }
+      return 'not_found'
+    }
+
+    const ext = extname(filePath).toLowerCase()
+    if (isExecutablePath(filePath)) {
+      const choice = dialog.showMessageBoxSync(mainWindow, {
+        type: 'warning',
+        buttons: ['取消', '仍然打开'],
+        defaultId: 0,
+        cancelId: 0,
+        title: '安全警告',
+        message: `"${basename(filePath)}" 是可执行文件`,
+        detail: '打开可执行文件可能存在安全风险。\n\n确定要继续吗？'
+      })
+      if (choice === 1) {
+        shell.openPath(filePath)
+        return 'opened'
+      }
+      return 'cancelled'
+    }
+
+    shell.openPath(filePath)
+    return 'opened'
+  } catch (err) {
+    return err.message
+  }
+})
+
 ipcMain.on('window:setTitle', (_event, title) => {
   if (mainWindow) mainWindow.setTitle(title)
 })

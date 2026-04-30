@@ -20,7 +20,8 @@ const DEFAULT_SETTINGS = {
   },
   folderSortMode: 'foldersFirst-createTime',
   confirmBeforeCloseTab: true,
-  confirmBeforeCloseApp: true
+  confirmBeforeCloseApp: true,
+  linkOpenMode: 'defaultBrowser'
 }
 
 function getSettings() {

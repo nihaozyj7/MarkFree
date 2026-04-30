@@ -177,6 +177,21 @@ function App() {
         return false
       },
       handleDOMEvents: {
+        click: (view, event) => {
+          if (!event.ctrlKey && !event.metaKey) return false
+          const target = event.target.closest('a')
+          if (!target) return false
+          const href = target.getAttribute('href')
+          if (!href) return false
+          event.preventDefault()
+          event.stopPropagation()
+          const linkOpenMode = settingsRef.current.linkOpenMode || 'defaultBrowser'
+          const baseDir = filePathRef.current ? dirname(filePathRef.current) : ''
+          window.electronAPI.openLink(href, linkOpenMode, baseDir).catch(err => {
+            console.error('打开链接失败:', err)
+          })
+          return true
+        },
         mousedown: (view, event) => {
           if (event.target === view.dom) {
             const { doc, schema } = view.state
@@ -560,7 +575,8 @@ function App() {
       shortcuts: settings.shortcuts ?? settingsRef.current.shortcuts,
       folderSortMode: settings.folderSortMode ?? settingsRef.current.folderSortMode,
       confirmBeforeCloseTab: settings.confirmBeforeCloseTab ?? settingsRef.current.confirmBeforeCloseTab,
-      confirmBeforeCloseApp: settings.confirmBeforeCloseApp ?? settingsRef.current.confirmBeforeCloseApp
+      confirmBeforeCloseApp: settings.confirmBeforeCloseApp ?? settingsRef.current.confirmBeforeCloseApp,
+      linkOpenMode: settings.linkOpenMode ?? settingsRef.current.linkOpenMode
     }
     applyFontSettings(settings)
   }, [])
