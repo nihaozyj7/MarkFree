@@ -163,7 +163,7 @@ function App() {
       handleClick: (view, pos, event) => {
         const { doc, schema } = view.state
         const docEnd = doc.content.size
-        if (pos >= docEnd - 1) {
+        if (pos === docEnd) {
           const lastChild = doc.lastChild
           if (lastChild && !lastChild.isTextblock) {
             const tr = view.state.tr
@@ -214,14 +214,17 @@ function App() {
         const items = event.clipboardData?.items
         if (!items) return false
 
+        const imageItems = []
         for (let i = 0; i < items.length; i++) {
           const item = items[i]
           if (!item.type.startsWith('image/')) continue
-
-          event.preventDefault()
           const file = item.getAsFile()
-          if (!file) return true
+          if (file) imageItems.push(file)
+        }
+        if (imageItems.length === 0) return false
 
+        event.preventDefault()
+        for (const file of imageItems) {
           readImageFromFile(file).then(({ base64Data, mime, ext }) => {
             const ed = editorRef.current
             if (!ed) return
@@ -231,19 +234,18 @@ function App() {
               filePath: filePathRef.current
             })
           })
-          return true
         }
-        return false
+        return true
       },
       handleDrop: (view, event) => {
         const files = event.dataTransfer?.files
         if (!files || files.length === 0) return false
 
-        for (let i = 0; i < files.length; i++) {
-          const file = files[i]
-          if (!file.type.startsWith('image/')) continue
+        const imageFiles = [...files].filter(f => f.type.startsWith('image/'))
+        if (imageFiles.length === 0) return false
 
-          event.preventDefault()
+        event.preventDefault()
+        for (const file of imageFiles) {
           readImageFromFile(file).then(({ base64Data, mime, ext }) => {
             const ed = editorRef.current
             if (!ed) return
@@ -253,9 +255,8 @@ function App() {
               filePath: filePathRef.current
             })
           })
-          return true
         }
-        return false
+        return true
       }
     },
     onUpdate
@@ -281,7 +282,7 @@ function App() {
     window.electronAPI.setTitle(
       `${modified ? '* ' : ''}${fileName || tabs[0]?.fileName || 'MarkFree'}  - MarkFree`
     )
-  }, [fileName, modified])
+  }, [fileName, modified, tabs])
 
   useEffect(() => {
     if (!editor) return
@@ -350,7 +351,7 @@ function App() {
 
       try {
         localStorage.setItem('cachedTabs', JSON.stringify(unsavedTabs))
-      } catch {}
+      } catch (e) { console.error('缓存标签页失败:', e) }
       window.electronAPI.confirmAppClose()
     })
     return () => {
@@ -513,21 +514,32 @@ function App() {
     setCompactMode(prev => {
       const next = !prev
       try {
-        const settings = JSON.parse(localStorage.getItem('editorSettings') || '{}')
-        settings.compactMode = next
-        localStorage.setItem('editorSettings', JSON.stringify(settings))
-      } catch {}
+        const merged = saveSettings({ compactMode: next })
+        settingsRef.current.compactMode = next
+      } catch (e) { console.error('保存紧凑模式设置失败:', e) }
       return next
     })
+  }, [])
+
+  const handleAICommand = useCallback(() => {
+    const ed = editorRef.current
+    if (!ed) return
+    const { state } = ed
+    const { selection } = state
+    const { from, to } = selection
+    const text = selection.empty ? '' : state.doc.textBetween(from, to)
+    setAISelectedText(text)
+    setAIInsertPos(selection.empty ? from : { from, to })
+    setAIInputVisible(true)
+    setAIError(null)
   }, [])
 
   const handleSidebarWidthChange = useCallback((width) => {
     setSidebarWidth(width)
     try {
-      const settings = JSON.parse(localStorage.getItem('editorSettings') || '{}')
-      settings.sidebarWidth = width
-      localStorage.setItem('editorSettings', JSON.stringify(settings))
-    } catch {}
+      saveSettings({ sidebarWidth: width })
+      settingsRef.current.sidebarWidth = width
+    } catch (e) { console.error('保存侧边栏宽度失败:', e) }
   }, [])
 
   const {
@@ -614,7 +626,7 @@ function App() {
           }
           el.textContent = result.css
         }
-      } catch (_) {}
+      } catch (e) { console.error('加载主题失败:', e) }
     }
     loadTheme()
   }, [currentTheme])
@@ -662,7 +674,7 @@ function App() {
         }
         localStorage.removeItem('cachedTabs')
       }
-    } catch {}
+    } catch (e) { console.error('恢复缓存标签页失败:', e) }
   }, [])
 
   const handleContextMenu = useCallback((e) => {
@@ -819,6 +831,7 @@ function App() {
         sidebarVisible={sidebarVisible}
         compactMode={compactMode}
         onToggleCompactMode={handleToggleCompactMode}
+        onAICommand={handleAICommand}
       />
     </div>
     </Suspense>

@@ -23,7 +23,7 @@ function loadSettings() {
     if (existsSync(p)) {
       return JSON.parse(readFileSync(p, 'utf-8'))
     }
-  } catch { }
+  } catch (e) { console.error('加载设置文件失败:', e) }
   return {}
 }
 
@@ -32,7 +32,7 @@ function saveSettingsFile(settings) {
     const dir = app.getPath('userData')
     if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
     writeFileSync(getSettingsPath(), JSON.stringify(settings, null, 2), 'utf-8')
-  } catch { }
+  } catch (e) { console.error('保存设置文件失败:', e) }
 }
 
 const appSettings = loadSettings()
@@ -244,7 +244,7 @@ ipcMain.handle('theme:load', async (_event, name) => {
     try {
       const css = readFileSync(filePath, 'utf-8')
       return { name, css }
-    } catch (_) { }
+    } catch (e) { console.error('加载主题 CSS 失败:', e) }
   }
   const builtin = THEMES.find(t => t.name === name)
   if (builtin) return { name, css: builtin.css }
@@ -483,7 +483,7 @@ async function buildDirectoryChildren(dirPath) {
             const content = await readFile(fullPath, 'utf-8')
             wordCount = content.trim() ? content.trim().split(/\s+/).length : 0
           }
-        } catch {}
+        } catch (e) { console.error('读取文件状态失败:', e) }
         return {
           name: entry.name,
           path: fullPath,
@@ -721,7 +721,7 @@ ipcMain.handle('link:open', async (_event, { url, linkOpenMode, baseDir }) => {
           mainWindow.webContents.send('file:opened', { content, filePath, fileName })
           return 'opened'
         }
-      } catch { }
+  } catch (e) { console.error('保存设置失败:', e) }
       return 'not_found'
     }
 
@@ -805,7 +805,7 @@ app.whenReady().then(() => {
               openFileAndSend(defaultPath)
             }
           }
-        } catch { }
+  } catch (e) { console.error('加载设置失败:', e) }
       })
     }
   }

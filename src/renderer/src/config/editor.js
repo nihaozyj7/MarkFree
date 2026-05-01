@@ -44,7 +44,7 @@ async function ensureLanguage(name) {
     const mod = await loader()
     languageCache[name] = true
     lowlight.register(name, mod.default)
-  } catch {}
+  } catch (e) { console.error('注册语法高亮语言失败:', e) }
 }
 
 function initLanguages() {

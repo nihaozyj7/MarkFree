@@ -44,6 +44,18 @@ export async function insertImageToEditor(editor, { base64Data, mime, ext, setti
     return
   }
 
+  if (imageInsertMode === 'absolute') {
+    const saveResult = await window.electronAPI.saveImageToDisk({
+      base64Data,
+      ext,
+      folderPath: imageFolder,
+      fileDir: filePath ? dirname(filePath) : ''
+    })
+    if (!saveResult || saveResult.error) return
+    editor.chain().focus().setImage({ src: saveResult.absolutePath }).run()
+    return
+  }
+
   const saveResult = await window.electronAPI.saveImageToDisk({
     base64Data,
     ext,

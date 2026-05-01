@@ -11,6 +11,7 @@ export function useDragDrop(editor, addTabRef) {
     const handleDragEnter = (e) => {
       e.preventDefault()
       e.stopPropagation()
+      if (!e.dataTransfer.types.includes('Files')) return
       dragCounter++
       if (dragCounter === 1) setDragOver(true)
     }

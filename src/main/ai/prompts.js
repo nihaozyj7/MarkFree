@@ -13,6 +13,8 @@ Supported Markdown syntax:
 - Images: ![alt](url)
 - Tables: standard Markdown pipe tables with alignment
 - Horizontal rules: ---
+- Inline formulas: $E=mc^2$
+- Block formulas: $$\\int_a^b f(x)dx$$
 
 Guidelines:
 - Return ONLY the result content, no explanations or greetings.

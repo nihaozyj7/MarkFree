@@ -1,4 +1,5 @@
 import { useCallback } from 'react'
+import { saveSettings } from '../settings'
 
 export function useFolderActions({
   currentFolderPath,
@@ -57,10 +58,8 @@ export function useFolderActions({
   const handleFolderSortModeChange = useCallback((mode) => {
     setFolderSortMode(mode)
     try {
-      const settings = JSON.parse(localStorage.getItem('editorSettings') || '{}')
-      settings.folderSortMode = mode
-      localStorage.setItem('editorSettings', JSON.stringify(settings))
-    } catch {}
+      saveSettings({ folderSortMode: mode })
+    } catch (e) { console.error('保存排序模式失败:', e) }
   }, [setFolderSortMode])
 
   const handleOpenFolderFile = useCallback(async (filePath) => {

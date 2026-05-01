@@ -1,38 +1,52 @@
-import { app } from 'electron'
+import { safeStorage } from 'electron'
 import crypto from 'crypto'
 
-const ALGORITHM = 'aes-256-gcm'
-const PREFIX = '$enc$'
+const SAFE_PREFIX = '$safe$'
+const OLD_PREFIX = '$enc$'
+const OLD_ALGORITHM = 'aes-256-gcm'
 
-function getKey() {
-  const seed = app.getPath('userData')
-  return crypto.scryptSync(seed, 'markfree-encryption-salt', 32)
+function getLegacyKey() {
+  const { app } = require('electron')
+  return crypto.scryptSync(app.getPath('userData'), 'markfree-encryption-salt', 32)
 }
 
-export function encrypt(plaintext) {
-  if (!plaintext) return plaintext
-  const key = getKey()
-  const iv = crypto.randomBytes(12)
-  const cipher = crypto.createCipheriv(ALGORITHM, key, iv)
-  let encrypted = cipher.update(plaintext, 'utf8', 'hex')
-  encrypted += cipher.final('hex')
-  const tag = cipher.getAuthTag().toString('hex')
-  const payload = JSON.stringify({ iv, encrypted, tag })
-  return PREFIX + Buffer.from(payload).toString('base64url')
-}
-
-export function decrypt(encoded) {
-  if (!encoded || typeof encoded !== 'string' || !encoded.startsWith(PREFIX)) return encoded
+function decryptLegacy(encoded) {
   try {
-    const json = Buffer.from(encoded.slice(PREFIX.length), 'base64url').toString('utf8')
+    const json = Buffer.from(encoded.slice(OLD_PREFIX.length), 'base64url').toString('utf8')
     const { iv, encrypted, tag } = JSON.parse(json)
-    const key = getKey()
-    const decipher = crypto.createDecipheriv(ALGORITHM, key, Buffer.from(iv, 'hex'))
+    const key = getLegacyKey()
+    const decipher = crypto.createDecipheriv(OLD_ALGORITHM, key, Buffer.from(iv, 'hex'))
     decipher.setAuthTag(Buffer.from(tag, 'hex'))
     let decrypted = decipher.update(encrypted, 'hex', 'utf8')
     decrypted += decipher.final('utf8')
     return decrypted
-  } catch {
+  } catch (e) {
+    console.error('解密旧格式密钥失败:', e)
     return encoded
   }
+}
+
+export function encrypt(plaintext) {
+  if (!plaintext) return plaintext
+  if (safeStorage.isEncryptionAvailable()) {
+    const buf = safeStorage.encryptString(plaintext)
+    return SAFE_PREFIX + buf.toString('base64')
+  }
+  return plaintext
+}
+
+export function decrypt(encoded) {
+  if (!encoded || typeof encoded !== 'string') return encoded
+  if (encoded.startsWith(SAFE_PREFIX)) {
+    try {
+      if (safeStorage.isEncryptionAvailable()) {
+        return safeStorage.decryptString(Buffer.from(encoded.slice(SAFE_PREFIX.length), 'base64'))
+      }
+    } catch (e) { console.error('解密失败:', e) }
+    return encoded
+  }
+  if (encoded.startsWith(OLD_PREFIX)) {
+    return decryptLegacy(encoded)
+  }
+  return encoded
 }
