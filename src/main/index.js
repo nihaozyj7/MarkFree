@@ -763,6 +763,223 @@ ipcMain.on('window:maximize', () => {
 
 ipcMain.on('window:close', () => mainWindow?.close())
 
+ipcMain.handle('help:open', () => {
+  const helpHtml = `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>MarkFree 帮助</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif; color: #e0e0e0; background: #1e1e2e; line-height: 1.7; padding: 0; }
+  .container { max-width: 800px; margin: 0 auto; padding: 40px 32px; }
+  h1 { font-size: 26px; color: #89b4fa; margin-bottom: 8px; }
+  .version { font-size: 13px; color: #888; margin-bottom: 32px; }
+  h2 { font-size: 18px; color: #89b4fa; margin: 32px 0 12px; padding-bottom: 6px; border-bottom: 1px solid #333; }
+  h3 { font-size: 15px; color: #cba6f7; margin: 20px 0 8px; }
+  p { font-size: 14px; color: #cdd6f4; margin: 8px 0; }
+  ul { padding-left: 20px; margin: 8px 0; }
+  li { font-size: 14px; color: #cdd6f4; margin: 4px 0; }
+  .shortcut-table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+  .shortcut-table th, .shortcut-table td { text-align: left; padding: 8px 12px; border-bottom: 1px solid #333; font-size: 14px; }
+  .shortcut-table th { color: #89b4fa; font-weight: 600; }
+  kbd { background: #313244; border: 1px solid #45475a; border-radius: 4px; padding: 2px 8px; font-size: 13px; font-family: inherit; color: #cdd6f4; }
+  code { background: #313244; border: 1px solid #45475a; border-radius: 3px; padding: 1px 6px; font-size: 13px; font-family: 'Consolas', 'Courier New', monospace; color: #a6e3a1; }
+  .section { margin: 24px 0; }
+  .feature-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 12px 0; }
+  .feature-card { background: #313244; border-radius: 8px; padding: 16px; }
+  .feature-card h4 { font-size: 14px; color: #89b4fa; margin-bottom: 4px; }
+  .feature-card p { font-size: 13px; color: #a6adc8; margin: 0; }
+  .note { background: #313244; border-left: 3px solid #f9e2af; padding: 12px 16px; border-radius: 4px; margin: 12px 0; }
+  .note p { color: #cdd6f4; font-size: 13px; margin: 0; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>MarkFree 帮助文档</h1>
+  <p class="version">版本 1.5.0</p>
+
+  <div class="section">
+    <h2>关于 MarkFree</h2>
+    <p>MarkFree 是一款基于 Electron、React 和 TipTap 构建的所见即所得 Markdown 编辑器。编辑器使用 Markdown 语法和可视化工具栏/右键菜单进行格式化，实时渲染为富文本，同时支持源码模式直接编辑 Markdown 原始文本。</p>
+  </div>
+
+  <div class="section">
+    <h2>核心功能</h2>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <h4>Markdown + 所见即所得</h4>
+        <p>输入 Markdown 语法自动渲染为富文本，也可通过工具栏按钮和右键菜单设置格式，无需记忆快捷键。</p>
+      </div>
+      <div class="feature-card">
+        <h4>源码模式</h4>
+        <p>点击状态栏 <kbd>&lt;/&gt;</kbd> 按钮切换到 Markdown 源码编辑模式，直接编辑原始 Markdown 文本。</p>
+      </div>
+      <div class="feature-card">
+        <h4>AI 助手</h4>
+        <p>按 <kbd>Ctrl+K</kbd> 呼出 AI 命令面板，可选中文字后让 AI 续写、改写、翻译等，或直接输入指令生成内容。</p>
+      </div>
+      <div class="feature-card">
+        <h4>多标签页</h4>
+        <p>支持同时打开多个文件，在标签页之间自由切换，鼠标中键点击可关闭标签页。</p>
+      </div>
+      <div class="feature-card">
+        <h4>语法高亮</h4>
+        <p>代码块支持 11+ 种语言的语法高亮，包括 JavaScript、Python、C++、Go、Rust 等。</p>
+      </div>
+      <div class="feature-card">
+        <h4>图片管理</h4>
+        <p>支持 Base64 内嵌、相对路径和绝对路径三种图片插入方式，拖拽粘贴均可插入图片。</p>
+      </div>
+      <div class="feature-card">
+        <h4>链接与锚点</h4>
+        <p><kbd>Ctrl+点击</kbd> 打开网页链接或 .md 文件；<code>#锚点</code> 链接可跳转到文档内标题。</p>
+      </div>
+      <div class="feature-card">
+        <h4>文件树</h4>
+        <p>侧边栏打开文件夹后，可浏览文件树、创建/重命名/删除文件和文件夹，支持排序。</p>
+      </div>
+      <div class="feature-card">
+        <h4>主题系统</h4>
+        <p>内置深色和浅色主题，并支持自定义 CSS 主题，可在设置中打开主题文件夹编辑。</p>
+      </div>
+      <div class="feature-card">
+        <h4>导出 HTML</h4>
+        <p>将当前文档导出为独立 HTML 文件，包含内联样式，可直接在浏览器中查看。</p>
+      </div>
+      <div class="feature-card">
+        <h4>Markdown 复制/粘贴</h4>
+        <p>菜单栏「Markdown」→ 复制 MD / 粘贴 MD，可在 Markdown 源码与富文本之间转换。</p>
+      </div>
+      <div class="feature-card">
+        <h4>文件关联</h4>
+        <p>可将 .md 文件设为默认使用 MarkFree 打开（Windows），在设置中一键注册或取消。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>编辑方式</h2>
+    <div class="note">
+      <p><strong>提示：</strong>编辑器已屏蔽了 <kbd>Ctrl+B</kbd>（加粗）、<kbd>Ctrl+I</kbd>（斜体）、<kbd>Ctrl+E</kbd>（代码）等富文本快捷键，这些按键被分配给了应用级操作（如 <kbd>Ctrl+B</kbd> 切换侧边栏）。格式化请使用以下方式：</p>
+    </div>
+
+    <h3>方式一：Markdown 语法</h3>
+    <p>直接在编辑器中输入 Markdown 语法，会自动渲染为对应格式：</p>
+    <table class="shortcut-table">
+      <thead><tr><th>语法</th><th>效果</th></tr></thead>
+      <tbody>
+        <tr><td><code># 标题</code> ~ <code>###### 标题</code></td><td>一级 ~ 六级标题</td></tr>
+        <tr><td><code>**粗体**</code></td><td>粗体</td></tr>
+        <tr><td><code>*斜体*</code></td><td>斜体</td></tr>
+        <tr><td><code>~~删除线~~</code></td><td>删除线</td></tr>
+        <tr><td><code>\`行内代码\`</code></td><td>行内代码</td></tr>
+        <tr><td><code>!!! 下划线 !!!</code></td><td>下划线</td></tr>
+        <tr><td><code>&gt; 引用内容</code></td><td>引用块</td></tr>
+        <tr><td><code>- 项目</code></td><td>无序列表</td></tr>
+        <tr><td><code>1. 项目</code></td><td>有序列表</td></tr>
+        <tr><td><code>- [ ] 待办</code> / <code>- [x] 已完成</code></td><td>任务列表</td></tr>
+        <tr><td><code>\`\`\`语言</code></td><td>代码块</td></tr>
+        <tr><td><code>[链接](URL)</code></td><td>超链接</td></tr>
+        <tr><td><code>![图片](URL)</code></td><td>图片</td></tr>
+        <tr><td><code>---</code></td><td>水平分隔线</td></tr>
+      </tbody>
+    </table>
+
+    <h3>方式二：工具栏</h3>
+    <p>编辑区上方工具栏提供以下按钮：</p>
+    <ul>
+      <li><strong>格式：</strong> B（粗体）、I（斜体）、U（下划线）、S（删除线）、&lt;&gt;（行内代码）</li>
+      <li><strong>标题：</strong> H1、H2、H3</li>
+      <li><strong>列表：</strong> 无序列表、有序列表、任务列表</li>
+      <li><strong>块元素：</strong> 引用、代码块、分隔线</li>
+      <li><strong>表格：</strong> 插入表格、添加行/列</li>
+      <li><strong>其他：</strong> 插入链接、插入图片</li>
+    </ul>
+
+    <h3>方式三：右键菜单</h3>
+    <p>在编辑区右键可打开格式化菜单，包含：</p>
+    <ul>
+      <li><strong>格式：</strong> 加粗、斜体、下划线、删除线、行内代码</li>
+      <li><strong>标题：</strong> 标题 1 ~ 6</li>
+      <li><strong>列表：</strong> 无序列表、有序列表、任务列表</li>
+      <li><strong>块元素：</strong> 引用、代码块、分隔线</li>
+      <li><strong>编辑：</strong> 剪切、复制、粘贴、全选</li>
+      <li><strong>表格：</strong> 插入表格、上/下插行、左/右插列、删行、删列、删表、合并、拆分</li>
+    </ul>
+  </div>
+
+  <div class="section">
+    <h2>全局快捷键</h2>
+    <table class="shortcut-table">
+      <thead><tr><th>操作</th><th>快捷键</th></tr></thead>
+      <tbody>
+        <tr><td>新建文件</td><td><kbd>Ctrl+N</kbd></td></tr>
+        <tr><td>打开文件</td><td><kbd>Ctrl+O</kbd></td></tr>
+        <tr><td>保存</td><td><kbd>Ctrl+S</kbd></td></tr>
+        <tr><td>另存为</td><td><kbd>Ctrl+Shift+S</kbd></td></tr>
+        <tr><td>切换侧边栏</td><td><kbd>Ctrl+B</kbd></td></tr>
+        <tr><td>AI 命令面板</td><td><kbd>Ctrl+K</kbd></td></tr>
+        <tr><td>打开链接 / 跳转锚点</td><td><kbd>Ctrl+点击</kbd> 链接</td></tr>
+        <tr><td>撤销 / 重做</td><td><kbd>Ctrl+Z</kbd> / <kbd>Ctrl+Y</kbd></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section">
+    <h2>AI 助手</h2>
+    <h3>快捷键</h3>
+    <p>按 <kbd>Ctrl+K</kbd> 打开 AI 命令面板。</p>
+    <h3>使用方式</h3>
+    <ul>
+      <li><strong>无选中文本</strong>：在当前光标位置插入 AI 生成的内容</li>
+      <li><strong>选中文本</strong>：AI 将基于选中内容进行续写、改写、翻译等操作，生成的内容会替换选中文本</li>
+    </ul>
+    <h3>配置 API</h3>
+    <p>在 <strong>设置 &gt; AI 助手</strong> 中配置：</p>
+    <ul>
+      <li><strong>端点</strong>：兼容 OpenAI 格式的 API 地址（默认 DeepSeek）</li>
+      <li><strong>Key</strong>：API 密钥</li>
+      <li><strong>模型</strong>：模型名称（如 deepseek-chat）</li>
+      <li><strong>Temperature</strong>：生成随机性（0-2，越低越确定性）</li>
+      <li><strong>Max Tokens</strong>：最大生成 token 数</li>
+      <li><strong>系统提示词</strong>：自定义系统提示词（留空使用默认）</li>
+    </ul>
+    <p>配置完成后可点击「测试连接」验证 API 是否可用。</p>
+  </div>
+
+  <div class="section">
+    <h2>链接与锚点</h2>
+    <ul>
+      <li><kbd>Ctrl+点击</kbd> 网页链接 → 在默认浏览器（或内置浏览器）中打开</li>
+      <li><kbd>Ctrl+点击</kbd> 本地 .md 文件链接 → 在编辑器中直接打开</li>
+      <li><kbd>Ctrl+点击</kbd> <code>#锚点</code> 链接 → 跳转到文档内对应标题</li>
+      <li>在链接上停留可看到气泡菜单，显示链接地址，支持编辑和取消链接</li>
+    </ul>
+  </div>
+
+  <div class="section">
+    <h2>技术栈</h2>
+    <p>Electron 33 · React 18 · TipTap 2 · ProseMirror · Vite 5 · lowlight · markdown-it</p>
+  </div>
+
+  <div class="section" style="margin-top:40px; padding-top:20px; border-top:1px solid #333;">
+    <p style="text-align:center; color:#666; font-size:12px;">© 2026 MarkFree · <a href="https://github.com/nihaozyj7/MarkFree" style="color:#89b4fa;">GitHub</a></p>
+  </div>
+</div>
+</body>
+</html>`
+  const helpWin = new BrowserWindow({
+    width: 900,
+    height: 700,
+    title: 'MarkFree 帮助',
+    parent: mainWindow,
+    webPreferences: { sandbox: true, contextIsolation: true }
+  })
+  helpWin.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(helpHtml))
+  helpWin.setMenu(null)
+})
+
 ipcMain.on('app:confirmClose', () => {
   closeConfirmed = true
   mainWindow?.close()

@@ -9,6 +9,8 @@ import StatusBar from './components/StatusBar'
 import Sidebar from './components/Sidebar'
 import WelcomePage from './components/WelcomePage'
 import MarkdownPreview from './components/MarkdownPreview'
+import SourceModeEditor from './components/SourceModeEditor'
+import LinkBubbleMenu from './components/LinkBubbleMenu'
 import ErrorBoundary from './components/ErrorBoundary'
 import { DEFAULT_SETTINGS, getSettings, saveSettings, applyFontSettings } from './settings'
 import { dirname } from './utils'
@@ -28,6 +30,8 @@ import './styles/editor.css'
 
 function App() {
   const [showPreview, setShowPreview] = useState(false)
+  const [sourceMode, setSourceMode] = useState(false)
+  const [sourceContent, setSourceContent] = useState('')
   const [markdownContent, setMarkdownContent] = useState('')
   const [showSettings, setShowSettings] = useState(false)
   const [currentTheme, setCurrentTheme] = useState(() => localStorage.getItem('appTheme') || 'dark')
@@ -185,6 +189,18 @@ function App() {
           if (!href) return false
           event.preventDefault()
           event.stopPropagation()
+
+          if (href.startsWith('#')) {
+            const anchor = href.slice(1)
+            const editorDom = view.dom
+            const headingEl = editorDom.querySelector(`[id="${CSS.escape(anchor)}"]`)
+              || editorDom.querySelector(`#${CSS.escape(anchor)}`)
+            if (headingEl) {
+              headingEl.scrollIntoView({ behavior: 'smooth', block: 'center' })
+            }
+            return true
+          }
+
           const linkOpenMode = settingsRef.current.linkOpenMode || 'defaultBrowser'
           const baseDir = filePathRef.current ? dirname(filePathRef.current) : ''
           window.electronAPI.openLink(href, linkOpenMode, baseDir).catch(err => {
@@ -279,6 +295,13 @@ function App() {
   }, [syncRef])
 
   useEffect(() => {
+    if (!sourceMode && editorRef.current) {
+      const md = contentRef.current
+      editorRef.current.commands.setContent(md || '')
+    }
+  }, [sourceMode])
+
+  useEffect(() => {
     window.electronAPI.setTitle(
       `${modified ? '* ' : ''}${fileName || tabs[0]?.fileName || 'MarkFree'}  - MarkFree`
     )
@@ -297,6 +320,7 @@ function App() {
     const md = tab.content || ''
     contentRef.current = md
     setMarkdownContent(md)
+    setSourceContent(md)
     editor.commands.setContent(md || '')
     editor.commands.focus()
   }, [activeTabId, editor])
@@ -361,16 +385,11 @@ function App() {
 
   const handleOpenFile = useCallback(async () => {
     if (!editor) return
-    const result = await window.electronAPI.openFile()
-    if (result) addTab(result)
-  }, [editor, addTab])
-
-  const handleOpenMultipleFiles = useCallback(async () => {
     const results = await window.electronAPI.openMultipleFiles()
     if (results && results.length > 0) {
       for (const r of results) addTab(r)
     }
-  }, [addTab])
+  }, [editor, addTab])
 
   const handleOpenFolder = useCallback(async () => {
     try {
@@ -502,6 +521,7 @@ function App() {
       case 'copyMarkdown': menuActionRefs.current.handleCopyMarkdown(); break
       case 'pasteMarkdown': menuActionRefs.current.handlePasteMarkdown(); break
       case 'settings': menuActionRefs.current.handleOpenSettings(); break
+      case 'help': window.electronAPI.openHelp(); break
       case 'about': setShowAbout(true); break
     }
   }, [])
@@ -690,6 +710,28 @@ function App() {
     setShowPreview(prev => !prev)
   }, [])
 
+  const handleToggleSourceMode = useCallback(() => {
+    setSourceMode(prev => {
+      if (!prev && editorRef.current) {
+        const md = editorRef.current.storage.markdown.getMarkdown()
+        setSourceContent(md)
+        contentRef.current = md
+      }
+      return !prev
+    })
+  }, [])
+
+  const handleSourceContentChange = useCallback((newContent) => {
+    setSourceContent(newContent)
+    contentRef.current = newContent
+    const tabId = activeTabIdRef.current
+    if (!tabId) return
+    setMarkdownContent(newContent)
+    setTabs(prev => prev.map(t =>
+      t.id === tabId ? { ...t, content: newContent, modified: newContent !== t.savedContent } : t
+    ))
+  }, [])
+
   const handleAIClose = useCallback(() => {
     if (aiLoading) return
     setAIInputVisible(false)
@@ -731,6 +773,16 @@ function App() {
   const handleCopyPreview = useCallback(() => {
     navigator.clipboard.writeText(markdownContent)
   }, [markdownContent])
+
+  const handleNavigateAnchor = useCallback((anchor) => {
+    if (!editor) return
+    const editorDom = editor.view.dom
+    const headingEl = editorDom.querySelector(`[id="${CSS.escape(anchor)}"]`)
+      || editorDom.querySelector(`#${CSS.escape(anchor)}`)
+    if (headingEl) {
+      headingEl.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }
+  }, [editor])
 
   const contextMenuPosition = useMemo(
     () => ({ x: contextMenu.x, y: contextMenu.y }),
@@ -787,10 +839,16 @@ function App() {
         )}
         {tabs.length > 0 ? (
           <>
-            <div className={`editor-area ${showPreview ? 'split' : 'full'}`} onContextMenu={handleContextMenu}>
+            <div className={`editor-area ${showPreview && !sourceMode ? 'split' : 'full'}`} onContextMenu={handleContextMenu} style={sourceMode ? { display: 'none' } : undefined}>
               <EditorContent editor={editor} className="editor-content" />
+              <LinkBubbleMenu editor={editor} onNavigateAnchor={handleNavigateAnchor} />
             </div>
-            {showPreview && (
+            {sourceMode && (
+              <div className="editor-area full source-mode-area">
+                <SourceModeEditor value={sourceContent} onChange={handleSourceContentChange} />
+              </div>
+            )}
+            {showPreview && !sourceMode && (
               <MarkdownPreview content={markdownContent} onCopy={handleCopyPreview} />
             )}
           </>
@@ -832,6 +890,8 @@ function App() {
         compactMode={compactMode}
         onToggleCompactMode={handleToggleCompactMode}
         onAICommand={handleAICommand}
+        sourceMode={sourceMode}
+        onToggleSourceMode={handleToggleSourceMode}
       />
     </div>
     </Suspense>

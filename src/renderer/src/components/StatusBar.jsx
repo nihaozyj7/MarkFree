@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, memo } from 'react'
 
-const StatusBar = memo(function StatusBar({ editor, filePath, modified, tabs, onToggleSidebar, sidebarVisible, compactMode, onToggleCompactMode, onAICommand }) {
+const StatusBar = memo(function StatusBar({ editor, filePath, modified, tabs, onToggleSidebar, sidebarVisible, compactMode, onToggleCompactMode, onAICommand, sourceMode, onToggleSourceMode }) {
   const [stats, setStats] = useState({ words: 0, chars: 0, lines: 0 })
   const rafRef = useRef(null)
 
@@ -66,6 +66,16 @@ const StatusBar = memo(function StatusBar({ editor, filePath, modified, tabs, on
                 <line x1="12" y1="3" x2="12" y2="21" />
               </>
             )}
+          </svg>
+        </button>
+        <button
+          className={`status-bar-btn${sourceMode ? ' active' : ''}`}
+          onClick={onToggleSourceMode}
+          title={sourceMode ? '切换为富文本模式' : '切换为源码模式'}
+        >
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="16 18 22 12 16 6" />
+            <polyline points="8 6 2 12 8 18" />
           </svg>
         </button>
         <span className="status-bar-text status-bar-tabs-count">

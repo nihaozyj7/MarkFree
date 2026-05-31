@@ -14,6 +14,7 @@ import TableHeader from '@tiptap/extension-table-header'
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
 import { createLowlight } from 'lowlight'
 import { Markdown } from 'tiptap-markdown'
+import { HeadingId } from '../extensions/HeadingId'
 
 const lowlight = createLowlight()
 
@@ -73,6 +74,7 @@ export const extensions = [
   MathDisplay,
   CustomImage.configure({ inline: true, allowBase64: true }),
   Link.configure({ openOnClick: false }),
+  HeadingId,
   Placeholder.configure({ placeholder: '开始写作...' }),
   TaskList,
   TaskItem.configure({ nested: true }),

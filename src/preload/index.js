@@ -80,5 +80,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   aiSaveSettings: (settings) => ipcRenderer.invoke('ai:saveSettings', settings),
 
   openLink: (url, linkOpenMode, baseDir) => ipcRenderer.invoke('link:open', { url, linkOpenMode, baseDir }),
-  isExecutable: (filePath) => ipcRenderer.invoke('shell:isExecutable', filePath)
+  isExecutable: (filePath) => ipcRenderer.invoke('shell:isExecutable', filePath),
+  openHelp: () => ipcRenderer.invoke('help:open')
 })

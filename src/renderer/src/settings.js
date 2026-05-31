@@ -16,7 +16,8 @@ const DEFAULT_SETTINGS = {
     open: 'Ctrl+O',
     save: 'Ctrl+S',
     saveAs: 'Ctrl+Shift+S',
-    sidebarToggle: 'Ctrl+B'
+    sidebarToggle: 'Ctrl+B',
+    aiCommand: 'Ctrl+K'
   },
   folderSortMode: 'foldersFirst-createTime',
   confirmBeforeCloseTab: true,

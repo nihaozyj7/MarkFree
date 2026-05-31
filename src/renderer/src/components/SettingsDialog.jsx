@@ -6,7 +6,8 @@ const SHORTCUT_LABELS = {
   open: '打开文件',
   save: '保存',
   saveAs: '另存为',
-  sidebarToggle: '侧边栏'
+  sidebarToggle: '侧边栏',
+  aiCommand: 'AI 命令面板'
 }
 
 const SettingsDialog = memo(function SettingsDialog({ onClose, currentTheme, onThemeChange, onSaveSettings, hwAccel, onHwAccelChange, defaultOpenPath, onDefaultOpenPathChange, windowMode, windowBounds, onWindowModeChange, onWindowBoundsChange, folderSortMode, onFolderSortModeChange }) {
@@ -229,6 +230,10 @@ const SettingsDialog = memo(function SettingsDialog({ onClose, currentTheme, onT
             <div className="settings-group">
               <h4 className="settings-group-title">AI 助手</h4>
               <div className="settings-group-body">
+                <div className="settings-section">
+                  <h3 className="settings-section-title">快捷键</h3>
+                  <p className="settings-section-desc">按 <strong>Ctrl+K</strong> 打开 AI 命令面板。选中文字后使用可实现续写、改写、翻译等；未选中时在光标处生成内容。</p>
+                </div>
                 <div className="settings-section">
                   <h3 className="settings-section-title">API 配置</h3>
                   <div className="settings-row">

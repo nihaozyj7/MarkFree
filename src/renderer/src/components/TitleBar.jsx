@@ -33,6 +33,7 @@ const menuGroups = [
   {
     label: '帮助',
     items: [
+      { id: 'help', label: '帮助文档' },
       { id: 'about', label: '关于 MarkFree' }
     ]
   }
